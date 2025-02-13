@@ -61,7 +61,7 @@ type PropertiesOf<T, Overrides extends keyof T = never> = {
   [K in keyof T]: K extends Overrides ? any : T[K];
 };
 type CollectionProperties = PropertiesOf<
-  MongoCollection,
+  Omit<MongoCollection, "timeoutMS">,
   | "find"
   | "findOne"
   | "findOneAndReplace"
