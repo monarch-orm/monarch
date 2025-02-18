@@ -9,7 +9,7 @@ importers:
   .:
     dependencies:
       mongodb:
-        specifier: ^6.13.0
+        specifier: '>= 6.0.0'
         version: 6.13.0(socks@2.8.4)
     devDependencies:
       '@biomejs/biome':

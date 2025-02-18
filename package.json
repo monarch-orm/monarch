@@ -44,8 +44,8 @@
     "url": "https://github.com/princecodes247/monarch/issues"
   },
   "homepage": "https://github.com/princecodes247/monarch#readme",
-  "dependencies": {
-    "mongodb": "^6.13.0"
+  "peerDependencies": {
+    "mongodb": ">= 6.0.0"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.3",
