@@ -7,7 +7,7 @@ export abstract class MonarchRelation<TInput, TOutput> {
   constructor(public parser: Parser<TInput, TOutput>) {}
 
   public static getRelation(relation: AnyMonarchRelation) {
-    return relation.getRelation();
+    return relation?.getRelation();
   }
 
   protected getRelation(): AnyMonarchRelation {

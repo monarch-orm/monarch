@@ -1,11 +1,15 @@
 import type { Sort as MongoSort } from "mongodb";
+import { MonarchRelation } from "../../schema/relations/base";
 import { MonarchMany } from "../../schema/relations/many";
 import { MonarchOne } from "../../schema/relations/one";
 import { MonarchRef } from "../../schema/relations/ref";
 import type {
   RelationPopulationOptions,
   RelationType,
+  SchemaRelationPopulation,
 } from "../../schema/relations/type-helpers";
+import { Schema } from "../../schema/schema";
+import type { InferSchemaRelations } from "../../schema/type-helpers";
 import type { Meta } from "../types/expressions";
 import type {
   Limit,
@@ -15,6 +19,7 @@ import type {
   Sort,
 } from "../types/pipeline-stage";
 import type { Projection } from "../types/query-options";
+import { makePopulationProjection, makeProjection } from "./projection";
 
 /**
  * Adds population stages to an existing MongoDB pipeline for relation handling
@@ -35,6 +40,7 @@ export function addPopulationPipeline(
   const foreignField = relation._field;
   const fieldVariable = generateFieldVariable(relationField, foreignField);
 
+  const nestedPopulation = options.populate ?? {};
   if (relation instanceof MonarchMany) {
     pipeline.push({
       $lookup: {
@@ -42,7 +48,8 @@ export function addPopulationPipeline(
         localField: relationField,
         foreignField: foreignField,
         as: fieldVariable,
-        pipeline: buildPipelineOptions(projection, options),
+        // pipeline: buildPipelineOptions(projection, options),
+        pipeline: buildPipelineOptions(projection, options, nestedPopulation, Schema.relations(relation._target)),
       },
     });
     pipeline.push({
@@ -79,7 +86,7 @@ export function addPopulationPipeline(
               },
             },
           },
-          ...buildPipelineOptions(projection, options),
+          ...buildPipelineOptions(projection, options, nestedPopulation, Schema.relations(relation._target)),
         ],
         as: fieldVariable,
       },
@@ -101,7 +108,7 @@ export function addPopulationPipeline(
               },
             },
           },
-          ...buildPipelineOptions(projection, { limit: 1 }),
+          ...buildPipelineOptions(projection, { limit: 1 }, nestedPopulation, Schema.relations(relation._target)),
         ],
         as: fieldVariable,
       },
@@ -134,17 +141,42 @@ function generateFieldVariable(
 function buildPipelineOptions(
   projection: Projection<any>,
   options: RelationPopulationOptions<any>,
+  nestedPopulation: SchemaRelationPopulation<any> = {},
+  nestedRelations: InferSchemaRelations<any> = {}
 ) {
   const pipeline: Lookup<any>["$lookup"]["pipeline"] = [];
+
   if (Object.keys(projection).length) {
     // @ts-ignore
     pipeline.push({ $project: projection });
   }
+
   addPipelineMetas(pipeline, {
     limit: options.limit,
     skip: options.skip,
     sort: options.sort,
   });
+
+  for (const [nestedField, nestedOptions] of Object.entries(nestedPopulation)) {
+    const nestedRelation = MonarchRelation.getRelation(nestedRelations[nestedField]) as RelationType;
+    if (!nestedRelation) continue;
+
+    const _options =
+    nestedOptions === true ? {} : (options as RelationPopulationOptions<any>);
+
+    const nestedProjection =
+      makePopulationProjection(_options) ??
+      makeProjection("omit", nestedRelation._target.options.omit ?? {});
+
+    addPopulationPipeline(
+      pipeline,
+      nestedField,
+      nestedRelation,
+      nestedProjection,
+      nestedOptions as RelationPopulationOptions<any>,
+    );
+  }
+
   return pipeline;
 }
 

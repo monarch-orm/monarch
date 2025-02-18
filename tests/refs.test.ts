@@ -214,6 +214,68 @@ describe("Tests for refs population", () => {
     expect(populatedUsers[1].tutor).toStrictEqual(user);
   });
 
+  it("should support nested population", async () => {
+    const { collections } = setupSchemasAndCollections();
+
+    // Create users with tutor relationship
+    const tutor = await collections.users
+      .insertOne({
+        name: "Master Tutor",
+        isAdmin: true,
+        createdAt: new Date(),
+      })
+      .exec();
+
+    const author = await collections.users
+      .insertOne({
+        name: "Student Author",
+        isAdmin: false,
+        createdAt: new Date(),
+        tutor: tutor._id,
+      })
+      .exec();
+
+    // Create posts for both users
+    await collections.posts
+      .insertOne({
+        title: "Tutor's Post",
+        contents: "Wisdom",
+        author: tutor._id,
+      })
+      .exec();
+
+    const studentPost = await collections.posts
+      .insertOne({
+        title: "Student's Post",
+        contents: "Learning",
+        author: author._id,
+      })
+      .exec();
+
+    // Test nested population
+    const populatedPost = await collections.posts
+      .findById(studentPost._id)
+      .populate({
+        author: {
+          populate: {
+            tutor: true,
+            posts: true,
+          }
+        }
+      })
+      .exec();
+      console.log({populatedPost})
+
+    // Verify the nested population results
+    expect(populatedPost).toBeDefined();
+    expect(populatedPost?.author).toBeDefined();
+    expect(populatedPost?.author.name).toBe("Student Author");
+    expect(populatedPost?.author.tutor).toBeDefined();
+    expect(populatedPost?.author.tutor.name).toBe("Master Tutor");
+    expect(populatedPost?.author.posts).toHaveLength(1);
+    expect(populatedPost?.author.posts[0].title).toBe("Student's Post");
+  });
+
   describe("Monarch Population Options", () => {
     it("should populate with limit and skip options", async () => {
       const { collections } = setupSchemasAndCollections();

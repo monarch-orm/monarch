@@ -46,10 +46,11 @@ type RelationOmitOrSelect<T> =
       omit?: never;
       select?: BoolProjection<T>;
     };
-export type RelationPopulationOptions<T> = {
+export type RelationPopulationOptions<T, K extends AnySchema = any> = {
   limit?: Limit["$limit"];
   skip?: Skip["$skip"];
   sort?: Sort["$sort"];
+  populate?: SchemaRelationPopulation<K>
 } & RelationOmitOrSelect<T>;
 type _RelationPopulationOptions<T extends AnyMonarchRelation> =
   T extends MonarchOne<any, any, any>
