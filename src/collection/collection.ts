@@ -318,6 +318,10 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
     this._collection.hint = v;
   }
 
+  public get timeoutMS() {
+    return this._collection.timeoutMS;
+  }
+
   public options(options?: OperationOptions) {
     return this._collection.options(options);
   }
