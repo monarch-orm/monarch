@@ -1,9 +1,6 @@
 import { MonarchParseError } from "../errors";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
 
-export const phantom: unique symbol = Symbol("monarch phantom");
-export type MonarchPhantom = typeof phantom;
-
 export type Parser<Input, Output> = (input: Input) => Output;
 
 export function pipeParser<Input, InterOutput, Output>(

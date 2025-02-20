@@ -1,20 +1,22 @@
 import type { Collection as MongoCollection } from "mongodb";
 import type { AnySchema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";
+import type { IdFirst, Merge, Pretty } from "../../type-helpers";
+import type { WithProjection } from "../types/query-options";
 
-export abstract class Query<T extends AnySchema, O> {
+export abstract class Query<TSchema extends AnySchema, TOutput> {
   constructor(
-    protected _schema: T,
-    protected _collection: MongoCollection<InferSchemaData<T>>,
+    protected _schema: TSchema,
+    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
     protected _readyPromise: Promise<void>,
   ) {}
 
-  public abstract exec(): Promise<O>;
+  public abstract exec(): Promise<TOutput>;
 
   // biome-ignore lint/suspicious/noThenProperty: We need automatic promise resolution
-  then<TResult1 = O, TResult2 = never>(
+  then<TResult1 = TOutput, TResult2 = never>(
     onfulfilled?:
-      | ((value: O) => TResult1 | PromiseLike<TResult1>)
+      | ((value: TOutput) => TResult1 | PromiseLike<TResult1>)
       | undefined
       | null,
     onrejected?:
@@ -30,11 +32,19 @@ export abstract class Query<T extends AnySchema, O> {
       | ((reason: any) => TResult | PromiseLike<TResult>)
       | undefined
       | null,
-  ): Promise<O | TResult> {
+  ): Promise<TOutput | TResult> {
     return this.exec().catch(onrejected);
   }
 
-  finally(onfinally?: (() => void) | undefined | null): Promise<O> {
+  finally(onfinally?: (() => void) | undefined | null): Promise<TOutput> {
     return this.exec().finally(onfinally);
   }
 }
+
+export type QueryOutput<
+  TOutput,
+  TOmit extends ["omit" | "select", keyof any] = ["omit", never],
+  TPopulate = {},
+> = Pretty<
+  IdFirst<Merge<WithProjection<TOmit[0], TOmit[1], TOutput>, TPopulate>>
+>;

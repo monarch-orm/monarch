@@ -1,77 +1,36 @@
 import type { Projection } from "../collection/types/query-options";
 import { detectProjection } from "../collection/utils/projection";
-import type { Merge, Pretty, WithOptionalId } from "../type-helpers";
+import type { Pretty, WithOptionalId } from "../type-helpers";
 import { objectId } from "../types/objectId";
-import { type AnyMonarchType, MonarchType, phantom } from "../types/type";
-import type { InferTypeOutput } from "../types/type-helpers";
-import type { AnyMonarchRelation, MonarchRelation } from "./relations/base";
-import { type Relations, relations } from "./relations/relations";
+import { type AnyMonarchType, MonarchType } from "../types/type";
+import type { SchemaIndexes } from "./indexes";
 import type {
-  CreateIndex,
   InferSchemaData,
   InferSchemaInput,
   InferSchemaOutput,
-  InferSchemaRelations,
   InferSchemaTypes,
-  SchemaIndex,
-  UniqueIndex,
 } from "./type-helpers";
-import type { Virtual } from "./virtuals";
+import type { SchemaVirtuals, Virtual } from "./virtuals";
 
-type SchemaRelation<T extends Record<string, AnyMonarchType>> = {
-  [k: string]: AnyMonarchRelation;
-} & {
-  [K in keyof T]?: MonarchRelation<any, InferTypeOutput<T[K]>>;
+type SchemaOmit<TTypes extends Record<string, AnyMonarchType>> = {
+  [K in keyof WithOptionalId<TTypes>]?: true;
 };
 
-type SchemaOmit<
-  TTypes extends Record<string, AnyMonarchType>,
-  TRelations extends Record<string, AnyMonarchRelation>,
-> = { [K in keyof Merge<WithOptionalId<TTypes>, TRelations>]?: true };
-
-type SchemaVirtuals<
-  TTypes extends Record<string, AnyMonarchType>,
-  TRelations extends Record<string, AnyMonarchRelation>,
-  TVirtuals extends Record<
-    string,
-    Virtual<Merge<TTypes, TRelations>, any, any>
-  >,
-> = TVirtuals;
-
-type SchemaIndexes<
-  TTypes extends Record<string, AnyMonarchType>,
-  TRelations extends Record<string, AnyMonarchRelation>,
-> = (options: {
-  createIndex: CreateIndex<Merge<TTypes, TRelations>>;
-  unique: UniqueIndex<Merge<TTypes, TRelations>>;
-}) => {
-  [k: string]: SchemaIndex<Merge<TTypes, TRelations>>;
-};
-
-export type AnySchema = Schema<any, any, any, any, any>;
-export type AnySchemaWithoutRelations = Schema<
-  any,
-  any,
-  { [k: string]: never },
-  any,
-  any
->;
+export type AnySchema = Schema<any, any, any, any>;
 
 export class Schema<
   TName extends string,
   TTypes extends Record<string, AnyMonarchType>,
-  TRelations extends SchemaRelation<TTypes> = {},
-  TOmit extends SchemaOmit<TTypes, TRelations> = {},
+  TOmit extends SchemaOmit<TTypes> = {},
   TVirtuals extends Record<string, Virtual<any, any, any>> = {},
 > {
   constructor(
     public name: TName,
     private _types: TTypes,
-    private _relations: TRelations,
     public options: {
-      omit?: SchemaOmit<TTypes, TRelations>;
-      virtuals?: SchemaVirtuals<TTypes, TRelations, TVirtuals>;
-      indexes?: SchemaIndexes<TTypes, TRelations>;
+      omit?: SchemaOmit<TTypes>;
+      virtuals?: SchemaVirtuals<TTypes, TVirtuals>;
+      indexes?: SchemaIndexes<TTypes>;
     },
   ) {
     // @ts-ignore
@@ -80,12 +39,6 @@ export class Schema<
 
   public static types<T extends AnySchema>(schema: T): InferSchemaTypes<T> {
     return schema._types;
-  }
-
-  public static relations<T extends AnySchema>(
-    schema: T,
-  ): InferSchemaRelations<T> {
-    return schema._relations;
   }
 
   public static toData<T extends AnySchema>(
@@ -101,18 +54,7 @@ export class Schema<
     for (const [key, type] of Object.entries(types)) {
       const parser = MonarchType.parser(type);
       const parsed = parser(input[key as keyof InferSchemaInput<this>]);
-      if (parsed === undefined || parsed === phantom) continue;
-      data[key as keyof typeof data] = parsed;
-    }
-    // add and optionally override with relation types
-    const relations = Schema.relations(this);
-    for (const [key, relation] of Object.entries(relations)) {
-      // skip parsing relation fields duplicated in the current schema
-      if (key in types) continue;
-      const parsed = relation.parser(
-        input[key as keyof InferSchemaInput<this>],
-      );
-      if (parsed === undefined || parsed === phantom) continue;
+      if (parsed === undefined) continue;
       data[key as keyof typeof data] = parsed;
     }
     return data;
@@ -137,7 +79,7 @@ export class Schema<
       for (const [key, virtual] of Object.entries(this.options.virtuals)) {
         // skip omitted virtual field
         if (isProjected(key)) {
-          // @ts-expect-error
+          // @ts-ignore
           output[key] = virtual.output(data);
         }
       }
@@ -166,31 +108,16 @@ export class Schema<
     return updates;
   }
 
-  omit<TOmit extends SchemaOmit<TTypes, TRelations>>(omit: TOmit) {
-    const schema = this as unknown as Schema<
-      TName,
-      TTypes,
-      TRelations,
-      TOmit,
-      TVirtuals
-    >;
+  omit<TOmit extends SchemaOmit<TTypes>>(omit: TOmit) {
+    const schema = this as unknown as Schema<TName, TTypes, TOmit, TVirtuals>;
     schema.options.omit = omit;
     return schema;
   }
 
-  virtuals<
-    TVirtuals extends Record<
-      string,
-      Virtual<Pretty<Merge<TTypes, TRelations>>, any, any>
-    >,
-  >(virtuals: SchemaVirtuals<TTypes, TRelations, TVirtuals>) {
-    const schema = this as unknown as Schema<
-      TName,
-      TTypes,
-      TRelations,
-      TOmit,
-      TVirtuals
-    >;
+  virtuals<TVirtuals extends Record<string, Virtual<Pretty<TTypes>, any, any>>>(
+    virtuals: SchemaVirtuals<TTypes, TVirtuals>,
+  ) {
+    const schema = this as unknown as Schema<TName, TTypes, TOmit, TVirtuals>;
     schema.options.virtuals = virtuals;
     return schema;
   }
@@ -200,9 +127,9 @@ export class Schema<
    *
    * This method allows you to specify indexes that should be created for the schema.
    *
-   * @param {SchemaIndexes<TTypes, TRelations>} indexes - A function that defines the indexes to be created.
+   * @param indexes - A function that defines the indexes to be created.
    *
-   * @returns {this} The current schema instance for method chaining.
+   * @returns The current schema instance for method chaining.
    *
    * @example
    * const userSchema = createSchema("users", {
@@ -213,42 +140,15 @@ export class Schema<
    *   fullname: createIndex({ firstname: 1, surname: 1 }, { unique: true }),
    * }));
    */
-  indexes(indexes: SchemaIndexes<TTypes, TRelations>) {
+  indexes(indexes: SchemaIndexes<TTypes>) {
     this.options.indexes = indexes;
     return this;
-  }
-
-  relations<T extends SchemaRelation<TTypes>>(
-    fn: (relations: Relations<this>) => T,
-  ) {
-    const schema = this as unknown as Schema<
-      TName,
-      TTypes,
-      Pretty<Merge<TRelations, T>>,
-      TOmit,
-      TVirtuals
-    >;
-    schema._relations = {
-      ...schema._relations,
-      ...fn(relations(this)),
-    };
-    return schema;
   }
 }
 
 export function createSchema<
   TName extends string,
   TTypes extends Record<string, AnyMonarchType>,
->(name: TName, types: TTypes): Schema<TName, TTypes, {}, {}, {}> {
-  return new Schema(name, types, {}, {});
-}
-
-export function makeIndexes<
-  T extends Record<string, AnyMonarchType>,
-  R extends Record<string, AnyMonarchRelation>,
->(indexesFn: SchemaIndexes<T, R>) {
-  return indexesFn({
-    createIndex: (fields, options) => [fields, options],
-    unique: (field) => [{ [field as any]: 1 as const }, { unique: true }],
-  });
+>(name: TName, types: TTypes): Schema<TName, TTypes, {}, {}> {
+  return new Schema(name, types, {});
 }

@@ -33,7 +33,9 @@ import {
   type WithoutId,
 } from "mongodb";
 import { MonarchError } from "../errors";
-import { type AnySchema, Schema, makeIndexes } from "../schema/schema";
+import type { AnyRelations } from "../relations/relations";
+import { makeIndexes } from "../schema/indexes";
+import { type AnySchema, Schema } from "../schema/schema";
 import type {
   InferSchemaData,
   InferSchemaInput,
@@ -81,13 +83,18 @@ type CollectionProperties = PropertiesOf<
   | "aggregate"
 >;
 
-export class Collection<T extends AnySchema> implements CollectionProperties {
-  private _collection: MongoCollection<InferSchemaData<T>>;
+export class Collection<
+  TSchema extends AnySchema,
+  TDbRelations extends Record<string, AnyRelations>,
+> implements CollectionProperties
+{
+  private _collection: MongoCollection<InferSchemaData<TSchema>>;
   private _readyPromise: Promise<void>;
 
   constructor(
     db: Db,
-    private _schema: T,
+    private _schema: TSchema,
+    private _relations: TDbRelations,
   ) {
     // create indexes
     if (_schema.options.indexes) {
@@ -103,7 +110,9 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
     } else {
       this._readyPromise = Promise.resolve();
     }
-    this._collection = db.collection<InferSchemaData<T>>(this._schema.name);
+    this._collection = db.collection<InferSchemaData<TSchema>>(
+      this._schema.name,
+    );
   }
 
   public get isReady() {
@@ -114,21 +123,23 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
     return this._collection;
   }
 
-  public find(filter: Filter<InferSchemaData<T>> = {}) {
+  public find(filter: Filter<InferSchemaData<TSchema>> = {}) {
     return new FindQuery(
       this._schema,
+      this._relations,
       this._collection,
       this._readyPromise,
       filter,
     );
   }
 
-  public findById(id: Index<SchemaInputWithId<T>, "_id">) {
+  public findById(id: Index<SchemaInputWithId<TSchema>, "_id">) {
     const _idType = Schema.types(this._schema)._id;
     const isObjectIdType = MonarchType.isInstanceOf(_idType, MonarchObjectId);
 
     return new FindOneQuery(
       this._schema,
+      this._relations,
       this._collection,
       this._readyPromise,
       // @ts-ignore
@@ -136,9 +147,10 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
     );
   }
 
-  public findOne(filter: Filter<InferSchemaData<T>>) {
+  public findOne(filter: Filter<InferSchemaData<TSchema>>) {
     return new FindOneQuery(
       this._schema,
+      this._relations,
       this._collection,
       this._readyPromise,
       filter,
@@ -146,8 +158,8 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
   }
 
   public findOneAndReplace(
-    filter: Filter<InferSchemaData<T>>,
-    replacement: WithoutId<InferSchemaData<T>>,
+    filter: Filter<InferSchemaData<TSchema>>,
+    replacement: WithoutId<InferSchemaData<TSchema>>,
   ) {
     return new FindOneAndReplaceQuery(
       this._schema,
@@ -159,8 +171,8 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
   }
 
   public findOneAndUpdate(
-    filter: Filter<InferSchemaData<T>>,
-    update: UpdateFilter<InferSchemaData<T>>,
+    filter: Filter<InferSchemaData<TSchema>>,
+    update: UpdateFilter<InferSchemaData<TSchema>>,
   ) {
     return new FindOneAndUpdateQuery(
       this._schema,
@@ -171,7 +183,7 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
     );
   }
 
-  public findOneAndDelete(filter: Filter<InferSchemaData<T>>) {
+  public findOneAndDelete(filter: Filter<InferSchemaData<TSchema>>) {
     return new FindOneAndDeleteQuery(
       this._schema,
       this._collection,
@@ -180,7 +192,7 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
     );
   }
 
-  public insertOne(data: InferSchemaInput<T>) {
+  public insertOne(data: InferSchemaInput<TSchema>) {
     return new InsertOneQuery(
       this._schema,
       this._collection,
@@ -189,7 +201,7 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
     );
   }
 
-  public insertMany(data: InferSchemaInput<T>[]) {
+  public insertMany(data: InferSchemaInput<TSchema>[]) {
     return new InsertManyQuery(
       this._schema,
       this._collection,
@@ -198,7 +210,7 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
     );
   }
 
-  public bulkWrite(data: AnyBulkWriteOperation<InferSchemaData<T>>[]) {
+  public bulkWrite(data: AnyBulkWriteOperation<InferSchemaData<TSchema>>[]) {
     return new BulkWriteQuery(
       this._schema,
       this._collection,
@@ -208,8 +220,8 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
   }
 
   public replaceOne(
-    filter: Filter<InferSchemaData<T>>,
-    replacement: WithoutId<InferSchemaData<T>>,
+    filter: Filter<InferSchemaData<TSchema>>,
+    replacement: WithoutId<InferSchemaData<TSchema>>,
   ) {
     return new ReplaceOneQuery(
       this._schema,
@@ -221,8 +233,8 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
   }
 
   public updateOne(
-    filter: Filter<InferSchemaData<T>>,
-    update: UpdateFilter<InferSchemaData<T>>,
+    filter: Filter<InferSchemaData<TSchema>>,
+    update: UpdateFilter<InferSchemaData<TSchema>>,
   ) {
     return new UpdateOneQuery(
       this._schema,
@@ -234,8 +246,8 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
   }
 
   public updateMany(
-    filter: Filter<InferSchemaData<T>>,
-    update: UpdateFilter<InferSchemaData<T>>,
+    filter: Filter<InferSchemaData<TSchema>>,
+    update: UpdateFilter<InferSchemaData<TSchema>>,
   ) {
     return new UpdateManyQuery(
       this._schema,
@@ -246,7 +258,7 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
     );
   }
 
-  public deleteOne(filter: Filter<InferSchemaData<T>>) {
+  public deleteOne(filter: Filter<InferSchemaData<TSchema>>) {
     return new DeleteOneQuery(
       this._schema,
       this._collection,
@@ -255,7 +267,7 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
     );
   }
 
-  public deleteMany(filter: Filter<InferSchemaData<T>>) {
+  public deleteMany(filter: Filter<InferSchemaData<TSchema>>) {
     return new DeleteManyQuery(
       this._schema,
       this._collection,
@@ -265,14 +277,14 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
   }
 
   public async count(
-    filter: Filter<InferSchemaData<T>> = {},
+    filter: Filter<InferSchemaData<TSchema>> = {},
     options?: CountOptions,
   ) {
     return await this._collection.count(filter, options);
   }
 
   public async countDocuments(
-    filter: Filter<InferSchemaData<T>> = {},
+    filter: Filter<InferSchemaData<TSchema>> = {},
     options?: CountDocumentsOptions,
   ) {
     return await this._collection.countDocuments(filter, options);
@@ -377,23 +389,26 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
     return this._collection.indexInformation(options);
   }
 
-  distinct<Key extends keyof InferSchemaData<T>>(
+  distinct<Key extends keyof InferSchemaData<TSchema>>(
     key: Key,
-  ): Promise<Array<Flatten<InferSchemaData<T>[Key]>>>;
-  distinct<Key extends keyof InferSchemaData<T>>(
+  ): Promise<Array<Flatten<InferSchemaData<TSchema>[Key]>>>;
+  distinct<Key extends keyof InferSchemaData<TSchema>>(
     key: Key,
-    filter: Filter<InferSchemaData<T>>,
-  ): Promise<Array<Flatten<InferSchemaData<T>[Key]>>>;
-  distinct<Key extends keyof InferSchemaData<T>>(
+    filter: Filter<InferSchemaData<TSchema>>,
+  ): Promise<Array<Flatten<InferSchemaData<TSchema>[Key]>>>;
+  distinct<Key extends keyof InferSchemaData<TSchema>>(
     key: Key,
-    filter: Filter<InferSchemaData<T>>,
+    filter: Filter<InferSchemaData<TSchema>>,
     options: DistinctOptions,
-  ): Promise<Array<Flatten<InferSchemaData<T>[Key]>>>;
+  ): Promise<Array<Flatten<InferSchemaData<TSchema>[Key]>>>;
   distinct(key: string): Promise<any[]>;
-  distinct(key: string, filter: Filter<InferSchemaData<T>>): Promise<any[]>;
   distinct(
     key: string,
-    filter: Filter<InferSchemaData<T>>,
+    filter: Filter<InferSchemaData<TSchema>>,
+  ): Promise<any[]>;
+  distinct(
+    key: string,
+    filter: Filter<InferSchemaData<TSchema>>,
     options: DistinctOptions,
   ): Promise<any[]>;
   public async distinct(key: any, filter?: any, options?: any): Promise<any[]> {
@@ -435,7 +450,7 @@ export class Collection<T extends AnySchema> implements CollectionProperties {
   }
 
   public watch<
-    TLocal extends Document = InferSchemaData<T>,
+    TLocal extends Document = InferSchemaData<TSchema>,
     TChange extends Document = ChangeStreamDocument<TLocal>,
   >(
     pipeline?: Document[],

@@ -10,22 +10,25 @@ import type {
   InferSchemaOmit,
   InferSchemaOutput,
 } from "../../schema/type-helpers";
-import type { Projection, WithProjection } from "../types/query-options";
+import type { Projection } from "../types/query-options";
 import { makeProjection } from "../utils/projection";
-import { Query } from "./base";
+import { Query, type QueryOutput } from "./base";
 
 export class InsertOneQuery<
-  T extends AnySchema,
-  O = InferSchemaOutput<T>,
-  P extends ["omit" | "select", keyof any] = ["omit", InferSchemaOmit<T>],
-> extends Query<T, WithProjection<P[0], P[1], O>> {
-  private _projection: Projection<InferSchemaOutput<T>>;
+  TSchema extends AnySchema,
+  TOutput = InferSchemaOutput<TSchema>,
+  TOmit extends ["omit" | "select", keyof any] = [
+    "omit",
+    InferSchemaOmit<TSchema>,
+  ],
+> extends Query<TSchema, QueryOutput<TOutput, TOmit>> {
+  private _projection: Projection<InferSchemaOutput<TSchema>>;
 
   constructor(
-    protected _schema: T,
-    protected _collection: MongoCollection<InferSchemaData<T>>,
+    protected _schema: TSchema,
+    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
     protected _readyPromise: Promise<void>,
-    private _data: InferSchemaInput<T>,
+    private _data: InferSchemaInput<TSchema>,
     private _options: InsertOneOptions = {},
   ) {
     super(_schema, _collection, _readyPromise);
@@ -37,11 +40,11 @@ export class InsertOneQuery<
     return this;
   }
 
-  public async exec(): Promise<WithProjection<P[0], P[1], O>> {
+  public async exec(): Promise<QueryOutput<TOutput, TOmit>> {
     await this._readyPromise;
     const data = Schema.toData(this._schema, this._data);
     const res = await this._collection.insertOne(
-      data as OptionalUnlessRequiredId<InferSchemaData<T>>,
+      data as OptionalUnlessRequiredId<InferSchemaData<TSchema>>,
       this._options,
     );
     return Schema.fromData(
@@ -52,6 +55,6 @@ export class InsertOneQuery<
       },
       this._projection,
       Object.keys(this._projection),
-    ) as O;
+    ) as TOutput;
   }
 }

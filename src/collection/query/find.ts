@@ -5,57 +5,57 @@ import type {
   Collection as MongoCollection,
   Sort as MongoSort,
 } from "mongodb";
-import { MonarchRelation } from "../../schema/relations/base";
-import type {
-  InferRelationObjectPopulation,
-  RelationPopulationOptions,
-  RelationType,
-  SchemaRelationPopulation,
-} from "../../schema/relations/type-helpers";
+import type { AnyRelations } from "../../relations/relations";
+import type { InferRelationObjectPopulation } from "../../relations/type-helpers";
+import type { Population } from "../../relations/type-helpers";
 import { type AnySchema, Schema } from "../../schema/schema";
 import type {
   InferSchemaData,
   InferSchemaOmit,
   InferSchemaOutput,
 } from "../../schema/type-helpers";
-import type { Merge, Pretty, TrueKeys } from "../../type-helpers";
-import { mapOneOrArray } from "../../utils";
+import type { TrueKeys } from "../../type-helpers";
 import type { PipelineStage } from "../types/pipeline-stage";
-import type {
-  BoolProjection,
-  Projection,
-  Sort,
-  WithProjection,
-} from "../types/query-options";
+import type { BoolProjection, Projection, Sort } from "../types/query-options";
 import {
   addPipelineMetas,
-  addPopulationPipeline,
+  definePopulations,
+  expandPopulations,
   getSortDirection,
 } from "../utils/population";
 import {
   addExtraInputsToProjection,
-  makePopulationProjection,
   makeProjection,
 } from "../utils/projection";
-import { Query } from "./base";
+import { Query, type QueryOutput } from "./base";
 
 export class FindQuery<
-  T extends AnySchema,
-  O = InferSchemaOutput<T>,
-  P extends ["omit" | "select", keyof any] = ["omit", InferSchemaOmit<T>],
-> extends Query<T, WithProjection<P[0], P[1], O>[]> {
-  private _projection: Projection<InferSchemaOutput<T>>;
-  private _population: SchemaRelationPopulation<T> = {};
+  TSchema extends AnySchema,
+  TDbRelations extends Record<string, AnyRelations>,
+  TPopulate extends Record<string, any> = {},
+  TOutput = InferSchemaOutput<TSchema>,
+  TOmit extends ["omit" | "select", keyof any] = [
+    "omit",
+    InferSchemaOmit<TSchema>,
+  ],
+> extends Query<TSchema, QueryOutput<TOutput, TOmit, TPopulate>[]> {
+  private _projection: Projection<InferSchemaOutput<TSchema>>;
+  private _population: Population<TDbRelations, TSchema["name"]> = {};
 
   constructor(
-    protected _schema: T,
-    protected _collection: MongoCollection<InferSchemaData<T>>,
+    protected _schema: TSchema,
+    protected _relations: TDbRelations,
+    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
     protected _readyPromise: Promise<void>,
-    private _filter: Filter<InferSchemaData<T>>,
+    private _filter: Filter<InferSchemaData<TSchema>>,
     private _options: FindOptions = {},
   ) {
     super(_schema, _collection, _readyPromise);
     this._projection = makeProjection("omit", _schema.options.omit ?? {});
+  }
+
+  protected get relations() {
+    return this._relations[this._schema.name] as TDbRelations[TSchema["name"]];
   }
 
   public options(options: FindOptions): this {
@@ -63,7 +63,7 @@ export class FindQuery<
     return this;
   }
 
-  public sort(sort: Sort<InferSchemaOutput<T>>): this {
+  public sort(sort: Sort<InferSchemaOutput<TSchema>>): this {
     this._options.sort = sort as MongoSort;
     return this;
   }
@@ -78,30 +78,47 @@ export class FindQuery<
     return this;
   }
 
-  public omit<P extends BoolProjection<InferSchemaOutput<T>>>(projection: P) {
+  public omit<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(
+    projection: TProjection,
+  ) {
     this._projection = makeProjection("omit", projection);
-    return this as FindQuery<T, O, ["omit", TrueKeys<P>]>;
-  }
-
-  public select<P extends BoolProjection<InferSchemaOutput<T>>>(projection: P) {
-    this._projection = makeProjection("select", projection);
-    return this as FindQuery<T, O, ["select", TrueKeys<P>]>;
-  }
-
-  public populate<P extends SchemaRelationPopulation<T>>(population: P) {
-    Object.assign(this._population, population);
     return this as FindQuery<
-      T,
-      Pretty<Merge<O, InferRelationObjectPopulation<T, P>>>
+      TSchema,
+      TDbRelations,
+      TPopulate,
+      TOutput,
+      ["omit", TrueKeys<TProjection>]
     >;
   }
 
-  public async exec(): Promise<WithProjection<P[0], P[1], O>[]> {
-    return (await this.cursor()).toArray();
+  public select<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(
+    projection: TProjection,
+  ) {
+    this._projection = makeProjection("select", projection);
+    return this as FindQuery<
+      TSchema,
+      TDbRelations,
+      TPopulate,
+      TOutput,
+      ["select", TrueKeys<TProjection>]
+    >;
+  }
+
+  public populate<
+    TPopulation extends Population<TDbRelations, TSchema["name"]>,
+  >(population: TPopulation) {
+    this._population = population;
+    return this as FindQuery<
+      TSchema,
+      TDbRelations,
+      InferRelationObjectPopulation<TDbRelations, TSchema["name"], TPopulation>,
+      TOutput,
+      TOmit
+    >;
   }
 
   public async cursor(): Promise<
-    AbstractCursor<WithProjection<P[0], P[1], O>>
+    AbstractCursor<QueryOutput<TOutput, TOmit, TPopulate>>
   > {
     await this._readyPromise;
     if (Object.keys(this._population).length) {
@@ -110,12 +127,17 @@ export class FindQuery<
     return this._execWithoutPopulate();
   }
 
+  public async exec(): Promise<QueryOutput<TOutput, TOmit, TPopulate>[]> {
+    return (await this.cursor()).toArray();
+  }
+
   private _execWithoutPopulate(): AbstractCursor<
-    WithProjection<P[0], P[1], O>
+    QueryOutput<TOutput, TOmit, TPopulate>
   > {
     const extra = addExtraInputsToProjection(
       this._projection,
       this._schema.options.virtuals,
+      undefined,
     );
     const res = this._collection
       .find(this._filter, { ...this._options, projection: this._projection })
@@ -123,62 +145,37 @@ export class FindQuery<
         (doc) =>
           Schema.fromData(
             this._schema,
-            doc as InferSchemaData<T>,
+            doc as InferSchemaData<TSchema>,
             this._projection,
             extra,
-          ) as O,
+          ) as QueryOutput<TOutput, TOmit, TPopulate>,
       );
     return res;
   }
 
-  private _execWithPopulate(): AbstractCursor<WithProjection<P[0], P[1], O>> {
-    const pipeline: PipelineStage<InferSchemaOutput<T>>[] = [
+  private _execWithPopulate(): AbstractCursor<
+    QueryOutput<TOutput, TOmit, TPopulate>
+  > {
+    const pipeline: PipelineStage<InferSchemaOutput<TSchema>>[] = [
       // @ts-ignore
       { $match: this._filter },
     ];
-    const extra = addExtraInputsToProjection(
+    const extras = addExtraInputsToProjection(
       this._projection,
       this._schema.options.virtuals,
+      this._population,
     );
     if (Object.keys(this._projection).length) {
       // @ts-ignore
       pipeline.push({ $project: this._projection });
     }
 
-    const relations = Schema.relations(this._schema);
-    const populations: Record<
-      string,
-      {
-        relation: RelationType;
-        fieldVariable: string;
-        projection: Projection<any>;
-        extra: string[] | null;
-      }
-    > = {};
-    for (const [field, options] of Object.entries(this._population)) {
-      if (!options) continue;
-      const relation = MonarchRelation.getRelation(
-        relations[field],
-      ) as RelationType;
-      const _options =
-        options === true ? {} : (options as RelationPopulationOptions<any>);
-      // get population projection or fallback to schema omit projection
-      const projection =
-        makePopulationProjection(_options) ??
-        makeProjection("omit", relation._target.options.omit ?? {});
-      const extra = addExtraInputsToProjection(
-        projection,
-        relation._target.options.virtuals,
-      );
-      const { fieldVariable } = addPopulationPipeline(
-        pipeline,
-        field,
-        relation,
-        projection,
-        _options,
-      );
-      populations[field] = { relation, fieldVariable, projection, extra };
-    }
+    const populations = definePopulations(
+      this._population,
+      this.relations,
+      this._relations,
+      pipeline,
+    );
 
     addPipelineMetas(pipeline, {
       limit: this._options.limit,
@@ -186,31 +183,18 @@ export class FindQuery<
       sort: getSortDirection(this._options.sort),
     });
 
-    const res = this._collection.aggregate(pipeline).map((doc) => {
-      const populatedDoc = Schema.fromData(
-        this._schema,
-        doc as InferSchemaData<T>,
-        this._projection,
-        extra,
+    const res = this._collection
+      .aggregate(pipeline)
+      .map(
+        (doc) =>
+          expandPopulations(
+            populations,
+            this._projection,
+            extras,
+            this._schema,
+            doc,
+          ) as QueryOutput<TOutput, TOmit, TPopulate>,
       );
-      for (const [key, population] of Object.entries(populations)) {
-        // @ts-ignore
-        populatedDoc[key] = mapOneOrArray(
-          doc[population.fieldVariable],
-          (doc) => {
-            return Schema.fromData(
-              population.relation._target,
-              doc,
-              population.projection,
-              population.extra,
-            );
-          },
-        );
-        // @ts-ignore
-        delete populatedDoc[population.fieldVariable];
-      }
-      return populatedDoc as O;
-    });
     return res;
   }
 }

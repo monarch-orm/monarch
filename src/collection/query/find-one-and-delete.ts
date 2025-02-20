@@ -10,29 +10,28 @@ import type {
   InferSchemaOutput,
 } from "../../schema/type-helpers";
 import type { TrueKeys } from "../../type-helpers";
-import type {
-  BoolProjection,
-  Projection,
-  WithProjection,
-} from "../types/query-options";
+import type { BoolProjection, Projection } from "../types/query-options";
 import {
   addExtraInputsToProjection,
   makeProjection,
 } from "../utils/projection";
-import { Query } from "./base";
+import { Query, type QueryOutput } from "./base";
 
 export class FindOneAndDeleteQuery<
-  T extends AnySchema,
-  O = InferSchemaOutput<T>,
-  P extends ["omit" | "select", keyof any] = ["omit", InferSchemaOmit<T>],
-> extends Query<T, WithProjection<P[0], P[1], O> | null> {
-  private _projection: Projection<InferSchemaOutput<T>>;
+  TSchema extends AnySchema,
+  TOutput = InferSchemaOutput<TSchema>,
+  TOmit extends ["omit" | "select", keyof any] = [
+    "omit",
+    InferSchemaOmit<TSchema>,
+  ],
+> extends Query<TSchema, QueryOutput<TOutput, TOmit> | null> {
+  private _projection: Projection<InferSchemaOutput<TSchema>>;
 
   constructor(
-    protected _schema: T,
-    protected _collection: MongoCollection<InferSchemaData<T>>,
+    protected _schema: TSchema,
+    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
     protected _readyPromise: Promise<void>,
-    private _filter: Filter<InferSchemaData<T>>,
+    private _filter: Filter<InferSchemaData<TSchema>>,
     private _options: FindOneAndDeleteOptions = {},
   ) {
     super(_schema, _collection, _readyPromise);
@@ -44,17 +43,29 @@ export class FindOneAndDeleteQuery<
     return this;
   }
 
-  public omit<P extends BoolProjection<InferSchemaOutput<T>>>(projection: P) {
+  public omit<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(
+    projection: TProjection,
+  ) {
     this._projection = makeProjection("omit", projection);
-    return this as FindOneAndDeleteQuery<T, O, ["omit", TrueKeys<P>]>;
+    return this as FindOneAndDeleteQuery<
+      TSchema,
+      TOutput,
+      ["omit", TrueKeys<TProjection>]
+    >;
   }
 
-  public select<P extends BoolProjection<InferSchemaOutput<T>>>(projection: P) {
+  public select<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(
+    projection: TProjection,
+  ) {
     this._projection = makeProjection("select", projection);
-    return this as FindOneAndDeleteQuery<T, O, ["select", TrueKeys<P>]>;
+    return this as FindOneAndDeleteQuery<
+      TSchema,
+      TOutput,
+      ["select", TrueKeys<TProjection>]
+    >;
   }
 
-  public async exec(): Promise<WithProjection<P[0], P[1], O> | null> {
+  public async exec(): Promise<QueryOutput<TOutput, TOmit> | null> {
     await this._readyPromise;
     const extra = addExtraInputsToProjection(
       this._projection,
@@ -67,10 +78,10 @@ export class FindOneAndDeleteQuery<
     return res
       ? (Schema.fromData(
           this._schema,
-          res as InferSchemaData<T>,
+          res as InferSchemaData<TSchema>,
           this._projection,
           extra,
-        ) as O)
+        ) as QueryOutput<TOutput, TOmit>)
       : res;
   }
 }
