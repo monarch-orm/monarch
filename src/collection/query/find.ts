@@ -6,8 +6,10 @@ import type {
   Sort as MongoSort,
 } from "mongodb";
 import type { AnyRelations } from "../../relations/relations";
-import type { InferRelationObjectPopulation } from "../../relations/type-helpers";
-import type { Population } from "../../relations/type-helpers";
+import type {
+  InferRelationObjectPopulation,
+  Population,
+} from "../../relations/type-helpers";
 import { type AnySchema, Schema } from "../../schema/schema";
 import type {
   InferSchemaData,
@@ -137,7 +139,6 @@ export class FindQuery<
     const extra = addExtraInputsToProjection(
       this._projection,
       this._schema.options.virtuals,
-      undefined,
     );
     const res = this._collection
       .find(this._filter, { ...this._options, projection: this._projection })

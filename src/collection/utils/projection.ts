@@ -43,7 +43,7 @@ export function detectProjection<T>(projection: Projection<T>) {
 export function addExtraInputsToProjection<T>(
   projection: Projection<T>,
   virtuals: Record<string, Virtual<any, any, any>> | undefined,
-  populations: Population<any, any> | undefined,
+  populations?: Population<any, any>,
 ): string[] | null {
   const { isProjected, type } = detectProjection(projection);
 

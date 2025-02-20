@@ -90,7 +90,7 @@ export class FindOneAndUpdateQuery<
           res as InferSchemaData<TSchema>,
           this._projection,
           extra,
-        ) as TOutput)
+        ) as QueryOutput<TOutput, TOmit>)
       : res;
   }
 }

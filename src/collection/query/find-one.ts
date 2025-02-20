@@ -4,8 +4,10 @@ import type {
   Collection as MongoCollection,
 } from "mongodb";
 import type { AnyRelations } from "../../relations/relations";
-import type { InferRelationObjectPopulation } from "../../relations/type-helpers";
-import type { Population } from "../../relations/type-helpers";
+import type {
+  InferRelationObjectPopulation,
+  Population,
+} from "../../relations/type-helpers";
 import { type AnySchema, Schema } from "../../schema/schema";
 import type {
   InferSchemaData,
@@ -116,7 +118,6 @@ export class FindOneQuery<
     const extra = addExtraInputsToProjection(
       this._projection,
       this._schema.options.virtuals,
-      undefined,
     );
     const res = await this._collection.findOne(this._filter, {
       ...this._options,
