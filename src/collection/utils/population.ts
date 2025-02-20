@@ -5,7 +5,6 @@ import type {
   PopulationOptions,
 } from "../../relations/type-helpers";
 import { type AnySchema, Schema } from "../../schema/schema";
-import type {} from "../../schema/type-helpers";
 import { mapOneOrArray } from "../../utils";
 import type { Meta } from "../types/expressions";
 import type {

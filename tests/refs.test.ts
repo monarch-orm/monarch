@@ -276,8 +276,6 @@ describe("Tests for refs population", () => {
       })
       .exec();
 
-    console.log(populatedPost?.author?.posts);
-
     // Verify the nested population results
     expect(populatedPost).toBeTruthy();
     expect(populatedPost?.author).toBeTruthy();
