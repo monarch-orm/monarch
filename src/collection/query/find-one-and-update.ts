@@ -75,7 +75,7 @@ export class FindOneAndUpdateQuery<
     ) as MatchKeysAndValues<InferSchemaData<TSchema>>;
     this._update.$set = { ...fieldUpdates, ...this._update.$set };
 
-    const extra = addExtraInputsToProjection(
+    const extras = addExtraInputsToProjection(
       this._projection,
       this._schema.options.virtuals,
     );
@@ -89,7 +89,7 @@ export class FindOneAndUpdateQuery<
           this._schema,
           res as InferSchemaData<TSchema>,
           this._projection,
-          extra,
+          extras,
         ) as QueryOutput<TOutput, TOmit>)
       : res;
   }

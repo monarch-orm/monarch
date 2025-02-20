@@ -19,7 +19,7 @@ import type { PipelineStage } from "../types/pipeline-stage";
 import type { BoolProjection, Projection } from "../types/query-options";
 import {
   addPipelineMetas,
-  definePopulations,
+  addPopulations,
   expandPopulations,
   getSortDirection,
 } from "../utils/population";
@@ -52,10 +52,6 @@ export class FindOneQuery<
   ) {
     super(_schema, _collection, _readyPromise);
     this._projection = makeProjection("omit", _schema.options.omit ?? {});
-  }
-
-  protected get relations() {
-    return this._relations[this._schema.name] as TDbRelations[TSchema["name"]];
   }
 
   public options(options: FindOptions): this {
@@ -115,7 +111,7 @@ export class FindOneQuery<
     TOmit,
     TPopulate
   > | null> {
-    const extra = addExtraInputsToProjection(
+    const extras = addExtraInputsToProjection(
       this._projection,
       this._schema.options.virtuals,
     );
@@ -128,7 +124,7 @@ export class FindOneQuery<
           this._schema,
           res as InferSchemaData<TSchema>,
           this._projection,
-          extra,
+          extras,
         ) as QueryOutput<TOutput, TOmit, TPopulate>)
       : res;
   }
@@ -152,12 +148,11 @@ export class FindOneQuery<
       pipeline.push({ $project: this._projection });
     }
 
-    const populations = definePopulations(
-      this._population,
-      this.relations,
-      this._relations,
-      pipeline,
-    );
+    const populations = addPopulations(pipeline, {
+      relations: this._relations,
+      population: this._population,
+      schema: this._schema,
+    });
 
     addPipelineMetas(pipeline, {
       limit: this._options.limit,
@@ -169,13 +164,13 @@ export class FindOneQuery<
       .aggregate(pipeline)
       .map(
         (doc) =>
-          expandPopulations(
+          expandPopulations({
             populations,
-            this._projection,
+            projection: this._projection,
             extras,
-            this._schema,
+            schema: this._schema,
             doc,
-          ) as QueryOutput<TOutput, TOmit, TPopulate>,
+          }) as QueryOutput<TOutput, TOmit, TPopulate>,
       )
       .next();
     return res;

@@ -21,7 +21,7 @@ import type { PipelineStage } from "../types/pipeline-stage";
 import type { BoolProjection, Projection, Sort } from "../types/query-options";
 import {
   addPipelineMetas,
-  definePopulations,
+  addPopulations,
   expandPopulations,
   getSortDirection,
 } from "../utils/population";
@@ -54,10 +54,6 @@ export class FindQuery<
   ) {
     super(_schema, _collection, _readyPromise);
     this._projection = makeProjection("omit", _schema.options.omit ?? {});
-  }
-
-  protected get relations() {
-    return this._relations[this._schema.name] as TDbRelations[TSchema["name"]];
   }
 
   public options(options: FindOptions): this {
@@ -136,7 +132,7 @@ export class FindQuery<
   private _execWithoutPopulate(): AbstractCursor<
     QueryOutput<TOutput, TOmit, TPopulate>
   > {
-    const extra = addExtraInputsToProjection(
+    const extras = addExtraInputsToProjection(
       this._projection,
       this._schema.options.virtuals,
     );
@@ -148,7 +144,7 @@ export class FindQuery<
             this._schema,
             doc as InferSchemaData<TSchema>,
             this._projection,
-            extra,
+            extras,
           ) as QueryOutput<TOutput, TOmit, TPopulate>,
       );
     return res;
@@ -171,12 +167,11 @@ export class FindQuery<
       pipeline.push({ $project: this._projection });
     }
 
-    const populations = definePopulations(
-      this._population,
-      this.relations,
-      this._relations,
-      pipeline,
-    );
+    const populations = addPopulations(pipeline, {
+      relations: this._relations,
+      population: this._population,
+      schema: this._schema,
+    });
 
     addPipelineMetas(pipeline, {
       limit: this._options.limit,
@@ -184,18 +179,16 @@ export class FindQuery<
       sort: getSortDirection(this._options.sort),
     });
 
-    const res = this._collection
-      .aggregate(pipeline)
-      .map(
-        (doc) =>
-          expandPopulations(
-            populations,
-            this._projection,
-            extras,
-            this._schema,
-            doc,
-          ) as QueryOutput<TOutput, TOmit, TPopulate>,
-      );
+    const res = this._collection.aggregate(pipeline).map(
+      (doc) =>
+        expandPopulations({
+          populations,
+          projection: this._projection,
+          extras,
+          schema: this._schema,
+          doc,
+        }) as QueryOutput<TOutput, TOmit, TPopulate>,
+    );
     return res;
   }
 }

@@ -69,7 +69,7 @@ export class FindOneAndReplaceQuery<
 
   public async exec(): Promise<QueryOutput<TOutput, TOmit> | null> {
     await this._readyPromise;
-    const extra = addExtraInputsToProjection(
+    const extras = addExtraInputsToProjection(
       this._projection,
       this._schema.options.virtuals,
     );
@@ -83,7 +83,7 @@ export class FindOneAndReplaceQuery<
           this._schema,
           res as InferSchemaData<TSchema>,
           this._projection,
-          extra,
+          extras,
         ) as QueryOutput<TOutput, TOmit>)
       : res;
   }

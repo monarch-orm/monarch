@@ -268,6 +268,10 @@ describe("Tests for refs population", () => {
       .select({ contents: true })
       .populate({
         author: {
+          omit: {
+            tutor: true,
+            isAdmin: true,
+          },
           populate: {
             tutor: true,
             posts: true,
@@ -280,6 +284,8 @@ describe("Tests for refs population", () => {
     expect(populatedPost).toBeTruthy();
     expect(populatedPost?.author).toBeTruthy();
     expect(populatedPost?.author?.name).toBe("Student Author");
+    // @ts-ignore
+    expect(populatedPost?.author?.isAdmin).toBe(undefined);
     expect(populatedPost?.author?.tutor).toBeTruthy();
     expect(populatedPost?.author?.tutor?.name).toBe("Master Tutor");
     expect(populatedPost?.author?.posts).toHaveLength(1);

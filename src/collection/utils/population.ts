@@ -21,21 +21,136 @@ import {
   makeProjection,
 } from "./projection";
 
+type Populations = Record<
+  string,
+  {
+    relation: AnyRelation;
+    fieldVariable: string;
+    projection: Projection<any>;
+    extras: string[] | null;
+    pipeline: PipelineStage<any>[];
+    populations: Populations | undefined;
+  }
+>;
+
+export function addPopulations(
+  pipeline: PipelineStage<any>[],
+  opts: {
+    relations: Record<string, AnyRelations>;
+    population: Population<any, any>;
+    schema: AnySchema;
+  },
+): Populations {
+  const populations: Populations = {};
+  for (const [field, options] of Object.entries(opts.population)) {
+    if (!options) continue;
+
+    const relation = opts.relations[opts.schema.name][field];
+    const _options =
+      options === true ? {} : (options as PopulationOptions<any, any, any>);
+
+    // get population projection or fallback to schema omit projection
+    const projection =
+      makePopulationProjection(_options) ??
+      makeProjection("omit", relation.target.options.omit ?? {});
+
+    // ensure required fields are in projection
+    const extras = addExtraInputsToProjection(
+      projection,
+      relation.target.options.virtuals,
+      _options.populate,
+    );
+
+    // create pipeline for this poulation
+    const populationPipeline: Lookup<any>["$lookup"]["pipeline"] = [];
+    if (Object.keys(projection).length) {
+      // @ts-ignore
+      populationPipeline.push({ $project: projection });
+    }
+
+    // add nested populations to population pipeline
+    const populationPopulations = _options.populate
+      ? addPopulations(populationPipeline, {
+          population: _options.populate,
+          relations: opts.relations,
+          schema: relation.target,
+        })
+      : undefined;
+
+    addPipelineMetas(populationPipeline, {
+      limit: relation.relation === "one" ? 1 : _options.limit,
+      skip: _options.skip,
+      sort: _options.sort,
+    });
+
+    // add population to pipeline
+    const { fieldVariable } = addPopulationPipeline(pipeline, {
+      relation,
+      populationPipeline,
+    });
+
+    populations[field] = {
+      relation,
+      fieldVariable,
+      projection,
+      extras,
+      pipeline: populationPipeline,
+      populations: populationPopulations,
+    };
+  }
+  return populations;
+}
+
+export function expandPopulations(opts: {
+  populations: Populations;
+  projection: Projection<any>;
+  extras: string[] | null;
+  schema: AnySchema;
+  doc: any;
+}) {
+  const populatedDoc = Schema.fromData(
+    opts.schema,
+    opts.doc,
+    opts.projection,
+    opts.extras,
+  );
+  for (const [key, population] of Object.entries(opts.populations)) {
+    populatedDoc[key] = mapOneOrArray(
+      opts.doc[population.fieldVariable],
+      (doc) => {
+        if (population.populations) {
+          return expandPopulations({
+            populations: population.populations,
+            projection: population.projection,
+            extras: population.extras,
+            schema: population.relation.target,
+            doc,
+          });
+        }
+        return Schema.fromData(
+          population.relation.target,
+          doc,
+          population.projection,
+          population.extras,
+        );
+      },
+    );
+    delete populatedDoc[population.fieldVariable];
+  }
+  return populatedDoc;
+}
+
 /**
  * Adds population stages to an existing MongoDB pipeline for relation handling
- * @param pipeline - The MongoDB pipeline array to modify
- * @param relationField - The field name containing the relation
- * @param relation - The Monarch relation configuration
- * @param projection - The population projection with schema fallback
- * @param options - The population options
  */
-export function addPopulationPipeline(
+function addPopulationPipeline(
   pipeline: PipelineStage<any>[],
-  relation: AnyRelation,
-  relations: Record<string, AnyRelations>,
-  projection: Projection<any>,
-  options: PopulationOptions<any, any, any>,
+  opts: {
+    relation: AnyRelation;
+    populationPipeline: Lookup<any>["$lookup"]["pipeline"];
+  },
 ): { fieldVariable: string } {
+  const { relation } = opts;
   const collectionName = relation.target.name;
   const fieldVariable = `mn_${relation.schemaField}_${relation.targetField}`;
 
@@ -46,13 +161,7 @@ export function addPopulationPipeline(
         localField: relation.schemaField,
         foreignField: relation.targetField,
         as: fieldVariable,
-        pipeline: buildPipelineOptions(
-          projection,
-          options,
-          options.populate,
-          relation.target,
-          relations,
-        ),
+        pipeline: opts.populationPipeline,
       },
     });
     pipeline.push({
@@ -70,13 +179,11 @@ export function addPopulationPipeline(
   }
 
   if (relation.relation === "ref") {
-    const sourceField = relation.schemaField;
-
     pipeline.push({
       $lookup: {
         from: collectionName,
         let: {
-          [fieldVariable]: `$${sourceField}`,
+          [fieldVariable]: `$${relation.schemaField}`,
         },
         pipeline: [
           {
@@ -89,13 +196,7 @@ export function addPopulationPipeline(
               },
             },
           },
-          ...buildPipelineOptions(
-            projection,
-            options,
-            options.populate,
-            relation.target,
-            relations,
-          ),
+          ...(opts.populationPipeline ?? []),
         ],
         as: fieldVariable,
       },
@@ -117,13 +218,7 @@ export function addPopulationPipeline(
               },
             },
           },
-          ...buildPipelineOptions(
-            projection,
-            { limit: 1 },
-            options.populate,
-            relation.target,
-            relations,
-          ),
+          ...(opts.populationPipeline ?? []),
         ],
         as: fieldVariable,
       },
@@ -146,63 +241,15 @@ export function addPopulationPipeline(
   return { fieldVariable };
 }
 
-function buildPipelineOptions(
-  projection: Projection<any>,
-  options: PopulationOptions<any, any, any>,
-  population: Population<any, any> | undefined,
-  schema: AnySchema,
-  relations: Record<string, AnyRelations>,
-) {
-  const pipeline: Lookup<any>["$lookup"]["pipeline"] = [];
-
-  if (Object.keys(projection).length) {
-    // @ts-ignore
-    pipeline.push({ $project: projection });
-  }
-
-  addPipelineMetas(pipeline, {
-    limit: options.limit,
-    skip: options.skip,
-    sort: options.sort,
-  });
-
-  if (population) {
-    for (const [field, options] of Object.entries(population)) {
-      const relation = relations[schema.name][field];
-      if (!relation) continue;
-
-      const _options =
-        options === true ? {} : (options as PopulationOptions<any, any, any>);
-      const projection =
-        makePopulationProjection(_options) ??
-        makeProjection("omit", relation.target.options.omit ?? {});
-
-      addExtraInputsToProjection(
-        projection,
-        relation.target.options.virtuals,
-        _options.populate,
-      );
-
-      addPopulationPipeline(
-        pipeline,
-        relation,
-        relations,
-        projection,
-        _options,
-      );
-    }
-  }
-
-  return pipeline;
-}
+type MetaOptions = {
+  sort?: Sort["$sort"];
+  skip?: Skip["$skip"];
+  limit?: Limit["$limit"];
+};
 
 export function addPipelineMetas(
   pipeline: PipelineStage<any>[],
-  options: {
-    sort?: Sort["$sort"];
-    skip?: Skip["$skip"];
-    limit?: Limit["$limit"];
-  },
+  options: MetaOptions,
 ) {
   if (options.sort) pipeline.push({ $sort: options.sort });
   if (options.skip) pipeline.push({ $skip: options.skip });
@@ -241,96 +288,4 @@ export function getSortDirection(
     return sortDirections;
   }
   return undefined;
-}
-
-type Populations = Record<
-  string,
-  {
-    relation: AnyRelation;
-    fieldVariable: string;
-    projection: Projection<any>;
-    extras: string[] | null;
-    populations: Populations | undefined;
-  }
->;
-
-export function definePopulations(
-  population: Population<any, any>,
-  relations: AnyRelations,
-  dbRelations: Record<string, AnyRelations>,
-  pipeline: PipelineStage<any>[],
-): Populations {
-  const populations: Populations = {};
-
-  for (const [field, options] of Object.entries(population)) {
-    if (!options) continue;
-    const relation = relations[field];
-    const _options =
-      options === true ? {} : (options as PopulationOptions<any, any, any>);
-    // get population projection or fallback to schema omit projection
-    const projection =
-      makePopulationProjection(_options) ??
-      makeProjection("omit", relation.target.options.omit ?? {});
-    const extras = addExtraInputsToProjection(
-      projection,
-      relation.target.options.virtuals,
-      _options.populate,
-    );
-    const { fieldVariable } = addPopulationPipeline(
-      pipeline,
-      relation,
-      dbRelations,
-      projection,
-      _options,
-    );
-    populations[field] = {
-      relation,
-      fieldVariable,
-      projection,
-      extras,
-      populations:
-        typeof options === "object" && options.populate
-          ? // TODO: generate entire pipeline in exec
-            definePopulations(
-              options.populate,
-              dbRelations[relation.target.name],
-              dbRelations,
-              [],
-            ) // don't add to pipeline
-          : undefined,
-    };
-  }
-
-  return populations;
-}
-
-export function expandPopulations(
-  populations: Populations,
-  projection: Projection<any>,
-  extras: string[] | null,
-  schema: AnySchema,
-  doc: any,
-) {
-  const populatedDoc = Schema.fromData(schema, doc, projection, extras);
-  for (const [key, population] of Object.entries(populations)) {
-    populatedDoc[key] = mapOneOrArray(doc[population.fieldVariable], (doc) => {
-      if (population.populations) {
-        return expandPopulations(
-          population.populations,
-          population.projection,
-          population.extras,
-          population.relation.target,
-          doc,
-        );
-      }
-      return Schema.fromData(
-        population.relation.target,
-        doc,
-        population.projection,
-        population.extras,
-      );
-    });
-    delete populatedDoc[population.fieldVariable];
-  }
-  return populatedDoc;
 }
