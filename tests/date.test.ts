@@ -12,11 +12,13 @@ import {
 import {
   createDatabase,
   createSchema,
+} from "../src";
+import {
   createdAt,
   date,
   dateString,
   updatedAt,
-} from "../src";
+} from "../src/types";
 
 const mongod = await MongoMemoryServer.create();
 
