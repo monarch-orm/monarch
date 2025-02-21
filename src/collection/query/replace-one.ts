@@ -9,16 +9,16 @@ import type { AnySchema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";
 import { Query } from "./base";
 
-export class ReplaceOneQuery<T extends AnySchema> extends Query<
-  T,
-  UpdateResult<InferSchemaData<T>>
+export class ReplaceOneQuery<TSchema extends AnySchema> extends Query<
+  TSchema,
+  UpdateResult<InferSchemaData<TSchema>>
 > {
   constructor(
-    protected _schema: T,
-    protected _collection: MongoCollection<InferSchemaData<T>>,
+    protected _schema: TSchema,
+    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
     protected _readyPromise: Promise<void>,
-    private _filter: Filter<InferSchemaData<T>>,
-    private _replacement: WithoutId<InferSchemaData<T>>,
+    private _filter: Filter<InferSchemaData<TSchema>>,
+    private _replacement: WithoutId<InferSchemaData<TSchema>>,
     private _options: ReplaceOptions = {},
   ) {
     super(_schema, _collection, _readyPromise);
@@ -29,13 +29,13 @@ export class ReplaceOneQuery<T extends AnySchema> extends Query<
     return this;
   }
 
-  public async exec(): Promise<UpdateResult<InferSchemaData<T>>> {
+  public async exec(): Promise<UpdateResult<InferSchemaData<TSchema>>> {
     await this._readyPromise;
     const res = await this._collection.replaceOne(
       this._filter,
       this._replacement,
       this._options,
     );
-    return res as UpdateResult<InferSchemaData<T>>;
+    return res as UpdateResult<InferSchemaData<TSchema>>;
   }
 }

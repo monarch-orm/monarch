@@ -1,7 +1,13 @@
 export { Collection } from "./collection";
-export { createClient, createDatabase } from "./database";
+export {
+  createClient,
+  createDatabase,
+  Database,
+  InferInput,
+  InferOutput,
+} from "./database";
 export { MonarchError, MonarchParseError } from "./errors";
-export { AnySchema, Schema, createSchema } from "./schema/schema";
+export { AnySchema, createSchema, Schema } from "./schema/schema";
 export { InferSchemaInput, InferSchemaOutput } from "./schema/type-helpers";
 export { Virtual, virtual } from "./schema/virtuals";
 export { array } from "./types/array";
@@ -17,7 +23,7 @@ export { record } from "./types/record";
 export { string } from "./types/string";
 export { taggedUnion } from "./types/tagged-union";
 export { tuple } from "./types/tuple";
-export { MonarchType, defaulted, nullable, optional, type } from "./types/type";
+export { defaulted, MonarchType, nullable, optional, type } from "./types/type";
 export { InferTypeInput, InferTypeOutput } from "./types/type-helpers";
 export { union } from "./types/union";
 export {
@@ -25,4 +31,4 @@ export {
   isValidObjectId,
   objectIdToString,
   toObjectId,
-} from "./utils";
+} from "./utils/objectId";

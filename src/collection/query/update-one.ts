@@ -10,16 +10,16 @@ import { type AnySchema, Schema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";
 import { Query } from "./base";
 
-export class UpdateOneQuery<T extends AnySchema> extends Query<
-  T,
-  UpdateResult<InferSchemaData<T>>
+export class UpdateOneQuery<TSchema extends AnySchema> extends Query<
+  TSchema,
+  UpdateResult<InferSchemaData<TSchema>>
 > {
   constructor(
-    protected _schema: T,
-    protected _collection: MongoCollection<InferSchemaData<T>>,
+    protected _schema: TSchema,
+    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
     protected _readyPromise: Promise<void>,
-    private _filter: Filter<InferSchemaData<T>>,
-    private _update: UpdateFilter<InferSchemaData<T>>,
+    private _filter: Filter<InferSchemaData<TSchema>>,
+    private _update: UpdateFilter<InferSchemaData<TSchema>>,
     private _options: FindOptions = {},
   ) {
     super(_schema, _collection, _readyPromise);
@@ -30,11 +30,11 @@ export class UpdateOneQuery<T extends AnySchema> extends Query<
     return this;
   }
 
-  public async exec(): Promise<UpdateResult<InferSchemaData<T>>> {
+  public async exec(): Promise<UpdateResult<InferSchemaData<TSchema>>> {
     await this._readyPromise;
     const fieldUpdates = Schema.getFieldUpdates(
       this._schema,
-    ) as MatchKeysAndValues<InferSchemaData<T>>;
+    ) as MatchKeysAndValues<InferSchemaData<TSchema>>;
     this._update.$set = { ...fieldUpdates, ...this._update.$set };
 
     const res = await this._collection.updateOne(

@@ -4,12 +4,12 @@ import type { InferSchemaData } from "../../schema/type-helpers";
 import { Pipeline } from "./base";
 
 export class AggregationPipeline<
-  T extends AnySchema,
-  O extends any[],
-> extends Pipeline<T, Promise<O>> {
+  TSchema extends AnySchema,
+  TOutput extends any[],
+> extends Pipeline<TSchema, TOutput> {
   constructor(
-    protected _schema: T,
-    protected _collection: MongoCollection<InferSchemaData<T>>,
+    protected _schema: TSchema,
+    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
     protected _readyPromise: Promise<void>,
     protected _options: AggregateOptions = {},
   ) {
@@ -22,17 +22,17 @@ export class AggregationPipeline<
   }
 
   public castStage<O extends any[]>() {
-    return this as unknown as AggregationPipeline<T, O>;
+    return this as unknown as AggregationPipeline<TSchema, O>;
   }
 
   public cast<O extends any[]>() {
-    return this as unknown as AggregationPipeline<T, O>;
+    return this as unknown as AggregationPipeline<TSchema, O>;
   }
 
-  public async exec(): Promise<O> {
+  public async exec(): Promise<TOutput> {
     const res = await this._collection
       .aggregate(this._pipeline, this._options)
       .toArray();
-    return res as O;
+    return res as TOutput;
   }
 }

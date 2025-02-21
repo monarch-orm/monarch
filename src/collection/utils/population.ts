@@ -1,11 +1,11 @@
 import type { Sort as MongoSort } from "mongodb";
-import { MonarchMany } from "../../schema/relations/many";
-import { MonarchOne } from "../../schema/relations/one";
-import { MonarchRef } from "../../schema/relations/ref";
+import type { AnyRelation, AnyRelations } from "../../relations/relations";
 import type {
-  RelationPopulationOptions,
-  RelationType,
-} from "../../schema/relations/type-helpers";
+  Population,
+  PopulationOptions,
+} from "../../relations/type-helpers";
+import { type AnySchema, Schema } from "../../schema/schema";
+import { mapOneOrArray } from "../../utils/misc";
 import type { Meta } from "../types/expressions";
 import type {
   Limit,
@@ -15,34 +15,153 @@ import type {
   Sort,
 } from "../types/pipeline-stage";
 import type { Projection } from "../types/query-options";
+import {
+  addExtraInputsToProjection,
+  makePopulationProjection,
+  makeProjection,
+} from "./projection";
+
+type Populations = Record<
+  string,
+  {
+    relation: AnyRelation;
+    fieldVariable: string;
+    projection: Projection<any>;
+    extras: string[] | null;
+    pipeline: PipelineStage<any>[];
+    populations: Populations | undefined;
+  }
+>;
+
+export function addPopulations(
+  pipeline: PipelineStage<any>[],
+  opts: {
+    relations: Record<string, AnyRelations>;
+    population: Population<any, any>;
+    schema: AnySchema;
+  },
+): Populations {
+  const populations: Populations = {};
+  for (const [field, options] of Object.entries(opts.population)) {
+    if (!options) continue;
+
+    const relation = opts.relations[opts.schema.name][field];
+    const _options =
+      options === true ? {} : (options as PopulationOptions<any, any, any>);
+
+    // get population projection or fallback to schema omit projection
+    const projection =
+      makePopulationProjection(_options) ??
+      makeProjection("omit", relation.target.options.omit ?? {});
+
+    // ensure required fields are in projection
+    const extras = addExtraInputsToProjection(
+      projection,
+      relation.target.options.virtuals,
+      _options.populate,
+    );
+
+    // create pipeline for this poulation
+    const populationPipeline: Lookup<any>["$lookup"]["pipeline"] = [];
+    if (Object.keys(projection).length) {
+      // @ts-ignore
+      populationPipeline.push({ $project: projection });
+    }
+
+    // add nested populations to population pipeline
+    const populationPopulations = _options.populate
+      ? addPopulations(populationPipeline, {
+          population: _options.populate,
+          relations: opts.relations,
+          schema: relation.target,
+        })
+      : undefined;
+
+    addPipelineMetas(populationPipeline, {
+      limit: relation.relation === "one" ? 1 : _options.limit,
+      skip: _options.skip,
+      sort: _options.sort,
+    });
+
+    // add population to pipeline
+    const { fieldVariable } = addPopulationPipeline(pipeline, {
+      relation,
+      populationPipeline,
+    });
+
+    populations[field] = {
+      relation,
+      fieldVariable,
+      projection,
+      extras,
+      pipeline: populationPipeline,
+      populations: populationPopulations,
+    };
+  }
+  return populations;
+}
+
+export function expandPopulations(opts: {
+  populations: Populations;
+  projection: Projection<any>;
+  extras: string[] | null;
+  schema: AnySchema;
+  doc: any;
+}) {
+  const populatedDoc = Schema.fromData(
+    opts.schema,
+    opts.doc,
+    opts.projection,
+    opts.extras,
+  );
+  for (const [key, population] of Object.entries(opts.populations)) {
+    populatedDoc[key] = mapOneOrArray(
+      opts.doc[population.fieldVariable],
+      (doc) => {
+        if (population.populations) {
+          return expandPopulations({
+            populations: population.populations,
+            projection: population.projection,
+            extras: population.extras,
+            schema: population.relation.target,
+            doc,
+          });
+        }
+        return Schema.fromData(
+          population.relation.target,
+          doc,
+          population.projection,
+          population.extras,
+        );
+      },
+    );
+    delete populatedDoc[population.fieldVariable];
+  }
+  return populatedDoc;
+}
 
 /**
  * Adds population stages to an existing MongoDB pipeline for relation handling
- * @param pipeline - The MongoDB pipeline array to modify
- * @param relationField - The field name containing the relation
- * @param relation - The Monarch relation configuration
- * @param projection - The population projection with schema fallback
- * @param options - The population options
  */
-export function addPopulationPipeline(
+function addPopulationPipeline(
   pipeline: PipelineStage<any>[],
-  relationField: string,
-  relation: RelationType,
-  projection: Projection<any>,
-  options: RelationPopulationOptions<any>,
+  opts: {
+    relation: AnyRelation;
+    populationPipeline: Lookup<any>["$lookup"]["pipeline"];
+  },
 ): { fieldVariable: string } {
-  const collectionName = relation._target.name;
-  const foreignField = relation._field;
-  const fieldVariable = generateFieldVariable(relationField, foreignField);
+  const { relation } = opts;
+  const collectionName = relation.target.name;
+  const fieldVariable = `mn_${relation.schemaField}_${relation.targetField}`;
 
-  if (relation instanceof MonarchMany) {
+  if (relation.relation === "many") {
     pipeline.push({
       $lookup: {
         from: collectionName,
-        localField: relationField,
-        foreignField: foreignField,
+        localField: relation.schemaField,
+        foreignField: relation.targetField,
         as: fieldVariable,
-        pipeline: buildPipelineOptions(projection, options),
+        pipeline: opts.populationPipeline,
       },
     });
     pipeline.push({
@@ -59,14 +178,12 @@ export function addPopulationPipeline(
     });
   }
 
-  if (relation instanceof MonarchRef) {
-    const sourceField = relation._references;
-
+  if (relation.relation === "ref") {
     pipeline.push({
       $lookup: {
         from: collectionName,
         let: {
-          [fieldVariable]: `$${sourceField}`,
+          [fieldVariable]: `$${relation.schemaField}`,
         },
         pipeline: [
           {
@@ -74,34 +191,34 @@ export function addPopulationPipeline(
               $expr: {
                 $and: [
                   { $ne: [`$$${fieldVariable}`, null] },
-                  { $eq: [`$${foreignField}`, `$$${fieldVariable}`] },
+                  { $eq: [`$${relation.targetField}`, `$$${fieldVariable}`] },
                 ],
               },
             },
           },
-          ...buildPipelineOptions(projection, options),
+          ...(opts.populationPipeline ?? []),
         ],
         as: fieldVariable,
       },
     });
   }
 
-  if (relation instanceof MonarchOne) {
+  if (relation.relation === "one") {
     pipeline.push({
       $lookup: {
         from: collectionName,
         let: {
-          [fieldVariable]: `$${relationField}`,
+          [fieldVariable]: `$${relation.schemaField}`,
         },
         pipeline: [
           {
             $match: {
               $expr: {
-                $eq: [`$${foreignField}`, `$$${fieldVariable}`],
+                $eq: [`$${relation.targetField}`, `$$${fieldVariable}`],
               },
             },
           },
-          ...buildPipelineOptions(projection, { limit: 1 }),
+          ...(opts.populationPipeline ?? []),
         ],
         as: fieldVariable,
       },
@@ -124,37 +241,15 @@ export function addPopulationPipeline(
   return { fieldVariable };
 }
 
-function generateFieldVariable(
-  relationField: string,
-  foreignField: string,
-): string {
-  return `mn_${relationField}_${foreignField}`;
-}
-
-function buildPipelineOptions(
-  projection: Projection<any>,
-  options: RelationPopulationOptions<any>,
-) {
-  const pipeline: Lookup<any>["$lookup"]["pipeline"] = [];
-  if (Object.keys(projection).length) {
-    // @ts-ignore
-    pipeline.push({ $project: projection });
-  }
-  addPipelineMetas(pipeline, {
-    limit: options.limit,
-    skip: options.skip,
-    sort: options.sort,
-  });
-  return pipeline;
-}
+type MetaOptions = {
+  sort?: Sort["$sort"];
+  skip?: Skip["$skip"];
+  limit?: Limit["$limit"];
+};
 
 export function addPipelineMetas(
   pipeline: PipelineStage<any>[],
-  options: {
-    sort?: Sort["$sort"];
-    skip?: Skip["$skip"];
-    limit?: Limit["$limit"];
-  },
+  options: MetaOptions,
 ) {
   if (options.sort) pipeline.push({ $sort: options.sort });
   if (options.skip) pipeline.push({ $skip: options.skip });

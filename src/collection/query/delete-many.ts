@@ -8,15 +8,15 @@ import type { AnySchema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";
 import { Query } from "./base";
 
-export class DeleteManyQuery<T extends AnySchema> extends Query<
-  T,
+export class DeleteManyQuery<TSchema extends AnySchema> extends Query<
+  TSchema,
   DeleteResult
 > {
   constructor(
-    protected _schema: T,
-    protected _collection: MongoCollection<InferSchemaData<T>>,
+    protected _schema: TSchema,
+    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
     protected _readyPromise: Promise<void>,
-    private _filter: Filter<InferSchemaData<T>>,
+    private _filter: Filter<InferSchemaData<TSchema>>,
     private _options: DeleteOptions = {},
   ) {
     super(_schema, _collection, _readyPromise);

@@ -11,6 +11,7 @@ import {
   string,
   virtual,
 } from "../src";
+import { createRelations } from "../src/relations/relations";
 
 let mongod: MongoMemoryServer;
 let client: MongoClient;
@@ -36,17 +37,18 @@ describe("Tests for refs population", () => {
 
   const setupSchemasAndCollections = () => {
     // Define schemas
-    const _UserSchema = createSchema("users", {
+    const UserSchema = createSchema("users", {
       name: string(),
       isAdmin: boolean(),
       createdAt: date(),
       tutor: objectId().optional(),
       maybe: string().optional(),
     });
-    const _PostSchema = createSchema("posts", {
+    const PostSchema = createSchema("posts", {
       title: string(),
       contents: string(),
       author: objectId().optional(),
+      editor: objectId().optional(),
       contributors: array(objectId()).optional().default([]),
       secret: string().default(() => "secret"),
     })
@@ -59,19 +61,27 @@ describe("Tests for refs population", () => {
         secretSize: virtual("secret", ({ secret }) => secret.length),
       });
 
-    const UserSchema = _UserSchema.relations(({ one, ref }) => ({
-      tutor: one(_UserSchema, "_id").optional(),
-      posts: ref(_PostSchema, "author", "_id"),
+    const UserSchemaRelations = createRelations(UserSchema, ({ one, ref }) => ({
+      tutor: one(UserSchema, { field: "tutor", references: "_id" }),
+      posts: ref(PostSchema, { field: "_id", references: "author" }),
     }));
-    const PostSchema = _PostSchema.relations(({ one, many }) => ({
-      author: one(_UserSchema, "_id").optional().nullable(),
-      editor: one(_UserSchema, "_id").optional().nullable(),
-      contributors: many(_UserSchema, "_id").optional(),
-    }));
+    const PostSchemaRelations = createRelations(
+      PostSchema,
+      ({ one, many }) => ({
+        author: one(UserSchema, { field: "author", references: "_id" }),
+        editor: one(UserSchema, { field: "editor", references: "_id" }),
+        contributors: many(UserSchema, {
+          field: "contributors",
+          references: "_id",
+        }),
+      }),
+    );
     // Create database collections
     return createDatabase(client.db(), {
       users: UserSchema,
       posts: PostSchema,
+      UserSchemaRelations,
+      PostSchemaRelations,
     });
   };
 
@@ -212,6 +222,74 @@ describe("Tests for refs population", () => {
     expect(populatedUsers[0].posts.length).toBe(2);
     expect(populatedUsers[1].posts.length).toBe(0);
     expect(populatedUsers[1].tutor).toStrictEqual(user);
+  });
+
+  it("should support nested population", async () => {
+    const { collections } = setupSchemasAndCollections();
+
+    // Create users with tutor relationship
+    const tutor = await collections.users
+      .insertOne({
+        name: "Master Tutor",
+        isAdmin: true,
+        createdAt: new Date(),
+      })
+      .exec();
+
+    const author = await collections.users
+      .insertOne({
+        name: "Student Author",
+        isAdmin: false,
+        createdAt: new Date(),
+        tutor: tutor._id,
+      })
+      .exec();
+
+    // Create posts for both users
+    await collections.posts
+      .insertOne({
+        title: "Tutor's Post",
+        contents: "Wisdom",
+        author: tutor._id,
+      })
+      .exec();
+
+    const studentPost = await collections.posts
+      .insertOne({
+        title: "Student's Post",
+        contents: "Learning",
+        author: author._id,
+      })
+      .exec();
+
+    // Test nested population
+    const populatedPost = await collections.posts
+      .findById(studentPost._id)
+      .select({ contents: true })
+      .populate({
+        author: {
+          omit: {
+            tutor: true,
+            isAdmin: true,
+          },
+          populate: {
+            tutor: true,
+            posts: true,
+          },
+        },
+      })
+      .exec();
+
+    // Verify the nested population results
+    expect(populatedPost).toBeTruthy();
+    expect(populatedPost?.author).toBeTruthy();
+    expect(populatedPost?.author?.name).toBe("Student Author");
+    // @ts-ignore
+    expect(populatedPost?.author?.isAdmin).toBe(undefined);
+    expect(populatedPost?.author?.tutor).toBeTruthy();
+    expect(populatedPost?.author?.tutor?.name).toBe("Master Tutor");
+    expect(populatedPost?.author?.posts).toHaveLength(1);
+    expect(populatedPost?.author?.posts[0].title).toBe("Student's Post");
   });
 
   describe("Monarch Population Options", () => {

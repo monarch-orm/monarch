@@ -3,7 +3,7 @@
 // Original source: https://github.com/Automattic/mongoose/blob/master/types/expressions.d.ts
 
 import type { BSON } from "mongodb";
-import type { WithRequiredId } from "../../type-helpers";
+import type { WithRequiredId } from "../../utils/type-helpers";
 
 // The following types and interfaces are derived from Mongoose's aggregate pipeline stages
 // with modifications to fit our project's needs.

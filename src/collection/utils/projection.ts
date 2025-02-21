@@ -1,4 +1,7 @@
-import type { RelationPopulationOptions } from "../../schema/relations/type-helpers";
+import type {
+  Population,
+  PopulationOptions,
+} from "../../relations/type-helpers";
 import type { Virtual } from "../../schema/virtuals";
 import type { BoolProjection, Projection } from "../types/query-options";
 
@@ -14,7 +17,7 @@ export function makeProjection<T>(
 }
 
 export function makePopulationProjection<T>(
-  options: RelationPopulationOptions<T>,
+  options: PopulationOptions<T, any, any>,
 ) {
   if (options.omit) return makeProjection("omit", options.omit);
   if (options.select) return makeProjection("select", options.select);
@@ -40,23 +43,40 @@ export function detectProjection<T>(projection: Projection<T>) {
 export function addExtraInputsToProjection<T>(
   projection: Projection<T>,
   virtuals: Record<string, Virtual<any, any, any>> | undefined,
+  populations?: Population<any, any>,
 ): string[] | null {
-  if (!virtuals) return null;
-
   const { isProjected, type } = detectProjection(projection);
-  const extra = new Set<string>();
+
+  // add populated keys to projection even if they are not projected
+  if (populations) {
+    for (const [key, population] of Object.entries(populations)) {
+      if (!population) continue;
+      if (type === "omit" && key in projection) {
+        delete projection[key as keyof T];
+      }
+      if (type === "select" && !(key in projection)) {
+        projection[key as keyof T] = 1;
+      }
+    }
+  }
+
+  // add dependencies of virtuals to projection
+  // also add them to extras so they can be removed
+  if (!virtuals) return null;
+  const extras = new Set<string>();
+
   for (const [key, virtual] of Object.entries(virtuals)) {
     if (!isProjected(key)) continue;
     for (const input of virtual.input) {
       if (type === "omit" && input in projection) {
         delete projection[input as keyof T];
-        extra.add(input);
+        extras.add(input);
       }
       if (type === "select" && !(input in projection)) {
         projection[input as keyof T] = 1;
-        extra.add(input);
+        extras.add(input);
       }
     }
   }
-  return Array.from(extra);
+  return Array.from(extras);
 }

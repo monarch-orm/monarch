@@ -8,15 +8,15 @@ import type { AnySchema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";
 import { Query } from "./base";
 
-export class BulkWriteQuery<T extends AnySchema> extends Query<
-  T,
+export class BulkWriteQuery<TSchema extends AnySchema> extends Query<
+  TSchema,
   BulkWriteResult
 > {
   constructor(
-    protected _schema: T,
-    protected _collection: MongoCollection<InferSchemaData<T>>,
+    protected _schema: TSchema,
+    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
     protected _readyPromise: Promise<void>,
-    private _data: AnyBulkWriteOperation<InferSchemaData<T>>[],
+    private _data: AnyBulkWriteOperation<InferSchemaData<TSchema>>[],
     private _options: BulkWriteOptions = {},
   ) {
     super(_schema, _collection, _readyPromise);

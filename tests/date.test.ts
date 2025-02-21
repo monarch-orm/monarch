@@ -46,7 +46,7 @@ describe("test for date", () => {
       currentDateString: dateString(),
     });
     const markedDate = new Date();
-    const { db, collections } = createDatabase(client.db(), {
+    const { use, collections } = createDatabase(client.db(), {
       users: UserSchema,
     });
 
@@ -66,7 +66,7 @@ describe("test for date", () => {
     );
 
     // db query builder
-    const users = await db(UserSchema)
+    const users = await use(UserSchema)
       .find({
         currentDate: markedDate,
         currentDateString: markedDate,
@@ -89,7 +89,7 @@ describe("test for date", () => {
       createdAt: createdAt(),
     });
     const beforeInsert = new Date();
-    const { db, collections } = createDatabase(client.db(), {
+    const { use, collections } = createDatabase(client.db(), {
       users: UserSchema,
     });
 
@@ -107,7 +107,7 @@ describe("test for date", () => {
     );
 
     // check existing document date is in between beforeInsert and afterInsert
-    const existingUser = await db(UserSchema).findOne({}).exec();
+    const existingUser = await use(UserSchema).findOne({}).exec();
     assert(existingUser);
     expect(new Date(existingUser.createdAt).getTime()).toBeGreaterThan(
       beforeInsert.getTime(),
@@ -121,7 +121,7 @@ describe("test for date", () => {
     const UserSchema = createSchema("users", {
       updatedAt: updatedAt(),
     });
-    const { db, collections } = createDatabase(client.db(), {
+    const { use, collections } = createDatabase(client.db(), {
       users: UserSchema,
     });
 
@@ -139,7 +139,7 @@ describe("test for date", () => {
     );
 
     // check existing document date is in between beforeInsert and afterInsert
-    const existingUser = await db(UserSchema).findOne({}).exec();
+    const existingUser = await use(UserSchema).findOne({}).exec();
     assert(existingUser);
     expect(new Date(existingUser.updatedAt).getTime()).toBeGreaterThan(
       beforeInsert.getTime(),
@@ -151,12 +151,12 @@ describe("test for date", () => {
     // update user
     const beforeUpdate = new Date();
     await delay(10);
-    await db(UserSchema).updateOne({}, { $set: {} }).exec();
+    await use(UserSchema).updateOne({}, { $set: {} }).exec();
     await delay(10);
     const afterUpdate = new Date();
 
     // check updated document date is in between beforeInsert and afterInsert
-    const updatedUser = await db(UserSchema).findOne({}).exec();
+    const updatedUser = await use(UserSchema).findOne({}).exec();
     assert(updatedUser);
     expect(new Date(updatedUser.updatedAt).getTime()).toBeGreaterThan(
       beforeInsert.getTime(),
