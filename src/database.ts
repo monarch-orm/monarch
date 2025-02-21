@@ -1,5 +1,5 @@
 import { MongoClient, type Db, type MongoClientOptions } from "mongodb";
-import { Collection } from "./collection";
+import { Collection } from "./collection/collection";
 import type {
   BoolProjection,
   WithProjection,

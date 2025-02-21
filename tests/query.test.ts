@@ -48,9 +48,9 @@ describe("Query methods Tests", () => {
   });
 
   afterEach(async () => {
-    await collections.users.dropIndexes();
+    await collections.users.raw().dropIndexes();
     await collections.users.deleteMany({}).exec();
-    await collections.todos.dropIndexes();
+    await collections.todos.raw().dropIndexes();
     await collections.todos.deleteMany({}).exec();
   });
 
@@ -345,12 +345,6 @@ describe("Query methods Tests", () => {
     expect(deletedUser?.email).toBe("anon@gmail.com");
   });
 
-  it("counts documents", async () => {
-    await collections.users.insertMany(mockUsers).exec();
-    const count = await collections.users.count();
-    expect(count).toBeGreaterThanOrEqual(2);
-  });
-
   it("updates one document", async () => {
     await collections.users.insertOne(mockUsers[1]).exec();
     const updated = await collections.users
@@ -384,26 +378,6 @@ describe("Query methods Tests", () => {
     expect(replaced.modifiedCount).toBe(1);
   });
 
-  it("distinct method", async () => {
-    await collections.users
-      .insertMany([
-        { name: "John", email: "john@example.com" },
-        { name: "Jane", email: "jane@example.com" },
-        { name: "John", email: "john@example.com" },
-      ])
-      .exec();
-    const distinctEmails = await collections.users.distinct("email");
-
-    expect(distinctEmails).toEqual(["jane@example.com", "john@example.com"]);
-  });
-
-  it("estimatedDocumentCount", async () => {
-    await collections.users.insertMany(mockUsers).exec();
-    const estimatedCount = await collections.users.estimatedDocumentCount();
-
-    expect(estimatedCount).toBe(3);
-  });
-
   it("deletes one document", async () => {
     await collections.users.insertOne(mockUsers[2]).exec();
     const deleted = await collections.users
@@ -411,6 +385,19 @@ describe("Query methods Tests", () => {
       .exec();
 
     expect(deleted.deletedCount).toBe(1);
+  });
+
+  it("countDocuments", async () => {
+    await collections.users.insertMany(mockUsers).exec();
+    const count = await collections.users.countDocuments();
+    expect(count).toBeGreaterThanOrEqual(2);
+  });
+
+  it("estimatedDocumentCount", async () => {
+    await collections.users.insertMany(mockUsers).exec();
+    const estimatedCount = await collections.users.estimatedDocumentCount();
+
+    expect(estimatedCount).toBe(3);
   });
 
   it("bulk writes", async () => {
@@ -442,81 +429,6 @@ describe("Query methods Tests", () => {
     expect(bulkWriteResult.insertedCount).toBe(2);
   });
 
-  it("creates index", async () => {
-    const indexName = await collections.users.createIndex({ email: 1 });
-    expect(indexName).toBeDefined();
-  });
-
-  it("creates multiple indexes", async () => {
-    const indexNames = await collections.users.createIndexes([
-      { key: { name: 1 } },
-      { key: { age: -1 } },
-    ]);
-    expect(indexNames).toBeDefined();
-  });
-
-  it("drops an index", async () => {
-    await collections.users.createIndex({ email: 1 });
-    const indexes = await collections.users.listIndexes().toArray();
-
-    const dropIndexResult = await collections.users.dropIndex("email_1");
-    expect(dropIndexResult).toBeTruthy();
-  });
-
-  it("drops all indexes", async () => {
-    const dropIndexesResult = await collections.users.dropIndexes();
-    expect(dropIndexesResult).toBeTruthy();
-  });
-
-  it("lists indexes", async () => {
-    await collections.users.createIndex({ email: 1 }, { unique: true });
-    const indexes = await collections.users.listIndexes().toArray();
-    expect(indexes.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("checks if an index exists", async () => {
-    await collections.users.createIndex({ email: 1 }, { unique: true });
-    const indexExists = await collections.users.indexExists("email_1");
-    expect(indexExists).toBeTruthy();
-  });
-
-  it("gets index information", async () => {
-    await collections.users.createIndex({ email: 1 }, { unique: true });
-    const indexInformation = await collections.users.indexInformation({});
-    expect(indexInformation).toHaveProperty("email_1");
-  });
-
-  // it("creates a search index", async () => {
-  //   const searchIndexName = await collections.users.createSearchIndex({});
-  //   expect(searchIndexName).toBeDefined();
-  // });
-
-  // it("creates multiple search indexes", async () => {
-  //   const searchIndexNames = await collections.users.createSearchIndexes([
-  //     { name: 1 },
-  //     { age: -1 },
-  //   ]);
-  //   expect(searchIndexNames).toBeDefined();
-  // });
-
-  // it("drops a search index", async () => {
-  //   await collections.users.createSearchIndex({ email: 1 });
-  //   const dropSearchIndexResult = await collections.users.dropSearchIndex("email_1");
-  //   expect(dropSearchIndexResult).toBeTruthy();
-  // });
-
-  // it("lists search indexes", async () => {
-  //   await collections.users.createSearchIndex({ email: 1 });
-  //   const searchIndexes = await collections.users.listSearchIndexes();
-  //   expect(searchIndexes).toHaveProperty("email_1");
-  // });
-
-  // it("updates a search index", async () => {
-  //   await collections.users.createSearchIndex({ email: 1 });
-  //   const updateSearchIndexResult = await collections.users.updateSearchIndex("email_1", { email: 1, name: 1 });
-  //   expect(updateSearchIndexResult).toBeTruthy();
-  // });
-
   it("aggregates data", async () => {
     await collections.users.insertMany(mockUsers).exec();
     const result = await collections.users
@@ -527,17 +439,6 @@ describe("Query methods Tests", () => {
 
     expect(result).toBeInstanceOf(Array);
     expect(result.length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("watches for changes", async () => {
-    const pipeline = [{ $match: { operationType: "insert" } }];
-    const watchStream = collections.users
-      .watch(pipeline)
-      .on("change", (change) => {
-        expect(change.operationType).toBe("insert");
-      });
-    await collections.users.insertOne({ name: "Test User" }).exec();
-    watchStream.close();
   });
 
   it("executes raw MongoDB operations", async () => {
