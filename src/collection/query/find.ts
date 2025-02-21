@@ -16,7 +16,7 @@ import type {
   InferSchemaOmit,
   InferSchemaOutput,
 } from "../../schema/type-helpers";
-import type { TrueKeys } from "../../type-helpers";
+import type { TrueKeys } from "../../utils/type-helpers";
 import type { PipelineStage } from "../types/pipeline-stage";
 import type { BoolProjection, Projection, Sort } from "../types/query-options";
 import {

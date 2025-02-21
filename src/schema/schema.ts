@@ -1,8 +1,8 @@
 import type { Projection } from "../collection/types/query-options";
 import { detectProjection } from "../collection/utils/projection";
-import type { Pretty, WithOptionalId } from "../type-helpers";
 import { objectId } from "../types/objectId";
 import { type AnyMonarchType, MonarchType } from "../types/type";
+import type { Pretty, WithOptionalId } from "../utils/type-helpers";
 import type { SchemaIndexes } from "./indexes";
 import type {
   InferSchemaData,

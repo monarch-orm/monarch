@@ -9,7 +9,7 @@ import type {
   InferSchemaOmit,
   InferSchemaOutput,
 } from "../../schema/type-helpers";
-import type { TrueKeys } from "../../type-helpers";
+import type { TrueKeys } from "../../utils/type-helpers";
 import type { BoolProjection, Projection } from "../types/query-options";
 import {
   addExtraInputsToProjection,

@@ -41,9 +41,9 @@ import type {
   InferSchemaInput,
   SchemaInputWithId,
 } from "../schema/type-helpers";
-import type { Index } from "../type-helpers";
 import { MonarchObjectId } from "../types/objectId";
 import { MonarchType } from "../types/type";
+import type { Index } from "../utils/type-helpers";
 import { AggregationPipeline } from "./pipeline/aggregation";
 import { BulkWriteQuery } from "./query/bulk-write";
 import { DeleteManyQuery } from "./query/delete-many";
@@ -93,15 +93,15 @@ export class Collection<
 
   constructor(
     db: Db,
-    private _schema: TSchema,
-    private _relations: TDbRelations,
+    public schema: TSchema,
+    public relations: TDbRelations,
   ) {
     // create indexes
-    if (_schema.options.indexes) {
-      const indexes = makeIndexes(_schema.options.indexes);
+    if (schema.options.indexes) {
+      const indexes = makeIndexes(schema.options.indexes);
       const indexesPromises = Object.entries(indexes).map(
         async ([key, [fields, options]]) => {
-          await db.createIndex(_schema.name, fields, options).catch((error) => {
+          await db.createIndex(schema.name, fields, options).catch((error) => {
             throw new MonarchError(`failed to create index '${key}': ${error}`);
           });
         },
@@ -111,7 +111,7 @@ export class Collection<
       this._readyPromise = Promise.resolve();
     }
     this._collection = db.collection<InferSchemaData<TSchema>>(
-      this._schema.name,
+      this.schema.name,
     );
   }
 
@@ -125,8 +125,8 @@ export class Collection<
 
   public find(filter: Filter<InferSchemaData<TSchema>> = {}) {
     return new FindQuery(
-      this._schema,
-      this._relations,
+      this.schema,
+      this.relations,
       this._collection,
       this._readyPromise,
       filter,
@@ -134,12 +134,12 @@ export class Collection<
   }
 
   public findById(id: Index<SchemaInputWithId<TSchema>, "_id">) {
-    const _idType = Schema.types(this._schema)._id;
+    const _idType = Schema.types(this.schema)._id;
     const isObjectIdType = MonarchType.isInstanceOf(_idType, MonarchObjectId);
 
     return new FindOneQuery(
-      this._schema,
-      this._relations,
+      this.schema,
+      this.relations,
       this._collection,
       this._readyPromise,
       // @ts-ignore
@@ -149,8 +149,8 @@ export class Collection<
 
   public findOne(filter: Filter<InferSchemaData<TSchema>>) {
     return new FindOneQuery(
-      this._schema,
-      this._relations,
+      this.schema,
+      this.relations,
       this._collection,
       this._readyPromise,
       filter,
@@ -162,7 +162,7 @@ export class Collection<
     replacement: WithoutId<InferSchemaData<TSchema>>,
   ) {
     return new FindOneAndReplaceQuery(
-      this._schema,
+      this.schema,
       this._collection,
       this._readyPromise,
       filter,
@@ -175,7 +175,7 @@ export class Collection<
     update: UpdateFilter<InferSchemaData<TSchema>>,
   ) {
     return new FindOneAndUpdateQuery(
-      this._schema,
+      this.schema,
       this._collection,
       this._readyPromise,
       filter,
@@ -185,7 +185,7 @@ export class Collection<
 
   public findOneAndDelete(filter: Filter<InferSchemaData<TSchema>>) {
     return new FindOneAndDeleteQuery(
-      this._schema,
+      this.schema,
       this._collection,
       this._readyPromise,
       filter,
@@ -194,7 +194,7 @@ export class Collection<
 
   public insertOne(data: InferSchemaInput<TSchema>) {
     return new InsertOneQuery(
-      this._schema,
+      this.schema,
       this._collection,
       this._readyPromise,
       data,
@@ -203,7 +203,7 @@ export class Collection<
 
   public insertMany(data: InferSchemaInput<TSchema>[]) {
     return new InsertManyQuery(
-      this._schema,
+      this.schema,
       this._collection,
       this._readyPromise,
       data,
@@ -212,7 +212,7 @@ export class Collection<
 
   public bulkWrite(data: AnyBulkWriteOperation<InferSchemaData<TSchema>>[]) {
     return new BulkWriteQuery(
-      this._schema,
+      this.schema,
       this._collection,
       this._readyPromise,
       data,
@@ -224,7 +224,7 @@ export class Collection<
     replacement: WithoutId<InferSchemaData<TSchema>>,
   ) {
     return new ReplaceOneQuery(
-      this._schema,
+      this.schema,
       this._collection,
       this._readyPromise,
       filter,
@@ -237,7 +237,7 @@ export class Collection<
     update: UpdateFilter<InferSchemaData<TSchema>>,
   ) {
     return new UpdateOneQuery(
-      this._schema,
+      this.schema,
       this._collection,
       this._readyPromise,
       filter,
@@ -250,7 +250,7 @@ export class Collection<
     update: UpdateFilter<InferSchemaData<TSchema>>,
   ) {
     return new UpdateManyQuery(
-      this._schema,
+      this.schema,
       this._collection,
       this._readyPromise,
       filter,
@@ -260,7 +260,7 @@ export class Collection<
 
   public deleteOne(filter: Filter<InferSchemaData<TSchema>>) {
     return new DeleteOneQuery(
-      this._schema,
+      this.schema,
       this._collection,
       this._readyPromise,
       filter,
@@ -269,7 +269,7 @@ export class Collection<
 
   public deleteMany(filter: Filter<InferSchemaData<TSchema>>) {
     return new DeleteManyQuery(
-      this._schema,
+      this.schema,
       this._collection,
       this._readyPromise,
       filter,
@@ -443,7 +443,7 @@ export class Collection<
 
   public aggregate() {
     return new AggregationPipeline(
-      this._schema,
+      this.schema,
       this._collection,
       this._readyPromise,
     );

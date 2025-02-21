@@ -5,7 +5,7 @@ import type {
   PopulationOptions,
 } from "../../relations/type-helpers";
 import { type AnySchema, Schema } from "../../schema/schema";
-import { mapOneOrArray } from "../../utils";
+import { mapOneOrArray } from "../../utils/misc";
 import type { Meta } from "../types/expressions";
 import type {
   Limit,

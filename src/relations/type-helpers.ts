@@ -10,7 +10,12 @@ import type {
   InferSchemaOutput,
   SchemaInputWithId,
 } from "../schema/type-helpers";
-import type { ExtractIfArray, Index, Merge, Pretty } from "../type-helpers";
+import type {
+  ExtractIfArray,
+  Index,
+  Merge,
+  Pretty,
+} from "../utils/type-helpers";
 import type { AnyRelation, AnyRelations, Relation } from "./relations";
 
 type ValidRelationFieldType<
@@ -29,7 +34,7 @@ export type SchemaRelatableField<
     : never]: unknown;
 };
 
-type PopulationBaseOptions<
+export type PopulationBaseOptions<
   T,
   TDbRelations extends Record<string, AnyRelations>,
   TName extends keyof TDbRelations,

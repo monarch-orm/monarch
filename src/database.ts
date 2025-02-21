@@ -1,21 +1,32 @@
 import { MongoClient, type Db, type MongoClientOptions } from "mongodb";
 import { Collection } from "./collection";
+import type {
+  BoolProjection,
+  WithProjection,
+} from "./collection/types/query-options";
 import { MonarchError } from "./errors";
-import { type AnyRelations, Relations } from "./relations/relations";
+import { Relations, type AnyRelations } from "./relations/relations";
+import type {
+  InferRelationObjectPopulation,
+  Population,
+  PopulationBaseOptions,
+} from "./relations/type-helpers";
 import type { AnySchema } from "./schema/schema";
-import type { ExtractObject } from "./type-helpers";
+import type {
+  InferSchemaInput,
+  InferSchemaOmit,
+  InferSchemaOutput,
+} from "./schema/type-helpers";
+import type {
+  ExtractObject,
+  IdFirst,
+  Merge,
+  Pretty,
+} from "./utils/type-helpers";
 
-export type DbCollections<
-  TSchemas extends Record<string, AnySchema>,
-  TRelations extends Record<string, AnyRelations>,
-> = {
-  [K in keyof TSchemas]: Collection<TSchemas[K], TRelations>;
-} & {};
-export type DbRelations<
-  TRelations extends Record<string, Relations<any, any>>,
-> = {
-  [K in keyof TRelations as TRelations[K]["name"]]: TRelations[K]["relations"];
-} & {};
+export function createClient(uri: string, options?: MongoClientOptions) {
+  return new MongoClient(uri, options);
+}
 
 export class Database<
   TSchemas extends Record<string, AnySchema> = {},
@@ -61,7 +72,7 @@ export class Database<
 
   public use<S extends AnySchema>(
     schema: S,
-  ): Collection<S, DbRelations<TRelations>[S["name"]]> {
+  ): Collection<S, DbRelations<TRelations>> {
     return new Collection(
       this.db,
       schema,
@@ -99,6 +110,50 @@ export function createDatabase<
   return new Database(db, collections, relations);
 }
 
-export function createClient(uri: string, options?: MongoClientOptions) {
-  return new MongoClient(uri, options);
-}
+type DbCollections<
+  TSchemas extends Record<string, AnySchema>,
+  TRelations extends Record<string, AnyRelations>,
+> = {
+  [K in keyof TSchemas]: Collection<TSchemas[K], TRelations>;
+} & {};
+type DbRelations<TRelations extends Record<string, Relations<any, any>>> = {
+  [K in keyof TRelations as TRelations[K]["name"]]: TRelations[K]["relations"];
+} & {};
+
+export type InferInput<
+  TDatabase extends Database<any, any>,
+  TCollection extends keyof TDatabase["collections"],
+> = InferSchemaInput<TDatabase["collections"][TCollection]["schema"]>;
+
+export type InferOutput<
+  TDatabase extends Database<any, any>,
+  TCollection extends keyof TDatabase["collections"],
+  TOptions extends PopulationBaseOptions<
+    InferSchemaOutput<TDatabase["collections"][TCollection]["schema"]>,
+    TDatabase["relations"],
+    TCollection
+  > = {
+    omit: BoolProjection<
+      InferSchemaOmit<TDatabase["collections"][TCollection]["schema"]>
+    >;
+  },
+> = Pretty<
+  IdFirst<
+    Merge<
+      WithProjection<
+        TOptions["select"] extends BoolProjection<any> ? "select" : "omit",
+        TOptions["select"] extends BoolProjection<any>
+          ? keyof TOptions["select"]
+          : keyof TOptions["omit"],
+        InferSchemaOutput<TDatabase["collections"][TCollection]["schema"]>
+      >,
+      TOptions["populate"] extends Population<any, any>
+        ? InferRelationObjectPopulation<
+            TDatabase["relations"],
+            TCollection,
+            TOptions["populate"]
+          >
+        : {}
+    >
+  >
+>;

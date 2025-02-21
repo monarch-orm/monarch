@@ -1,4 +1,4 @@
-import type { Pretty } from "../type-helpers";
+import type { Pretty } from "../utils/type-helpers";
 import type { AnyMonarchType, MonarchType } from "./type";
 
 export type InferTypeInput<T> = T extends MonarchType<infer U, any> ? U : never;

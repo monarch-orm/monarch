@@ -1,4 +1,8 @@
 import type {
+  _InferTypeObjectInput,
+  _InferTypeObjectOutput,
+} from "../types/type-helpers";
+import type {
   IdFirst,
   Merge,
   Pretty,
@@ -6,11 +10,7 @@ import type {
   WithOptionalId,
   WithRequiredId,
   WithRequiredObjectId,
-} from "../type-helpers";
-import type {
-  _InferTypeObjectInput,
-  _InferTypeObjectOutput,
-} from "../types/type-helpers";
+} from "../utils/type-helpers";
 import type { AnySchema, Schema } from "./schema";
 import type { InferVirtualOutput } from "./virtuals";
 

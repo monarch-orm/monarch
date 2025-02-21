@@ -1,7 +1,7 @@
 import type { Collection as MongoCollection } from "mongodb";
 import type { AnySchema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";
-import type { IdFirst, Merge, Pretty } from "../../type-helpers";
+import type { IdFirst, Merge, Pretty } from "../../utils/type-helpers";
 import type { WithProjection } from "../types/query-options";
 
 export abstract class Query<TSchema extends AnySchema, TOutput> {
