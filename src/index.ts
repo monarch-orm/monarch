@@ -4,7 +4,7 @@ export {
   createDatabase,
   Database,
   InferInput,
-  InferOutput
+  InferOutput,
 } from "./database";
 export { MonarchError, MonarchParseError } from "./errors";
 export { AnySchema, createSchema, Schema } from "./schema/schema";
@@ -30,6 +30,5 @@ export {
   generateObjectId,
   isValidObjectId,
   objectIdToString,
-  toObjectId
+  toObjectId,
 } from "./utils/objectId";
-

@@ -7,7 +7,7 @@ import {
   type Collection as MongoCollection,
   ObjectId,
   type UpdateFilter,
-  type WithoutId
+  type WithoutId,
 } from "mongodb";
 import { MonarchError } from "../errors";
 import type { AnyRelations } from "../relations/relations";
