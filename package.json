@@ -11,6 +11,16 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "default": "./dist/index.js"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/types/index.mjs",
+      "default": "./dist/types/index.js"
+    },
+    "./operators": {
+      "types": "./dist/operators/index.d.ts",
+      "import": "./dist/operators/index.mjs",
+      "default": "./dist/operators/index.js"
     }
   },
   "scripts": {

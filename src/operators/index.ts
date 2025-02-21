@@ -1,6 +1,6 @@
 import type { Filter } from "mongodb";
-import type { AnySchema } from "./schema/schema";
-import type { InferSchemaData } from "./schema/type-helpers";
+import type { AnySchema } from "../schema/schema";
+import type { InferSchemaData } from "../schema/type-helpers";
 
 export function and<T extends AnySchema>(
   ...expressions: Filter<InferSchemaData<T>>[]
