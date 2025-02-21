@@ -38,7 +38,7 @@ describe("Query operators", () => {
   });
 
   afterEach(async () => {
-    await collections.users.dropIndexes();
+    await collections.users.raw().dropIndexes();
     await collections.users.deleteMany({}).exec();
   });
 
