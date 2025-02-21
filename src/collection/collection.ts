@@ -330,6 +330,10 @@ export class Collection<
     this._collection.hint = v;
   }
 
+  public get timeoutMS() {
+    return this._collection.timeoutMS;
+  }
+
   public options(options?: OperationOptions) {
     return this._collection.options(options);
   }
