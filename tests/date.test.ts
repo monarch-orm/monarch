@@ -9,16 +9,8 @@ import {
   expect,
   it,
 } from "vitest";
-import {
-  createDatabase,
-  createSchema,
-} from "../src";
-import {
-  createdAt,
-  date,
-  dateString,
-  updatedAt,
-} from "../src/types";
+import { createDatabase, createSchema } from "../src";
+import { createdAt, date, dateString, updatedAt } from "../src/types";
 
 const mongod = await MongoMemoryServer.create();
 

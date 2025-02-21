@@ -3,7 +3,6 @@ import { createSchema, Schema } from "../src";
 import {
   array,
   boolean,
-
   literal,
   mixed,
   number,
