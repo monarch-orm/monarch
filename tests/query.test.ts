@@ -9,16 +9,8 @@ import {
   it,
   vi,
 } from "vitest";
-import {
-  boolean,
-  createDatabase,
-  createSchema,
-  number,
-  objectId,
-  pipe,
-  string,
-  type,
-} from "../src";
+import { createDatabase, createSchema } from "../src";
+import { boolean, number, objectId, pipe, string, type } from "../src/types";
 import { mockUsers } from "./mock";
 
 const mongod = await MongoMemoryServer.create();

@@ -1,7 +1,7 @@
 import { MongoClient } from "mongodb";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { boolean, createDatabase, createSchema, number, string } from "../src";
+import { createDatabase, createSchema } from "../src";
 import {
   and,
   eq,
@@ -15,6 +15,7 @@ import {
   notInArray,
   or,
 } from "../src/operators";
+import { boolean, number, string } from "../src/types";
 import { mockUsers } from "./mock";
 
 const mongod = await MongoMemoryServer.create();
