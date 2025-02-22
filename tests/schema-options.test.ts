@@ -1,8 +1,7 @@
 import { MongoClient } from "mongodb";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { createDatabase, createSchema } from "../src";
-import { virtual } from "../src/schema/virtuals";
+import { createDatabase, createSchema, virtual } from "../src";
 import { boolean, number, string } from "../src/types";
 
 const server = await MongoMemoryServer.create();

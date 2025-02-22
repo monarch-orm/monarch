@@ -1,3 +1,4 @@
+export { ObjectId } from "mongodb";
 export { Collection } from "./collection/collection";
 export {
   createClient,
@@ -7,7 +8,8 @@ export {
   InferOutput,
 } from "./database";
 export { MonarchError } from "./errors";
-export { AnySchema, createSchema, Schema } from "./schema/schema";
+export { createRelations, Relation, Relations } from "./relations/relations";
+export { createSchema, Schema } from "./schema/schema";
 export { InferSchemaInput, InferSchemaOutput } from "./schema/type-helpers";
 export { Virtual, virtual } from "./schema/virtuals";
 export {
