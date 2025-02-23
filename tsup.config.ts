@@ -1,10 +1,9 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/index.ts", "src/operators.ts"],
-  format: ["cjs", "esm"], // Build for commonJS and ESmodules
-  dts: true, // Generate declaration file (.d.ts)
+  entry: ["src/index.ts", "src/types/index.ts", "src/operators/index.ts"],
+  format: ["cjs", "esm"],
+  dts: true,
   splitting: false,
-  sourcemap: true,
   clean: true,
 });

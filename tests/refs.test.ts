@@ -1,8 +1,7 @@
 import { MongoClient } from "mongodb";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { createDatabase, createSchema, virtual } from "../src";
-import { createRelations } from "../src/relations/relations";
+import { createDatabase, createRelations, createSchema, virtual } from "../src";
 import { array, boolean, date, objectId, string } from "../src/types";
 
 let mongod: MongoMemoryServer;
