@@ -1,5 +1,21 @@
 # monarch-orm
 
+## 0.7.0
+
+### Minor Changes
+
+- 2df301b: Hide exec from public API
+- 2df301b: Add createRelations API for schema relations
+- 58ffe8a: Implement only selected methods in Collection
+- b513167: Use subpath exports for types and operators
+- 60c2682: Add InferInput and InferOutput types to mirror find queries with omit/select and populate
+- 2df301b: Rename database.db() to database.use() and make db (underlying database) field public
+
+### Patch Changes
+
+- 2df301b: Drop MonarchPhantom
+- 2df301b: Propagate schema omit type with populate
+
 ## 0.6.2
 
 ### Patch Changes
