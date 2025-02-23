@@ -8,19 +8,34 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "default": "./dist/index.js"
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      }
     },
     "./types": {
-      "types": "./dist/types/index.d.ts",
-      "import": "./dist/types/index.mjs",
-      "default": "./dist/types/index.js"
+      "require": {
+        "types": "./dist/types/index.d.ts",
+        "default": "./dist/types/index.js"
+      },
+      "import": {
+        "types": "./dist/types/index.d.mts",
+        "default": "./dist/types/index.mjs"
+      }
     },
     "./operators": {
-      "types": "./dist/operators/index.d.ts",
-      "import": "./dist/operators/index.mjs",
-      "default": "./dist/operators/index.js"
+      "require": {
+        "types": "./dist/operators/index.d.ts",
+        "default": "./dist/operators/index.js"
+      },
+      "import": {
+        "types": "./dist/operators/index.d.mts",
+        "default": "./dist/operators/index.mjs"
+      }
     }
   },
   "scripts": {
@@ -48,12 +63,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/princecodes247/monarch.git"
+    "url": "git+https://github.com/monarch-orm/monarch.git"
   },
   "bugs": {
-    "url": "https://github.com/princecodes247/monarch/issues"
+    "url": "https://github.com/monarch-orm/monarch/issues"
   },
-  "homepage": "https://github.com/princecodes247/monarch#readme",
+  "homepage": "https://github.com/monarch-orm/monarch#readme",
   "peerDependencies": {
     "mongodb": ">= 6.0.0"
   },

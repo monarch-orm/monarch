@@ -5,7 +5,11 @@ src
 tests
 pnpm-lock.yaml
 tsconfig.json
+biome.json
 vitest.config.mts
+tsup.config.ts
 CHANGELOG.md
 README.md
 CONTRIBUTING.md
+api.md
+todo.md
