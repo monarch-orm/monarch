@@ -1,4 +1,5 @@
 import type { Sort as MongoSort } from "mongodb";
+import { MonarchError } from "../../errors";
 import type { AnyRelation, AnyRelations } from "../../relations/relations";
 import type {
   Population,
@@ -45,19 +46,38 @@ export function addPopulations(
   for (const [field, options] of Object.entries(opts.population)) {
     if (!options) continue;
 
+    // Validate that relations exist for the schema
+    if (!opts.relations[opts.schema.name]) {
+      throw new MonarchError(`No relations found for schema '${opts.schema.name}'`);
+    }
+
     const relation = opts.relations[opts.schema.name][field];
+    // Validate relation exists
+    if (!relation) {
+      throw new MonarchError(
+        `No relation found for field '${field}' in schema '${opts.schema.name}'.`
+      );
+    }
+
+    // Validate relation target exists
+    if (!relation.target) {
+      throw new MonarchError(`Target schema not found for relation '${field}' in schema '${opts.schema.name}'
+        This might happen if relations were declared before the target schema was initialized.
+        Ensure all schemas are initialized before defining their relations.`);
+    }
+
     const _options =
       options === true ? {} : (options as PopulationOptions<any, any, any>);
 
     // get population projection or fallback to schema omit projection
     const projection =
       makePopulationProjection(_options) ??
-      makeProjection("omit", relation.target.options.omit ?? {});
+      makeProjection("omit", relation.target.options?.omit ?? {});
 
     // ensure required fields are in projection
     const extras = addExtraInputsToProjection(
       projection,
-      relation.target.options.virtuals,
+      relation.target.options?.virtuals,
       _options.populate,
     );
 
