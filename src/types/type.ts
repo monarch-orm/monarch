@@ -26,18 +26,22 @@ export class MonarchType<TInput, TOutput> {
     private _updater?: Parser<void, TOutput>,
   ) {}
 
-  public static parser<T extends AnyMonarchType>(type: T) {
+  public static parser<T extends AnyMonarchType>(
+    type: T,
+  ): Parser<InferTypeInput<T>, InferTypeOutput<T>> {
     return type._parser;
   }
 
-  public static updater<T extends AnyMonarchType>(type: T) {
+  public static updater<T extends AnyMonarchType>(
+    type: T,
+  ): Parser<void, InferTypeOutput<T>> | undefined {
     return type._updater;
   }
 
-  public static isInstanceOf<T extends AnyMonarchType>(
-    type: T,
-    target: new (...args: any[]) => any,
-  ) {
+  public static isInstanceOf<T extends new (...args: any[]) => AnyMonarchType>(
+    type: AnyMonarchType,
+    target: T,
+  ): type is InstanceType<T> {
     return type.isInstanceOf(target);
   }
 

@@ -1,6 +1,7 @@
 import { MonarchParseError } from "../errors";
 import { type AnyMonarchType, MonarchType } from "./type";
 import type {
+  InferTypeInput,
   InferTypeObjectInput,
   InferTypeObjectOutput,
 } from "./type-helpers";
@@ -29,7 +30,7 @@ export class MonarchObject<
           try {
             const parser = MonarchType.parser(type);
             parsed[key as keyof typeof parsed] = parser(
-              input[key as keyof typeof input],
+              input[key as keyof typeof input] as InferTypeInput<T[keyof T]>,
             );
           } catch (error) {
             if (error instanceof MonarchParseError) {

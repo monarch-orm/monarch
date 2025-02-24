@@ -14,6 +14,12 @@ export class MonarchPipe<
   TPipeOut extends AnyMonarchType<InferTypeOutput<TPipeIn>, any>,
 > extends MonarchType<InferTypeInput<TPipeIn>, InferTypeOutput<TPipeOut>> {
   constructor(pipeIn: TPipeIn, pipeOut: TPipeOut) {
-    super(pipeParser(MonarchType.parser(pipeIn), MonarchType.parser(pipeOut)));
+    super(
+      pipeParser<
+        InferTypeInput<TPipeIn>,
+        InferTypeOutput<TPipeIn> & InferTypeInput<TPipeOut>,
+        InferTypeOutput<TPipeOut>
+      >(MonarchType.parser(pipeIn), MonarchType.parser(pipeOut)),
+    );
   }
 }
