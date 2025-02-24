@@ -1,5 +1,11 @@
 # monarch-orm
 
+## 0.7.1
+
+### Patch Changes
+
+- 89871cd: Use explicit require and import exports in package.json
+
 ## 0.7.0
 
 ### Minor Changes
