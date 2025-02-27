@@ -1,18 +1,12 @@
-import { MongoClient } from "mongodb";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createDatabase, createRelations, createSchema, virtual } from "../src";
 import { array, boolean, date, objectId, string } from "../src/types";
+import { createMockDatabase } from "./mock";
 
-let mongod: MongoMemoryServer;
-let client: MongoClient;
-let uri: string;
+describe("Tests for refs population", async () => {
+  const { server, client } = await createMockDatabase();
 
-describe("Tests for refs population", () => {
   beforeAll(async () => {
-    mongod = await MongoMemoryServer.create();
-    uri = mongod.getUri();
-    client = new MongoClient(uri);
     await client.connect();
   });
 
@@ -23,7 +17,7 @@ describe("Tests for refs population", () => {
 
   afterAll(async () => {
     await client.close();
-    await mongod.stop();
+    await server.stop();
   });
 
   const setupSchemasAndCollections = () => {

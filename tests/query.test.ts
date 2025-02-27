@@ -1,5 +1,4 @@
-import { MongoClient, ObjectId } from "mongodb";
-import { MongoMemoryServer } from "mongodb-memory-server";
+import { ObjectId } from "mongodb";
 import {
   afterAll,
   afterEach,
@@ -11,30 +10,29 @@ import {
 } from "vitest";
 import { createDatabase, createSchema } from "../src";
 import { boolean, number, objectId, pipe, string, type } from "../src/types";
-import { mockUsers } from "./mock";
+import { createMockDatabase, mockUsers } from "./mock";
 
-const mongod = await MongoMemoryServer.create();
-const uri = mongod.getUri();
-const client = new MongoClient(uri);
+describe("Query methods Tests", async () => {
+  const { server, client } = await createMockDatabase();
 
-const UserSchema = createSchema("users", {
-  name: string().optional(),
-  email: string().lowercase().optional(),
-  age: number().optional().default(10),
-  isVerified: boolean().default(false),
-});
-const TodoSchema = createSchema("todos", {
-  _id: number(),
-  title: string(),
-  userId: objectId(),
-});
+  const UserSchema = createSchema("users", {
+    name: string().optional(),
+    email: string().lowercase().optional(),
+    age: number().optional().default(10),
+    isVerified: boolean().default(false),
+  });
 
-const { collections } = createDatabase(client.db(), {
-  users: UserSchema,
-  todos: TodoSchema,
-});
+  const TodoSchema = createSchema("todos", {
+    _id: number(),
+    title: string(),
+    userId: objectId(),
+  });
 
-describe("Query methods Tests", () => {
+  const { collections } = createDatabase(client.db(), {
+    users: UserSchema,
+    todos: TodoSchema,
+  });
+
   beforeAll(async () => {
     await client.connect();
   });
@@ -48,7 +46,7 @@ describe("Query methods Tests", () => {
 
   afterAll(async () => {
     await client.close();
-    await mongod.stop();
+    await server.stop();
   });
 
   it("inserts one document", async () => {
