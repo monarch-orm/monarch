@@ -23,8 +23,7 @@ jobs:
           cache: "pnpm"
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm approve-builds mongodb-memory-server
-      
+
       - name: Check
         run: pnpm check
 

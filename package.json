@@ -49,6 +49,9 @@
     "watch": "vitest",
     "test": "vitest run"
   },
+  "pnpm": {
+    "onlyBuiltDependencies": ["mongodb-memory-server"]
+  },
   "keywords": [
     "mongodb",
     "odm",
