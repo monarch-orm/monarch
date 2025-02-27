@@ -1,5 +1,11 @@
 # monarch-orm
 
+## 0.8.0
+
+### Minor Changes
+
+- cf59f59: Export types namespace object (to support `m.string()` or `m.number()`)
+
 ## 0.7.1
 
 ### Patch Changes
