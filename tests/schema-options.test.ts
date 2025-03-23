@@ -1,13 +1,11 @@
-import { MongoClient } from "mongodb";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createDatabase, createSchema, virtual } from "../src";
 import { boolean, number, string } from "../src/types";
+import { createMockDatabase } from "./mock";
 
-const server = await MongoMemoryServer.create();
-const client = new MongoClient(server.getUri());
+describe("Schema options", async () => {
+  const { server, client } = await createMockDatabase();
 
-describe("Schema options", () => {
   beforeAll(async () => {
     await client.connect();
   });

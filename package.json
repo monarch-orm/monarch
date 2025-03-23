@@ -1,6 +1,6 @@
 {
   "name": "monarch-orm",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "Type safe Object Document Mapper (ODM) for MongoDB",
   "private": false,
   "main": "./dist/index.js",
@@ -48,6 +48,9 @@
     "lint:fix": "biome lint --write",
     "watch": "vitest",
     "test": "vitest run"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["mongodb-memory-server"]
   },
   "keywords": [
     "mongodb",

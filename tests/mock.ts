@@ -1,3 +1,12 @@
+import { MongoClient } from "mongodb";
+import { MongoMemoryServer } from "mongodb-memory-server";
+
+export async function createMockDatabase() {
+  const server = await MongoMemoryServer.create();
+  const client = new MongoClient(server.getUri());
+  return { server, client };
+}
+
 export const mockUsers = [
   {
     name: "anon",

@@ -1,5 +1,3 @@
-import { MongoClient } from "mongodb";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createDatabase, createSchema } from "../src";
 import {
@@ -16,24 +14,22 @@ import {
   or,
 } from "../src/operators";
 import { boolean, number, string } from "../src/types";
-import { mockUsers } from "./mock";
+import { createMockDatabase, mockUsers } from "./mock";
 
-const mongod = await MongoMemoryServer.create();
-const uri = mongod.getUri();
-const client = new MongoClient(uri);
+describe("Query operators", async () => {
+  const { server, client } = await createMockDatabase();
 
-const UserSchema = createSchema("users", {
-  name: string().optional(),
-  email: string().lowercase().optional(),
-  age: number().optional().default(10),
-  isVerified: boolean().default(false),
-});
+  const UserSchema = createSchema("users", {
+    name: string().optional(),
+    email: string().lowercase().optional(),
+    age: number().optional().default(10),
+    isVerified: boolean().default(false),
+  });
 
-const { collections, db } = createDatabase(client.db(), {
-  users: UserSchema,
-});
+  const { collections } = createDatabase(client.db(), {
+    users: UserSchema,
+  });
 
-describe("Query operators", () => {
   beforeAll(async () => {
     await client.connect();
   });
@@ -45,7 +41,7 @@ describe("Query operators", () => {
 
   afterAll(async () => {
     await client.close();
-    await mongod.stop();
+    await server.stop();
   });
 
   it("and operator", async () => {

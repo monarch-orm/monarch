@@ -1,22 +1,18 @@
-import { MongoClient } from "mongodb";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createDatabase, createSchema } from "../src";
 import { string } from "../src/types";
+import { createMockDatabase } from "./mock";
 
-const mongod = await MongoMemoryServer.create();
+describe("test for transformations", async () => {
+  const { server, client } = await createMockDatabase();
 
-const uri = mongod.getUri();
-const client = new MongoClient(uri);
-
-describe("test for transformations", () => {
   beforeAll(async () => {
     await client.connect();
   });
 
   afterAll(async () => {
     await client.close();
-    await mongod.stop();
+    await server.stop();
   });
 
   it("returns value in lowercase", async () => {

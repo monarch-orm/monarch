@@ -1,5 +1,3 @@
-import { MongoClient } from "mongodb";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import {
   afterAll,
   afterEach,
@@ -11,16 +9,13 @@ import {
 } from "vitest";
 import { createDatabase, createSchema } from "../src";
 import { createdAt, date, dateString, updatedAt } from "../src/types";
+import { createMockDatabase } from "./mock";
 
-const mongod = await MongoMemoryServer.create();
+const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
-const uri = mongod.getUri();
-const client = new MongoClient(uri);
+describe("test for date", async () => {
+  const { server, client } = await createMockDatabase();
 
-const delay = (duration: number) =>
-  new Promise((res) => setTimeout(res, duration));
-
-describe("test for date", () => {
   beforeAll(async () => {
     await client.connect();
   });
@@ -31,7 +26,7 @@ describe("test for date", () => {
 
   afterAll(async () => {
     await client.close();
-    await mongod.stop();
+    await server.stop();
   });
 
   it("inserts date object and finds it", async () => {
