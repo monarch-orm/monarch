@@ -1,7 +1,7 @@
 import { MongoClient } from "mongodb";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { createDatabase, createRelations, createSchema, virtual } from "../src";
+import { createClient, createDatabase, createRelations, createSchema, virtual } from "../src";
 import { array, boolean, date, objectId, string } from "../src/types";
 
 let mongod: MongoMemoryServer;
@@ -12,7 +12,7 @@ describe("Tests for refs population", () => {
   beforeAll(async () => {
     mongod = await MongoMemoryServer.create();
     uri = mongod.getUri();
-    client = new MongoClient(uri);
+    client = createClient(uri);
     await client.connect();
   });
 
