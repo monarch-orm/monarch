@@ -1,4 +1,5 @@
 import { MongoClient, type Db, type MongoClientOptions } from "mongodb";
+import { version } from "../package.json";
 import { Collection } from "./collection/collection";
 import type {
   BoolProjection,
@@ -25,6 +26,9 @@ import type {
 } from "./utils/type-helpers";
 
 export function createClient(uri: string, options?: MongoClientOptions) {
+  if (options) {
+    options.driverInfo = { name: "Monarch ORM", version: version };
+  }
   return new MongoClient(uri, options);
 }
 
