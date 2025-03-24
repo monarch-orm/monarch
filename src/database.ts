@@ -25,9 +25,10 @@ import type {
   Pretty,
 } from "./utils/type-helpers";
 
-export function createClient(uri: string, options?: MongoClientOptions) {
-  options = options || {};
-  options.driverInfo = { name: "Monarch ORM", version: version };
+export function createClient(uri: string, options: MongoClientOptions = {}) {
+  if (!options.driverInfo) {
+    options.driverInfo = { name: "Monarch ORM", version };
+  }
   return new MongoClient(uri, options);
 }
 
