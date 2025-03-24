@@ -1,5 +1,11 @@
 # monarch-orm
 
+## 0.8.1
+
+### Patch Changes
+
+- b771ba6: Add client metadata to mongo client returned by createClient
+
 ## 0.8.0
 
 ### Minor Changes
