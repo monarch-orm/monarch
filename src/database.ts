@@ -26,9 +26,8 @@ import type {
 } from "./utils/type-helpers";
 
 export function createClient(uri: string, options?: MongoClientOptions) {
-  if (options) {
-    options.driverInfo = { name: "Monarch ORM", version: version };
-  }
+  options = options || {};
+  options.driverInfo = { name: "Monarch ORM", version: version };
   return new MongoClient(uri, options);
 }
 
