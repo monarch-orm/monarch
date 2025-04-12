@@ -9,7 +9,7 @@ export class MonarchRecord<T extends AnyMonarchType> extends MonarchType<
   Record<string, InferTypeInput<T>>,
   Record<string, InferTypeOutput<T>>
 > {
-  constructor(type: T) {
+  constructor(private type: T) {
     super((input) => {
       console.log({ input });
       if (typeof input === "object" && input !== null) {
@@ -29,7 +29,11 @@ export class MonarchRecord<T extends AnyMonarchType> extends MonarchType<
         }
         return parsed;
       }
-      throw new MonarchParseError("expected an object", input);
+      throw new MonarchParseError(`expected ${this.typeName()}`, input);
     });
+  }
+
+  public typeName(): string {
+    return `Record<string, ${this.type.typeName()}>`;
   }
 }

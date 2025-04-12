@@ -9,7 +9,7 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<
   InferTypeInput<T>[],
   InferTypeOutput<T>[]
 > {
-  constructor(type: T) {
+  constructor(private type: T) {
     super((input) => {
       if (Array.isArray(input)) {
         const parsed = [] as InferTypeOutput<T>[];
@@ -20,7 +20,7 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<
           } catch (error) {
             if (error instanceof MonarchParseError) {
               throw new MonarchParseError(
-                `element at index '${index}' ${error.message}`,
+                `at index [${index}] ${error.message}`,
               );
             }
             throw error;
@@ -28,7 +28,11 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<
         }
         return parsed;
       }
-      throw new MonarchParseError("expected an array", input);
+      throw new MonarchParseError(`expected ${this.typeName()}`, input);
     });
+  }
+
+  public typeName(): string {
+    return `array<${this.type.typeName()}>`;
   }
 }

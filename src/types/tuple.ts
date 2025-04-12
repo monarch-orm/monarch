@@ -11,7 +11,7 @@ export const tuple = <T extends [AnyMonarchType, ...AnyMonarchType[]]>(
 export class MonarchTuple<
   T extends [AnyMonarchType, ...AnyMonarchType[]],
 > extends MonarchType<InferTypeTupleInput<T>, InferTypeTupleOutput<T>> {
-  constructor(types: T) {
+  constructor(private types: T) {
     super((input) => {
       if (Array.isArray(input)) {
         if (input.length > types.length) {
@@ -35,7 +35,11 @@ export class MonarchTuple<
         }
         return parsed;
       }
-      throw new MonarchParseError("expected an array", input);
+      throw new MonarchParseError(`expected ${this.typeName()}`, input);
     });
+  }
+
+  public typeName(): string {
+    return `[${this.types.map((type) => type.typeName()).join(", ")}]`;
   }
 }

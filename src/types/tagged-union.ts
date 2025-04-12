@@ -15,7 +15,7 @@ export class MonarchTaggedUnion<
   InferTypeTaggedUnionInput<T>,
   InferTypeTaggedUnionOutput<T>
 > {
-  constructor(variants: T) {
+  constructor(private variants: T) {
     super((input) => {
       if (typeof input === "object" && input !== null) {
         if (!("tag" in input)) {
@@ -51,5 +51,12 @@ export class MonarchTaggedUnion<
       }
       throw new MonarchParseError("expected an object", input);
     });
+  }
+
+  public typeName(): string {
+    const tags = Object.entries(this.variants)
+      .map(([tag, type]) => `${tag}: ${type.typeName()}`)
+      .join(", ");
+    return `object<{${tags}}>`;
   }
 }

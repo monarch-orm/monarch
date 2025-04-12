@@ -126,6 +126,10 @@ export class MonarchType<TInput, TOutput> {
       : base._updater;
     return this;
   }
+
+  public typeName(): string {
+    return this.constructor.name.replace("Monarch", "").toLowerCase();
+  }
 }
 
 export const nullable = <T extends AnyMonarchType>(type: T) =>

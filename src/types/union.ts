@@ -9,7 +9,7 @@ export const union = <T extends [AnyMonarchType, ...AnyMonarchType[]]>(
 export class MonarchUnion<
   T extends [AnyMonarchType, ...AnyMonarchType[]],
 > extends MonarchType<InferTypeUnionInput<T>, InferTypeUnionOutput<T>> {
-  constructor(variants: T) {
+  constructor(private variants: T) {
     super((input) => {
       for (const [index, type] of variants.entries()) {
         try {
@@ -19,7 +19,7 @@ export class MonarchUnion<
           if (error instanceof MonarchParseError) {
             if (index === variants.length - 1) {
               throw new MonarchParseError(
-                `expected type ${variants.map((variant) => variant.constructor.name).join(" or ")}`,
+                `expected type (${this.typeName()})`,
                 input,
               );
             }
@@ -30,5 +30,9 @@ export class MonarchUnion<
       }
       throw new MonarchParseError("no variants found for union type");
     });
+  }
+
+  public typeName(): string {
+    return this.variants.map((variant) => variant.typeName()).join(" | ");
   }
 }

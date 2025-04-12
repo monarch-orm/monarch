@@ -7,7 +7,7 @@ export const literal = <T extends string | number | boolean>(...values: T[]) =>
 export class MonarchLiteral<
   T extends string | number | boolean,
 > extends MonarchType<T, T> {
-  constructor(values: T[]) {
+  constructor(private values: T[]) {
     super((input) => {
       const _values = new Set(values);
       if (_values.has(input)) return input;
@@ -16,5 +16,9 @@ export class MonarchLiteral<
         input,
       );
     });
+  }
+
+  public typeName(): string {
+    return `(${this.values.map((v) => (typeof v === "string" ? `"${v}"` : v)).join(" | ")})`;
   }
 }
