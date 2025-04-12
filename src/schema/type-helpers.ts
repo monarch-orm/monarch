@@ -8,8 +8,7 @@ import type {
   Pretty,
   TrueKeys,
   WithOptionalId,
-  WithRequiredId,
-  WithRequiredObjectId,
+  WithRequiredId
 } from "../utils/type-helpers";
 import type { AnySchema, Schema } from "./schema";
 import type { InferVirtualOutput } from "./virtuals";
@@ -21,7 +20,7 @@ export type SchemaInputWithId<T extends AnySchema> = WithRequiredId<
 export type InferSchemaInput<T extends AnySchema> = Pretty<
   WithOptionalId<_InferTypeObjectInput<InferSchemaTypes<T>>>
 >;
-export type _InferSchemaData<T extends AnySchema> = WithRequiredObjectId<
+export type _InferSchemaData<T extends AnySchema> = WithRequiredId<
   _InferTypeObjectOutput<InferSchemaTypes<T>>
 >;
 export type InferSchemaData<T extends AnySchema> = Pretty<_InferSchemaData<T>>;
