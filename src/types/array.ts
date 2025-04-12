@@ -28,9 +28,7 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<
         }
         return parsed;
       }
-      throw new MonarchParseError(
-        `expected 'array' received '${typeof input}'`,
-      );
+      throw new MonarchParseError("expected an array", input);
     });
   }
 }

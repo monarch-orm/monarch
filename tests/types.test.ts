@@ -1,5 +1,5 @@
 import { describe, expect, it, test, vi } from "vitest";
-import { createSchema, Schema } from "../src";
+import { Schema, createSchema } from "../src";
 import {
   array,
   boolean,

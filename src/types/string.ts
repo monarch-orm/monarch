@@ -7,9 +7,7 @@ export class MonarchString extends MonarchType<string, string> {
   constructor() {
     super((input) => {
       if (typeof input === "string") return input;
-      throw new MonarchParseError(
-        `expected 'string' received '${typeof input}'`,
-      );
+      throw new MonarchParseError("expected string", input);
     });
   }
 

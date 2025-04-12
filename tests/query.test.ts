@@ -137,7 +137,7 @@ describe("Query methods Tests", async () => {
   it("inserts many documents", async () => {
     const newUsers = await collections.users.insertMany(mockUsers).exec();
 
-    expect(newUsers.insertedCount).toBe(mockUsers.length);
+    expect(newUsers.length).toBe(mockUsers.length);
   });
 
   it("finds documents", async () => {
@@ -182,7 +182,6 @@ describe("Query methods Tests", async () => {
 
     // find with string id
     const user2 = await collections.users
-      //@ts-expect-error
       .findOne({ _id: userId.toString() })
       .exec();
     expect(user2).toBe(null);

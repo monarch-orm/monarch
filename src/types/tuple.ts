@@ -35,9 +35,7 @@ export class MonarchTuple<
         }
         return parsed;
       }
-      throw new MonarchParseError(
-        `expected 'array' received '${typeof input}'`,
-      );
+      throw new MonarchParseError("expected an array", input);
     });
   }
 }

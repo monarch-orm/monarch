@@ -11,6 +11,7 @@ export class MonarchRecord<T extends AnyMonarchType> extends MonarchType<
 > {
   constructor(type: T) {
     super((input) => {
+      console.log({ input });
       if (typeof input === "object" && input !== null) {
         const parsed = {} as Record<string, InferTypeOutput<T>>;
         for (const [key, value] of Object.entries(input)) {
@@ -18,17 +19,17 @@ export class MonarchRecord<T extends AnyMonarchType> extends MonarchType<
             const parser = MonarchType.parser(type);
             parsed[key] = parser(value);
           } catch (error) {
-            if (error instanceof MonarchParseError) {
-              throw new MonarchParseError(`field '${key}' ${error.message}'`);
+            if (error instanceof Error) {
+              throw new MonarchParseError(
+                `field '${key}' ${error.message}asdads`,
+              );
             }
             throw error;
           }
         }
         return parsed;
       }
-      throw new MonarchParseError(
-        `expected 'object' received '${typeof input}'`,
-      );
+      throw new MonarchParseError("expected an object", input);
     });
   }
 }

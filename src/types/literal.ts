@@ -12,7 +12,8 @@ export class MonarchLiteral<
       const _values = new Set(values);
       if (_values.has(input)) return input;
       throw new MonarchParseError(
-        `unknown value '${input}', literal may only specify known values`,
+        `expected one of [${values.join(", ")}]`,
+        input,
       );
     });
   }

@@ -49,9 +49,7 @@ export class MonarchTaggedUnion<
           throw error;
         }
       }
-      throw new MonarchParseError(
-        `expected 'object' received '${typeof input}'`,
-      );
+      throw new MonarchParseError("expected an object", input);
     });
   }
 }

@@ -19,7 +19,8 @@ export class MonarchUnion<
           if (error instanceof MonarchParseError) {
             if (index === variants.length - 1) {
               throw new MonarchParseError(
-                `no matching variant found for union type: ${error.message}`,
+                `expected type ${variants.map((variant) => variant.constructor.name).join(" or ")}`,
+                input,
               );
             }
             continue;
@@ -27,9 +28,7 @@ export class MonarchUnion<
           throw error;
         }
       }
-      throw new MonarchParseError(
-        `expected one of union variants but received '${typeof input}'`,
-      );
+      throw new MonarchParseError("no variants found for union type");
     });
   }
 }

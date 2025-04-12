@@ -41,9 +41,7 @@ export class MonarchObject<
         }
         return parsed;
       }
-      throw new MonarchParseError(
-        `expected 'object' received '${typeof input}'`,
-      );
+      throw new MonarchParseError("expected an object", input);
     });
   }
 }
