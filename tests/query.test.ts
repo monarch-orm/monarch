@@ -81,7 +81,9 @@ describe("Query methods Tests", async () => {
       await collections.users
         .insertOne({ _id: "not_an_object_id", ...mockUsers[0] })
         .exec();
-    }).rejects.toThrow("expected valid ObjectId received");
+    }).rejects.toThrow(
+      "'users._id' expected a valid ObjectId — received string: \"not_an_object_id\".",
+    );
 
     // Test edge case: Insert empty document
     const emptyUser = await collections.users.insertOne({}).exec();

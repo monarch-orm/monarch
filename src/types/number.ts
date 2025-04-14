@@ -13,7 +13,7 @@ export class MonarchNumber extends MonarchType<number, number> {
 
   public min(value: number) {
     return number().extend(this, {
-      preParse: (input) => {
+      postParse: (input) => {
         if (input < value) {
           throw new MonarchParseError(
             `number must be greater than or equal to ${value}`,
@@ -26,7 +26,7 @@ export class MonarchNumber extends MonarchType<number, number> {
 
   public max(value: number) {
     return number().extend(this, {
-      preParse: (input) => {
+      postParse: (input) => {
         if (input > value) {
           throw new MonarchParseError(
             `number must be less than or equal to ${value}`,
@@ -39,9 +39,20 @@ export class MonarchNumber extends MonarchType<number, number> {
 
   public integer() {
     return number().extend(this, {
-      preParse: (input) => {
+      postParse: (input) => {
         if (!Number.isInteger(input)) {
           throw new MonarchParseError("number must be an integer");
+        }
+        return input;
+      },
+    });
+  }
+
+  public float() {
+    return number().extend(this, {
+      postParse: (input) => {
+        if (Number.isInteger(input)) {
+          throw new MonarchParseError("number must be a float");
         }
         return input;
       },
@@ -62,7 +73,7 @@ export class MonarchNumber extends MonarchType<number, number> {
 
   public multipleOf(value: number) {
     return number().extend(this, {
-      preParse: (input) => {
+      postParse: (input) => {
         if (input % value !== 0) {
           throw new MonarchParseError(`number must be a multiple of ${value}`);
         }

@@ -195,17 +195,21 @@ describe("Types", () => {
 
     // @ts-expect-error
     expect(() => Schema.toData(schema, {})).toThrowError(
-      "expected 'object' received 'undefined'",
+      "'test.permissions' expected an object — received undefined: undefined.",
     );
     expect(() =>
       // @ts-expect-error
       Schema.toData(schema, { permissions: { canUpdate: "yes" } }),
-    ).toThrowError("field 'canUpdate' expected 'boolean' received 'string'");
+    ).toThrowError(
+      "'test.permissions' field 'canUpdate' expected boolean — received string: \"yes\".",
+    );
     // fields are validates in the order they are registered in type
     expect(() =>
       // @ts-expect-error
       Schema.toData(schema, { permissions: { role: false } }),
-    ).toThrowError("field 'canUpdate' expected 'boolean' received 'undefined'");
+    ).toThrowError(
+      "'test.permissions' field 'canUpdate' expected boolean — received undefined: undefined.",
+    );
     // unknwon fields are rejected
     expect(() =>
       Schema.toData(schema, {
@@ -230,14 +234,16 @@ describe("Types", () => {
 
     // @ts-expect-error
     expect(() => Schema.toData(schema, {})).toThrowError(
-      "expected 'object' received 'undefined'",
+      "'test.grades' expected Record<string, number> — received undefined: undefined.",
     );
     // empty object is ok
     expect(() => Schema.toData(schema, { grades: {} })).not.toThrowError();
     expect(() =>
       // @ts-expect-error
       Schema.toData(schema, { grades: { math: "50" } }),
-    ).toThrowError("field 'math' expected 'number' received 'string'");
+    ).toThrowError(
+      "'test.grades' field 'math' expected number — received string: \"50\".",
+    );
     const data = Schema.toData(schema, { grades: { math: 50 } });
     expect(data).toStrictEqual({ grades: { math: 50 } });
   });
@@ -249,11 +255,11 @@ describe("Types", () => {
 
     // @ts-expect-error
     expect(() => Schema.toData(schema, {})).toThrowError(
-      "expected 'array' received 'undefined'",
+      "'test.items' expected [number, string] — received undefined: undefined.",
     );
     // @ts-expect-error
     expect(() => Schema.toData(schema, { items: [] })).toThrowError(
-      "element at index '0' expected 'number' received 'undefined'",
+      "'test.items' element at index '0' expected number — received undefined: undefined.",
     );
     const data = Schema.toData(schema, { items: [0, "1"] });
     expect(data).toStrictEqual({ items: [0, "1"] });
@@ -270,13 +276,13 @@ describe("Types", () => {
 
     // @ts-expect-error
     expect(() => Schema.toData(schema, {})).toThrowError(
-      "expected 'array' received 'undefined'",
+      "'test.items' expected array<number> — received undefined: undefined.",
     );
     // empty array is ok
     expect(() => Schema.toData(schema, { items: [] })).not.toThrowError();
     // @ts-expect-error
     expect(() => Schema.toData(schema, { items: [0, "1"] })).toThrowError(
-      "element at index '1' expected 'number' received 'string'",
+      "'test.items' at index [1] expected number — received string: \"1\".",
     );
     const data = Schema.toData(schema, { items: [0, 1] });
     expect(data).toStrictEqual({ items: [0, 1] });
@@ -289,11 +295,11 @@ describe("Types", () => {
 
     // @ts-expect-error
     expect(() => Schema.toData(schema, {})).toThrowError(
-      "unknown value 'undefined', literal may only specify known values",
+      "'test.role' expected one of [admin, moderator] — received undefined: undefined.",
     );
     // @ts-expect-error
     expect(() => Schema.toData(schema, { role: "user" })).toThrowError(
-      "unknown value 'user', literal may only specify known values",
+      "'test.role' expected one of [admin, moderator] — received string: \"user\".",
     );
     const data = Schema.toData(schema, { role: "admin" });
     expect(data).toStrictEqual({ role: "admin" });
@@ -312,7 +318,7 @@ describe("Types", () => {
 
     // @ts-expect-error
     expect(() => Schema.toData(schema, {})).toThrowError(
-      "expected 'object' received 'undefined'",
+      "'test.color' expected an object — received undefined: undefined.",
     );
     // @ts-expect-error
     expect(() => Schema.toData(schema, { color: {} })).toThrowError(
@@ -332,7 +338,7 @@ describe("Types", () => {
         color: { tag: "hex", value: "#fff", extra: "user" },
       }),
     ).toThrowError(
-      "unknown field 'extra', tagged union may only specify 'tag' and 'value' fields",
+      "'test.color' unknown field 'extra', tagged union may only specify 'tag' and 'value' fields",
     );
     expect(() =>
       // @ts-expect-error
@@ -369,15 +375,15 @@ describe("Types", () => {
 
     // @ts-expect-error
     expect(() => Schema.toData(schema, { emailOrPhone: {} })).toThrowError(
-      "no matching variant found for union type",
+      "'milf.emailOrPhone' expected type (string | number) — received object: {}.",
     );
     // @ts-expect-error
     expect(() => Schema.toData(schema, { emailOrPhone: [] })).toThrowError(
-      "no matching variant found for union type",
+      "'milf.emailOrPhone' expected type (string | number) — received object: [].",
     );
     // @ts-expect-error
     expect(() => Schema.toData(schema, { emailOrPhone: null })).toThrowError(
-      "no matching variant found for union type",
+      "'milf.emailOrPhone' expected type (string | number) — received object: null.",
     );
 
     const data1 = Schema.toData(schema, { emailOrPhone: "test" });

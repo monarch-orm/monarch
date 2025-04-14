@@ -47,17 +47,16 @@ export function addPopulations(
     if (!options) continue;
 
     // Validate that relations exist for the schema
-    if (!opts.relations[opts.schema.name]) {
-      throw new MonarchError(`No relations found for schema '${opts.schema.name}'`);
+    if (
+      !opts.relations[opts.schema.name] ||
+      !opts.relations[opts.schema.name][field]
+    ) {
+      throw new MonarchError(
+        `No relations found for schema '${opts.schema.name}'`,
+      );
     }
 
     const relation = opts.relations[opts.schema.name][field];
-    // Validate relation exists
-    if (!relation) {
-      throw new MonarchError(
-        `No relation found for field '${field}' in schema '${opts.schema.name}'.`
-      );
-    }
 
     // Validate relation target exists
     if (!relation.target) {

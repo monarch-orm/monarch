@@ -8,7 +8,7 @@ import type {
   Pretty,
   TrueKeys,
   WithOptionalId,
-  WithRequiredId
+  WithRequiredId,
 } from "../utils/type-helpers";
 import type { AnySchema, Schema } from "./schema";
 import type { InferVirtualOutput } from "./virtuals";

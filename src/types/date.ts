@@ -17,7 +17,7 @@ export class MonarchDate extends MonarchType<Date, Date> {
 
   public after(afterDate: Date) {
     return date().extend(this, {
-      preParse: (input) => {
+      postParse: (input) => {
         if (input > afterDate) return input;
         throw new MonarchParseError(`date must be after ${afterDate}`);
       },
@@ -50,7 +50,7 @@ export class MonarchDateString extends MonarchType<string, Date> {
 
   public after(afterDate: Date) {
     return dateString().extend(this, {
-      preParse: (input) => {
+      postParse: (input) => {
         const date = new Date(input);
         if (date > afterDate) return input;
         throw new MonarchParseError(`date must be after ${afterDate}`);

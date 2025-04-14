@@ -1,7 +1,7 @@
 import type {
   BulkWriteOptions,
   Collection as MongoCollection,
-  OptionalUnlessRequiredId
+  OptionalUnlessRequiredId,
 } from "mongodb";
 import { type AnySchema, Schema } from "../../schema/schema";
 import type {
@@ -15,12 +15,12 @@ import { makeProjection } from "../utils/projection";
 import { Query, type QueryOutput } from "./base";
 
 export class InsertManyQuery<
-TSchema extends AnySchema,
-TOutput = InferSchemaOutput<TSchema>[],
-TOmit extends ["omit" | "select", keyof any] = [
-  "omit",
-  InferSchemaOmit<TSchema>,
-],
+  TSchema extends AnySchema,
+  TOutput = InferSchemaOutput<TSchema>[],
+  TOmit extends ["omit" | "select", keyof any] = [
+    "omit",
+    InferSchemaOmit<TSchema>,
+  ],
 > extends Query<TSchema, QueryOutput<TOutput, TOmit>[]> {
   private _projection: Projection<InferSchemaOutput<TSchema>>;
 
@@ -43,20 +43,19 @@ TOmit extends ["omit" | "select", keyof any] = [
   public async exec(): Promise<QueryOutput<TOutput, TOmit>[]> {
     await this._readyPromise;
     const data = this._data.map((data) => Schema.toData(this._schema, data));
-    const res = await this._collection.insertMany(
+    await this._collection.insertMany(
       data as OptionalUnlessRequiredId<InferSchemaData<TSchema>>[],
       this._options,
     );
-    // return res;
-    return Object.values(res.insertedIds).map(id => {
-      const resValue = data.find(result => result?._id === id)
-      if(!resValue) return null;
-      return Schema.fromData(
+    const result = new Array(data.length);
+    for (let i = 0; i < data.length; i++) {
+      result[i] = Schema.fromData(
         this._schema,
-        resValue,
+        data[i],
         this._projection,
         Object.keys(this._projection),
-      )
-  }) as QueryOutput<TOutput, TOmit>[];
+      );
+    }
+    return result as QueryOutput<TOutput, TOmit>[];
   }
 }

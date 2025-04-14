@@ -21,7 +21,6 @@ export class AggregationPipeline<
     return this;
   }
 
-
   public cast<O extends any[]>() {
     return this as unknown as AggregationPipeline<TSchema, O>;
   }

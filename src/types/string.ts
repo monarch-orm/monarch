@@ -25,7 +25,7 @@ export class MonarchString extends MonarchType<string, string> {
 
   public minLength(length: number) {
     return string().extend(this, {
-      preParse: (input) => {
+      postParse: (input) => {
         if (input.length < length) {
           throw new MonarchParseError(
             `string must be at least ${length} characters long`,
@@ -38,7 +38,7 @@ export class MonarchString extends MonarchType<string, string> {
 
   public maxLength(length: number) {
     return string().extend(this, {
-      preParse: (input) => {
+      postParse: (input) => {
         if (input.length > length) {
           throw new MonarchParseError(
             `string must be at most ${length} characters long`,
@@ -51,7 +51,7 @@ export class MonarchString extends MonarchType<string, string> {
 
   public length(length: number) {
     return string().extend(this, {
-      preParse: (input) => {
+      postParse: (input) => {
         if (input.length !== length) {
           throw new MonarchParseError(
             `string must be exactly ${length} characters long`,
@@ -64,7 +64,7 @@ export class MonarchString extends MonarchType<string, string> {
 
   public pattern(regex: RegExp) {
     return string().extend(this, {
-      preParse: (input) => {
+      postParse: (input) => {
         if (!regex.test(input)) {
           throw new MonarchParseError(`string must match pattern ${regex}`);
         }
@@ -89,7 +89,7 @@ export class MonarchString extends MonarchType<string, string> {
 
   public nonEmpty() {
     return string().extend(this, {
-      preParse: (input) => {
+      postParse: (input) => {
         if (input.length === 0) {
           throw new MonarchParseError("string must not be empty");
         }
@@ -100,7 +100,7 @@ export class MonarchString extends MonarchType<string, string> {
 
   public includes(searchString: string) {
     return string().extend(this, {
-      preParse: (input) => {
+      postParse: (input) => {
         if (!input.includes(searchString)) {
           throw new MonarchParseError(`string must include "${searchString}"`);
         }
@@ -111,7 +111,7 @@ export class MonarchString extends MonarchType<string, string> {
 
   public startsWith(searchString: string) {
     return string().extend(this, {
-      preParse: (input) => {
+      postParse: (input) => {
         if (!input.startsWith(searchString)) {
           throw new MonarchParseError(
             `string must start with "${searchString}"`,
@@ -124,7 +124,7 @@ export class MonarchString extends MonarchType<string, string> {
 
   public endsWith(searchString: string) {
     return string().extend(this, {
-      preParse: (input) => {
+      postParse: (input) => {
         if (!input.endsWith(searchString)) {
           throw new MonarchParseError(`string must end with "${searchString}"`);
         }

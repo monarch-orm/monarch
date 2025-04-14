@@ -20,9 +20,7 @@ export class MonarchRecord<T extends AnyMonarchType> extends MonarchType<
             parsed[key] = parser(value);
           } catch (error) {
             if (error instanceof Error) {
-              throw new MonarchParseError(
-                `field '${key}' ${error.message}asdads`,
-              );
+              throw new MonarchParseError(`field '${key}' ${error.message}`);
             }
             throw error;
           }
