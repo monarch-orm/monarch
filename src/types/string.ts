@@ -73,14 +73,6 @@ export class MonarchString extends MonarchType<string, string> {
     });
   }
 
-  public email() {
-    return this.pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
-  }
-
-  public url() {
-    return this.pattern(/^https?:\/\/[^\s$.?#].[^\s]*$/);
-  }
-
   public trim() {
     return string().extend(this, {
       postParse: (input) => input.trim(),
@@ -92,41 +84,6 @@ export class MonarchString extends MonarchType<string, string> {
       postParse: (input) => {
         if (input.length === 0) {
           throw new MonarchParseError("string must not be empty");
-        }
-        return input;
-      },
-    });
-  }
-
-  public includes(searchString: string) {
-    return string().extend(this, {
-      postParse: (input) => {
-        if (!input.includes(searchString)) {
-          throw new MonarchParseError(`string must include "${searchString}"`);
-        }
-        return input;
-      },
-    });
-  }
-
-  public startsWith(searchString: string) {
-    return string().extend(this, {
-      postParse: (input) => {
-        if (!input.startsWith(searchString)) {
-          throw new MonarchParseError(
-            `string must start with "${searchString}"`,
-          );
-        }
-        return input;
-      },
-    });
-  }
-
-  public endsWith(searchString: string) {
-    return string().extend(this, {
-      postParse: (input) => {
-        if (!input.endsWith(searchString)) {
-          throw new MonarchParseError(`string must end with "${searchString}"`);
         }
         return input;
       },
