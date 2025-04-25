@@ -1,8 +1,10 @@
 import { describe, expect, it, test, vi } from "vitest";
-import { createSchema, Schema } from "../src";
+import { Schema, createSchema } from "../src";
 import {
   array,
   boolean,
+  date,
+  dateString,
   literal,
   mixed,
   number,
@@ -386,28 +388,258 @@ describe("Types", () => {
     const data2 = Schema.toData(schema, { emailOrPhone: 42 });
     expect(data2).toStrictEqual({ emailOrPhone: 42 });
   });
-});
+  describe("string", () => {
+    test("lowercase and uppercase", () => {
+      const schema = createSchema("test", {
+        lower: string().lowercase(),
+        upper: string().uppercase(),
+      });
+      const data = Schema.toData(schema, { lower: "HELLO", upper: "hello" });
+      expect(data).toStrictEqual({ lower: "hello", upper: "HELLO" });
+    });
 
-test("mixed", () => {
-  const schema = createSchema("test", {
-    anything: mixed(),
+    test("length validations", () => {
+      const schema = createSchema("test", {
+        min: string().minLength(3),
+        max: string().maxLength(5),
+        exact: string().length(4),
+      });
+
+      expect(() =>
+        Schema.toData(schema, { min: "ab", max: "test", exact: "test" }),
+      ).toThrowError("string must be at least 3 characters long");
+      expect(() =>
+        Schema.toData(schema, { min: "test", max: "toolong", exact: "test" }),
+      ).toThrowError("string must be at most 5 characters long");
+      expect(() =>
+        Schema.toData(schema, { min: "test", max: "test", exact: "toolong" }),
+      ).toThrowError("string must be exactly 4 characters long");
+
+      const data = Schema.toData(schema, {
+        min: "abc",
+        max: "test",
+        exact: "test",
+      });
+      expect(data).toStrictEqual({ min: "abc", max: "test", exact: "test" });
+    });
+
+    test("pattern", () => {
+      const schema = createSchema("test", {
+        email: string().pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
+      });
+
+      expect(() => Schema.toData(schema, { email: "invalid" })).toThrowError(
+        "string must match pattern /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/",
+      );
+
+      const data = Schema.toData(schema, { email: "test@example.com" });
+      expect(data).toStrictEqual({ email: "test@example.com" });
+    });
+
+    test("trim", () => {
+      const schema = createSchema("test", {
+        trimmed: string().trim(),
+      });
+
+      const data = Schema.toData(schema, { trimmed: "  hello  " });
+      expect(data).toStrictEqual({ trimmed: "hello" });
+    });
+
+    test("nonEmpty", () => {
+      const schema = createSchema("test", {
+        required: string().nonEmpty(),
+      });
+
+      expect(() => Schema.toData(schema, { required: "" })).toThrowError(
+        "string must not be empty",
+      );
+
+      const data = Schema.toData(schema, { required: "hello" });
+      expect(data).toStrictEqual({ required: "hello" });
+    });
+
+    test("includes", () => {
+      const schema = createSchema("test", {
+        contains: string().includes("world"),
+      });
+
+      expect(() => Schema.toData(schema, { contains: "hello" })).toThrowError(
+        'string must include "world"',
+      );
+
+      const data = Schema.toData(schema, { contains: "hello world" });
+      expect(data).toStrictEqual({ contains: "hello world" });
+    });
   });
 
-  const data1 = Schema.toData(schema, { anything: "string" });
-  expect(data1).toStrictEqual({ anything: "string" });
+  describe("date", () => {
+    const now = new Date();
+    const past = new Date(now.getTime() - 1000 * 60 * 60 * 24 * 2); // 2 days ago
+    const future = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 2); // 2 days later
 
-  const data2 = Schema.toData(schema, { anything: 42 });
-  expect(data2).toStrictEqual({ anything: 42 });
+    test("MonarchDate", () => {
+      const schema = createSchema("test", {
+        date: date(),
+      });
 
-  const data3 = Schema.toData(schema, { anything: true });
-  expect(data3).toStrictEqual({ anything: true });
+      const validData = Schema.toData(schema, { date: now });
+      expect(validData).toStrictEqual({ date: now });
 
-  const data4 = Schema.toData(schema, { anything: { nested: "object" } });
-  expect(data4).toStrictEqual({ anything: { nested: "object" } });
+      // @ts-expect-error
+      expect(() => Schema.toData(schema, { date: "not a date" })).toThrowError(
+        "expected 'Date' received 'string'",
+      );
+      // @ts-expect-error
+      expect(() => Schema.toData(schema, { date: 123 })).toThrowError(
+        "expected 'Date' received 'number'",
+      );
+    });
 
-  const data5 = Schema.toData(schema, { anything: [1, "2", false] });
-  expect(data5).toStrictEqual({ anything: [1, "2", false] });
+    test("MonarchDateString", () => {
+      const schema = createSchema("test", {
+        date: dateString(),
+      });
 
-  const data6 = Schema.toData(schema, { anything: null });
-  expect(data6).toStrictEqual({ anything: null });
+      // Valid ISO date string should pass
+      const validData = Schema.toData(schema, { date: now.toISOString() });
+      expect(validData).toStrictEqual({ date: now });
+
+      expect(() =>
+        Schema.toData(schema, { date: "invalid date" }),
+      ).toThrowError("expected 'ISO Date string' received 'string'");
+      // @ts-expect-error
+      expect(() => Schema.toData(schema, { date: 123 })).toThrowError(
+        "expected 'ISO Date string' received 'number'",
+      );
+    });
+
+    test("MonarchDate after() and before()", () => {
+      const schema = createSchema("test", {
+        afterDate: date().after(now),
+        beforeDate: date().before(now),
+      });
+
+      expect(() =>
+        Schema.toData(schema, { afterDate: past, beforeDate: future }),
+      ).toThrowError(`date must be after ${now}`);
+      expect(() =>
+        Schema.toData(schema, { afterDate: future, beforeDate: future }),
+      ).toThrowError(`date must be before ${now.toISOString()}`);
+
+      const data = Schema.toData(schema, {
+        afterDate: future,
+        beforeDate: past,
+      });
+      expect(data).toStrictEqual({ afterDate: future, beforeDate: past });
+    });
+
+    test("MonarchDateString after() and before()", () => {
+      const schema = createSchema("test", {
+        afterDate: dateString().after(now),
+        beforeDate: dateString().before(now),
+      });
+
+      expect(() =>
+        Schema.toData(schema, {
+          afterDate: past.toISOString(),
+          beforeDate: future.toISOString(),
+        }),
+      ).toThrowError(`date must be after ${now}`);
+
+      expect(() =>
+        Schema.toData(schema, {
+          afterDate: future.toISOString(),
+          beforeDate: future.toISOString(),
+        }),
+      ).toThrowError(`date must be before ${now.toISOString()}`);
+
+      const data = Schema.toData(schema, {
+        afterDate: future.toISOString(),
+        beforeDate: past.toISOString(),
+      });
+      expect(data).toStrictEqual({
+        afterDate: future,
+        beforeDate: past,
+      });
+    });
+  });
+
+  test("mixed", () => {
+    const schema = createSchema("test", {
+      anything: mixed(),
+    });
+
+    const data1 = Schema.toData(schema, { anything: "string" });
+    expect(data1).toStrictEqual({ anything: "string" });
+
+    const data2 = Schema.toData(schema, { anything: 42 });
+    expect(data2).toStrictEqual({ anything: 42 });
+
+    const data3 = Schema.toData(schema, { anything: true });
+    expect(data3).toStrictEqual({ anything: true });
+
+    const data4 = Schema.toData(schema, { anything: { nested: "object" } });
+    expect(data4).toStrictEqual({ anything: { nested: "object" } });
+
+    const data5 = Schema.toData(schema, { anything: [1, "2", false] });
+    expect(data5).toStrictEqual({ anything: [1, "2", false] });
+
+    const data6 = Schema.toData(schema, { anything: null });
+    expect(data6).toStrictEqual({ anything: null });
+  });
+
+  describe("number", () => {
+    test("number validation", () => {
+      const schema = createSchema("test", {
+        value: number(),
+      });
+
+      const data = Schema.toData(schema, { value: 42 });
+      expect(data).toStrictEqual({ value: 42 });
+
+      // @ts-expect-error
+      expect(() => Schema.toData(schema, { value: "42" })).toThrowError(
+        "expected 'number' received 'string'",
+      );
+    });
+
+    test("min and max constraints", () => {
+      const schema = createSchema("test", {
+        min: number().min(5),
+        max: number().max(10),
+      });
+
+      expect(() => Schema.toData(schema, { min: 3, max: 8 })).toThrowError(
+        "number must be greater than or equal to 5",
+      );
+      expect(() => Schema.toData(schema, { min: 6, max: 12 })).toThrowError(
+        "number must be less than or equal to 10",
+      );
+
+      const data = Schema.toData(schema, { min: 7, max: 8 });
+      expect(data).toStrictEqual({ min: 7, max: 8 });
+    });
+
+    test("integer conversion", () => {
+      const schema = createSchema("test", {
+        value: number().integer(),
+      });
+
+      const data = Schema.toData(schema, { value: 5.7 });
+      expect(data).toStrictEqual({ value: 5 });
+    });
+
+    test("multipleOf validation", () => {
+      const schema = createSchema("test", {
+        value: number().multipleOf(3),
+      });
+
+      expect(() => Schema.toData(schema, { value: 7 })).toThrowError(
+        "number must be a multiple of 3",
+      );
+
+      const data = Schema.toData(schema, { value: 9 });
+      expect(data).toStrictEqual({ value: 9 });
+    });
+  });
 });
