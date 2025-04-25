@@ -518,4 +518,48 @@ describe("Tests for refs population", async () => {
       expect(populatedPost[0]).not.toHaveProperty("secret");
     });
   });
+
+  describe("Schema Relation Validations", () => {
+    it("should throw error when relation target schema is not initialized", async () => {
+      const UserSchema = createSchema("users", {
+        name: string(),
+        isAdmin: boolean(),
+        createdAt: date(),
+      });
+
+      // Create relations before PostSchema is defined
+      const UserSchemaRelations = createRelations(UserSchema, ({ ref }) => ({
+        posts: ref(undefined as any, { field: "_id", references: "author" }),
+      }));
+
+      const db = createDatabase(client.db(), {
+        users: UserSchema,
+        UserSchemaRelations,
+      });
+
+      // Attempt to populate undefined relation
+      await expect(async () => {
+        await db.collections.users.find().populate({ posts: true }).exec();
+      }).rejects.toThrow(
+        "Target schema not found for relation 'posts' in schema 'users'",
+      );
+    });
+
+    it("should throw error when schema has no relations defined", async () => {
+      const UserSchema = createSchema("users", {
+        name: string(),
+        isAdmin: boolean(),
+        createdAt: date(),
+      });
+
+      const db = createDatabase(client.db(), {
+        users: UserSchema,
+      });
+
+      // Attempt to populate non-existent relation
+      await expect(async () => {
+        await db.collections.users.find().populate({ posts: true }).exec();
+      }).rejects.toThrow("No relations found for schema 'users'");
+    });
+  });
 });
