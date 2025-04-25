@@ -21,10 +21,6 @@ export class AggregationPipeline<
     return this;
   }
 
-  public castStage<O extends any[]>() {
-    return this as unknown as AggregationPipeline<TSchema, O>;
-  }
-
   public cast<O extends any[]>() {
     return this as unknown as AggregationPipeline<TSchema, O>;
   }
