@@ -1,4 +1,4 @@
-import { MonarchParseError } from "../errors";
+import { FieldError } from "../errors";
 import { type AnyMonarchType, MonarchType } from "./type";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
 
@@ -18,17 +18,18 @@ export class MonarchRecord<T extends AnyMonarchType> extends MonarchType<
             const parser = MonarchType.parser(type);
             parsed[key] = parser(value);
           } catch (error) {
-            if (error instanceof MonarchParseError) {
-              throw new MonarchParseError(`field '${key}' ${error.message}'`);
+            if (error instanceof FieldError) {
+              throw new FieldError(error.message, [
+                key,
+                ...(error.fieldPath ?? []),
+              ]);
             }
             throw error;
           }
         }
         return parsed;
       }
-      throw new MonarchParseError(
-        `expected 'object' received '${typeof input}'`,
-      );
+      throw new FieldError(`expected 'object' received '${typeof input}'`);
     });
   }
 }
