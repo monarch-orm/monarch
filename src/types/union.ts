@@ -1,4 +1,4 @@
-import { MonarchParseError } from "../errors";
+import { FieldError } from "../errors";
 import { type AnyMonarchType, MonarchType } from "./type";
 import type { InferTypeUnionInput, InferTypeUnionOutput } from "./type-helpers";
 
@@ -16,9 +16,9 @@ export class MonarchUnion<
           const parser = MonarchType.parser(type);
           return parser(input);
         } catch (error) {
-          if (error instanceof MonarchParseError) {
+          if (error instanceof FieldError) {
             if (index === variants.length - 1) {
-              throw new MonarchParseError(
+              throw new FieldError(
                 `no matching variant found for union type: ${error.message}`,
               );
             }
@@ -27,7 +27,7 @@ export class MonarchUnion<
           throw error;
         }
       }
-      throw new MonarchParseError(
+      throw new FieldError(
         `expected one of union variants but received '${typeof input}'`,
       );
     });

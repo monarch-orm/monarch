@@ -1,7 +1,7 @@
 import type { Projection } from "../collection/types/query-options";
 import { detectProjection } from "../collection/utils/projection";
 import {
-  MonarchParseError,
+  FieldError,
   MonarchValidationError,
   formatValidationPath,
 } from "../errors";
@@ -63,7 +63,7 @@ export class Schema<
         if (parsed === undefined) continue;
         data[key as keyof typeof data] = parsed;
       } catch (error) {
-        if (error instanceof MonarchParseError) {
+        if (error instanceof FieldError) {
           throw new MonarchValidationError(
             error.message,
             formatValidationPath({

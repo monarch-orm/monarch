@@ -1,4 +1,4 @@
-import { MonarchParseError } from "../errors";
+import { FieldError } from "../errors";
 import { MonarchType } from "./type";
 
 export const number = () => new MonarchNumber();
@@ -7,9 +7,7 @@ export class MonarchNumber extends MonarchType<number, number> {
   constructor() {
     super((input) => {
       if (typeof input === "number") return input;
-      throw new MonarchParseError(
-        `expected 'number' received '${typeof input}'`,
-      );
+      throw new FieldError(`expected 'number' received '${typeof input}'`);
     });
   }
 
@@ -17,7 +15,7 @@ export class MonarchNumber extends MonarchType<number, number> {
     return number().extend(this, {
       preParse: (input) => {
         if (input < value) {
-          throw new MonarchParseError(
+          throw new FieldError(
             `number must be greater than or equal to ${value}`,
           );
         }
@@ -30,9 +28,7 @@ export class MonarchNumber extends MonarchType<number, number> {
     return number().extend(this, {
       preParse: (input) => {
         if (input > value) {
-          throw new MonarchParseError(
-            `number must be less than or equal to ${value}`,
-          );
+          throw new FieldError(`number must be less than or equal to ${value}`);
         }
         return input;
       },
@@ -51,7 +47,7 @@ export class MonarchNumber extends MonarchType<number, number> {
     return number().extend(this, {
       postParse: (input) => {
         if (input % value !== 0) {
-          throw new MonarchParseError(`number must be a multiple of ${value}`);
+          throw new FieldError(`number must be a multiple of ${value}`);
         }
         return input;
       },

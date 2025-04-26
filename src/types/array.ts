@@ -1,4 +1,4 @@
-import { MonarchParseError, normalizeFieldPath } from "../errors";
+import { FieldError } from "../errors";
 import { type AnyMonarchType, MonarchType } from "./type";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
 
@@ -18,10 +18,10 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<
             const parser = MonarchType.parser(type);
             parsed[index] = parser(value);
           } catch (error) {
-            if (error instanceof MonarchParseError) {
-              throw new MonarchParseError(error.message, [
+            if (error instanceof FieldError) {
+              throw new FieldError(error.message, [
                 index,
-                ...normalizeFieldPath(error.fieldPath),
+                ...(error.fieldPath ?? []),
               ]);
             }
             throw error;
@@ -29,9 +29,7 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<
         }
         return parsed;
       }
-      throw new MonarchParseError(
-        `expected 'array' received '${typeof input}'`,
-      );
+      throw new FieldError(`expected 'array' received '${typeof input}'`);
     });
   }
 }
