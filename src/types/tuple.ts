@@ -1,4 +1,4 @@
-import { MonarchParseError } from "../errors";
+import { MonarchParseError, normalizeFieldPath } from "../errors";
 import { type AnyMonarchType, MonarchType } from "./type";
 import type { InferTypeTupleInput, InferTypeTupleOutput } from "./type-helpers";
 
@@ -26,9 +26,10 @@ export class MonarchTuple<
             parsed[index] = parser(input[index]);
           } catch (error) {
             if (error instanceof MonarchParseError) {
-              throw new MonarchParseError(
-                `element at index '${index}' ${error.message}`,
-              );
+              throw new MonarchParseError(error.message, [
+                index,
+                ...normalizeFieldPath(error.fieldPath),
+              ]);
             }
             throw error;
           }

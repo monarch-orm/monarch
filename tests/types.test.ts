@@ -202,12 +202,16 @@ describe("Types", () => {
     expect(() =>
       // @ts-expect-error
       Schema.toData(schema, { permissions: { canUpdate: "yes" } }),
-    ).toThrowError("field 'canUpdate' expected 'boolean' received 'string'");
+    ).toThrowError(
+      "'test.permissions.canUpdate' expected 'boolean' received 'string'",
+    );
     // fields are validates in the order they are registered in type
     expect(() =>
       // @ts-expect-error
       Schema.toData(schema, { permissions: { role: false } }),
-    ).toThrowError("field 'canUpdate' expected 'boolean' received 'undefined'");
+    ).toThrowError(
+      "'test.permissions.canUpdate' expected 'boolean' received 'undefined'",
+    );
     // unknwon fields are rejected
     expect(() =>
       Schema.toData(schema, {
@@ -239,7 +243,7 @@ describe("Types", () => {
     expect(() =>
       // @ts-expect-error
       Schema.toData(schema, { grades: { math: "50" } }),
-    ).toThrowError("field 'math' expected 'number' received 'string'");
+    ).toThrowError("'test.grades.math' expected 'number' received 'string'");
     const data = Schema.toData(schema, { grades: { math: 50 } });
     expect(data).toStrictEqual({ grades: { math: 50 } });
   });
@@ -255,7 +259,7 @@ describe("Types", () => {
     );
     // @ts-expect-error
     expect(() => Schema.toData(schema, { items: [] })).toThrowError(
-      "element at index '0' expected 'number' received 'undefined'",
+      "'test.items.0' expected 'number' received 'undefined'",
     );
     const data = Schema.toData(schema, { items: [0, "1"] });
     expect(data).toStrictEqual({ items: [0, "1"] });
@@ -278,7 +282,7 @@ describe("Types", () => {
     expect(() => Schema.toData(schema, { items: [] })).not.toThrowError();
     // @ts-expect-error
     expect(() => Schema.toData(schema, { items: [0, "1"] })).toThrowError(
-      "element at index '1' expected 'number' received 'string'",
+      "'test.items.1' expected 'number' received 'string'",
     );
     const data = Schema.toData(schema, { items: [0, 1] });
     expect(data).toStrictEqual({ items: [0, 1] });
@@ -469,6 +473,131 @@ describe("Types", () => {
 
       const data = Schema.toData(schema, { contains: "hello world" });
       expect(data).toStrictEqual({ contains: "hello world" });
+    });
+  });
+
+  describe("error handling for nested structures", () => {
+    test("deeply nested objects", () => {
+      const schema = createSchema("test", {
+        user: object({
+          profile: object({
+            contact: object({
+              email: string().pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
+              phone: object({
+                country: string().length(2),
+                number: string().pattern(/^\d{10}$/),
+              }),
+            }),
+          }),
+        }),
+      });
+
+      expect(() =>
+        Schema.toData(schema, {
+          user: {
+            profile: {
+              contact: {
+                email: "invalid",
+                phone: { country: "USA", number: "123" },
+              },
+            },
+          },
+        }),
+      ).toThrowError(
+        "'test.user.profile.contact.email' string must match pattern /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/",
+      );
+
+      expect(() =>
+        Schema.toData(schema, {
+          user: {
+            profile: {
+              contact: {
+                email: "test@example.com",
+                phone: { country: "USA", number: "123" },
+              },
+            },
+          },
+        }),
+      ).toThrowError(
+        "'test.user.profile.contact.phone.country' string must be exactly 2 characters long",
+      );
+    });
+
+    test("array of objects", () => {
+      const schema = createSchema("test", {
+        users: array(
+          object({
+            name: string().nonEmpty(),
+            age: number().min(0),
+            contacts: array(
+              taggedUnion({
+                email: string().pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
+                phone: string().pattern(/^\d{10}$/),
+              }),
+            ),
+          }),
+        ),
+      });
+
+      expect(() =>
+        Schema.toData(schema, {
+          users: [
+            {
+              name: "John",
+              age: -1,
+              contacts: [{ tag: "email", value: "john@example.com" }],
+            },
+          ],
+        }),
+      ).toThrowError(
+        "'test.users.0.age' number must be greater than or equal to 0",
+      );
+
+      expect(() =>
+        Schema.toData(schema, {
+          users: [
+            {
+              name: "John",
+              age: 30,
+              contacts: [
+                { tag: "phone", value: "1234567890" },
+                // @ts-expect-error
+                { tag: "invalid", value: "john@example.com" },
+              ],
+            },
+          ],
+        }),
+      ).toThrowError("'test.users.0.contacts.1' unknown tag 'invalid'");
+    });
+
+    test("nested tuples", () => {
+      const schema = createSchema("test", {
+        coordinates: array(
+          tuple([
+            number()
+              .min(-90)
+              .max(90), // latitude
+            number()
+              .min(-180)
+              .max(180), // longitude
+            array(string().nonEmpty()), // tags
+          ]),
+        ),
+      });
+
+      expect(() =>
+        Schema.toData(schema, {
+          coordinates: [[91, 0, ["north"]]],
+        }),
+      ).toThrowError(
+        "'test.coordinates.0.0' number must be less than or equal to 90",
+      );
+
+      expect(() =>
+        Schema.toData(schema, {
+          coordinates: [[0, 0, [""]]],
+        }),
+      ).toThrowError("'test.coordinates.0.2.0' string must not be empty");
     });
   });
 

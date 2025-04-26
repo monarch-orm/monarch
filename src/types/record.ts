@@ -1,4 +1,4 @@
-import { MonarchParseError } from "../errors";
+import { MonarchParseError, normalizeFieldPath } from "../errors";
 import { type AnyMonarchType, MonarchType } from "./type";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
 
@@ -19,7 +19,10 @@ export class MonarchRecord<T extends AnyMonarchType> extends MonarchType<
             parsed[key] = parser(value);
           } catch (error) {
             if (error instanceof MonarchParseError) {
-              throw new MonarchParseError(`field '${key}' ${error.message}'`);
+              throw new MonarchParseError(error.message, [
+                key,
+                ...normalizeFieldPath(error.fieldPath),
+              ]);
             }
             throw error;
           }

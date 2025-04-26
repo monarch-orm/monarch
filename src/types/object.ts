@@ -1,4 +1,4 @@
-import { MonarchParseError } from "../errors";
+import { MonarchParseError, normalizeFieldPath } from "../errors";
 import { type AnyMonarchType, MonarchType } from "./type";
 import type {
   InferTypeInput,
@@ -34,7 +34,10 @@ export class MonarchObject<
             );
           } catch (error) {
             if (error instanceof MonarchParseError) {
-              throw new MonarchParseError(`field '${key}' ${error.message}'`);
+              throw new MonarchParseError(error.message, [
+                key,
+                ...normalizeFieldPath(error.fieldPath),
+              ]);
             }
             throw error;
           }
