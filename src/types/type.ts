@@ -57,6 +57,10 @@ export class MonarchType<TInput, TOutput> {
     return optional(this);
   }
 
+  public isOptional() {
+    return this.isInstanceOf(MonarchOptional);
+  }
+
   public default(defaultInput: TInput | (() => TInput)) {
     return defaulted(
       this,
