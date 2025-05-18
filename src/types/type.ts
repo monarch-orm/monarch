@@ -1,4 +1,4 @@
-import { MonarchParseError } from "../errors";
+import { FieldError } from "../errors";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
 
 export type Parser<Input, Output> = (input: Input) => Output;
@@ -57,6 +57,10 @@ export class MonarchType<TInput, TOutput> {
     return optional(this);
   }
 
+  public isOptional() {
+    return this.isInstanceOf(MonarchOptional);
+  }
+
   public default(defaultInput: TInput | (() => TInput)) {
     return defaulted(
       this,
@@ -92,7 +96,7 @@ export class MonarchType<TInput, TOutput> {
     return type(
       pipeParser(this._parser, (input) => {
         const valid = fn(input);
-        if (!valid) throw new MonarchParseError(message);
+        if (!valid) throw new FieldError(message);
         return input;
       }),
       this._updater,

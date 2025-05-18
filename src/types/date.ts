@@ -1,4 +1,4 @@
-import { MonarchParseError } from "../errors";
+import { FieldError } from "../errors";
 import { MonarchType } from "./type";
 
 export const date = () => new MonarchDate();
@@ -7,7 +7,7 @@ export class MonarchDate extends MonarchType<Date, Date> {
   constructor() {
     super((input) => {
       if (input instanceof Date) return input;
-      throw new MonarchParseError(`expected 'Date' received '${typeof input}'`);
+      throw new FieldError(`expected 'Date' received '${typeof input}'`);
     });
   }
 
@@ -15,7 +15,7 @@ export class MonarchDate extends MonarchType<Date, Date> {
     return date().extend(this, {
       preParse: (input) => {
         if (input > afterDate) return input;
-        throw new MonarchParseError(`date must be after ${afterDate}`);
+        throw new FieldError(`date must be after ${afterDate}`);
       },
     });
   }
@@ -24,7 +24,7 @@ export class MonarchDate extends MonarchType<Date, Date> {
     return date().extend(this, {
       preParse: (input) => {
         if (input > targetDate) {
-          throw new MonarchParseError(
+          throw new FieldError(
             `date must be before ${targetDate.toISOString()}`,
           );
         }
@@ -51,7 +51,7 @@ export class MonarchDateString extends MonarchType<string, Date> {
       if (typeof input === "string" && !Number.isNaN(Date.parse(input))) {
         return new Date(input);
       }
-      throw new MonarchParseError(
+      throw new FieldError(
         `expected 'ISO Date string' received '${typeof input}'`,
       );
     });
@@ -62,7 +62,7 @@ export class MonarchDateString extends MonarchType<string, Date> {
       preParse: (input) => {
         const date = new Date(input);
         if (date > afterDate) return input;
-        throw new MonarchParseError(`date must be after ${afterDate}`);
+        throw new FieldError(`date must be after ${afterDate}`);
       },
     });
   }
@@ -72,7 +72,7 @@ export class MonarchDateString extends MonarchType<string, Date> {
       preParse: (input) => {
         const date = new Date(input);
         if (date > targetDate) {
-          throw new MonarchParseError(
+          throw new FieldError(
             `date must be before ${targetDate.toISOString()}`,
           );
         }

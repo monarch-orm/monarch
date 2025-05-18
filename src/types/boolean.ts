@@ -1,4 +1,4 @@
-import { MonarchParseError } from "../errors";
+import { FieldError } from "../errors";
 import { MonarchType } from "./type";
 
 export const boolean = () => new MonarchBoolean();
@@ -7,9 +7,7 @@ export class MonarchBoolean extends MonarchType<boolean, boolean> {
   constructor() {
     super((input) => {
       if (typeof input === "boolean") return input;
-      throw new MonarchParseError(
-        `expected 'boolean' received '${typeof input}'`,
-      );
+      throw new FieldError(`expected 'boolean' received '${typeof input}'`);
     });
   }
 }
