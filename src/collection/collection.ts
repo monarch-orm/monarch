@@ -25,6 +25,7 @@ import { AggregationPipeline } from "./pipeline/aggregation";
 import { BulkWriteQuery } from "./query/bulk-write";
 import { DeleteManyQuery } from "./query/delete-many";
 import { DeleteOneQuery } from "./query/delete-one";
+import { DistinctQuery } from "./query/distinct";
 import { FindQuery } from "./query/find";
 import { FindOneQuery } from "./query/find-one";
 import { FindOneAndDeleteQuery } from "./query/find-one-and-delete";
@@ -73,6 +74,20 @@ export class Collection<
 
   public raw() {
     return this._collection;
+  }
+
+  public distinct<K extends keyof InferSchemaData<TSchema>>(
+    key: K,
+    filter: Filter<InferSchemaData<TSchema>> = {},
+  ) {
+    return new DistinctQuery<any, any, Array<InferSchemaData<TSchema>[K]>>(
+      this.schema,
+      this.relations,
+      this._collection as any,
+      this._readyPromise,
+      filter as any,
+      key as any,
+    );
   }
 
   public find(filter: Filter<InferSchemaData<TSchema>> = {}) {

@@ -303,6 +303,15 @@ describe("Query methods Tests", async () => {
     });
   });
 
+  it("gets distinct values", async () => {
+    await collections.users.insertOne(mockUsers[0]).exec();
+
+    const distinctEmails = await collections.users.distinct("age").exec();
+    // const distinctEmails = await collections.users.fakeDistinct("email");
+
+    expect(distinctEmails).not.toBe(null);
+  });
+
   it("finds one and updates", async () => {
     await collections.users.insertOne(mockUsers[0]).exec();
 
