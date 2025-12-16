@@ -67,12 +67,9 @@ describe("Tests for refs population", async () => {
         }),
       }),
     );
-    const BookSchemaRelations = createRelations(
-      BookSchema,
-      ({ one }) => ({
-        author: one(UserSchema, { field: "author", references: "_id" }),
-      }),
-    );
+    const BookSchemaRelations = createRelations(BookSchema, ({ one }) => ({
+      author: one(UserSchema, { field: "author", references: "_id" }),
+    }));
 
     // Create database collections
     return createDatabase(client.db(), {
@@ -311,12 +308,12 @@ describe("Tests for refs population", async () => {
         editor: user._id,
       })
       .exec();
-  await collections.books
-    .insertOne({
-      title: "Book 1",
-      author: user._id,
-    })
-    .exec();
+    await collections.books
+      .insertOne({
+        title: "Book 1",
+        author: user._id,
+      })
+      .exec();
 
     const populatedUser = await collections.users
       .findById(user._id)
@@ -376,15 +373,18 @@ describe("Tests for refs population", async () => {
 
     const populatedUser = await collections.users
       .findById(user._id)
-      .populate({ posts: {
-        populate: {
-          editor: {
-            populate: {
-              posts: true
-            }
-          }
-        }
-      }, books: true })
+      .populate({
+        posts: {
+          populate: {
+            editor: {
+              populate: {
+                posts: true,
+              },
+            },
+          },
+        },
+        books: true,
+      })
       .exec();
 
     expect(populatedUser).toBeTruthy();
@@ -393,7 +393,7 @@ describe("Tests for refs population", async () => {
     expect(populatedUser?.posts?.[0]?.title).toBe("Post 1");
     expect(populatedUser?.posts?.[0]?.editor?.posts).toHaveLength(1);
     expect(populatedUser?.books?.[0]?.title).toBe("Book 1");
-  })
+  });
 
   describe("Monarch Population Options", () => {
     it("should populate with limit and skip options", async () => {

@@ -107,9 +107,7 @@ export function addPopulations(
       populationPipeline.push({ $project: projection });
     }
 
-    const nextVar =
-  opts.nextVar ?? createPopulationVarGenerator();
-
+    const nextVar = opts.nextVar ?? createPopulationVarGenerator();
 
     // add nested populations to population pipeline
     const populationPopulations = _options.populate
