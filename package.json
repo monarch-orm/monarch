@@ -50,9 +50,7 @@
     "test": "vitest run"
   },
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "mongodb-memory-server"
-    ]
+    "onlyBuiltDependencies": ["mongodb-memory-server"]
   },
   "keywords": [
     "mongodb",
