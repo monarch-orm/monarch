@@ -11,3 +11,12 @@ export function mapOneOrArray<T extends Record<string, any>, U>(
   if (Array.isArray(input)) return input.map(fn);
   return fn(input);
 }
+
+export function hashString(input: string) {
+  let hash = 0;
+  for (let i = 0; i < input.length; i++) {
+    hash = (hash << 5) - hash + input.charCodeAt(i);
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(36);
+}

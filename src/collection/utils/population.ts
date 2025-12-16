@@ -6,7 +6,7 @@ import type {
   PopulationOptions,
 } from "../../relations/type-helpers";
 import { type AnySchema, Schema } from "../../schema/schema";
-import { mapOneOrArray } from "../../utils/misc";
+import { hashString, mapOneOrArray } from "../../utils/misc";
 import type { Meta } from "../types/expressions";
 import type {
   Limit,
@@ -34,12 +34,32 @@ type Populations = Record<
   }
 >;
 
+function createPopulationVarGenerator() {
+  const counts = new Map<string, number>();
+
+  return (relation: AnyRelation): string => {
+    const key = [
+      relation.relation,
+      relation.schema.name,
+      relation.schemaField,
+      relation.target.name,
+      relation.targetField,
+    ].join("_");
+
+    const base = `mn_${hashString(key)}`;
+    const count = counts.get(base) ?? 0;
+    counts.set(base, count + 1);
+    return `${base}_${count}`;
+  };
+}
+
 export function addPopulations(
   pipeline: PipelineStage<any>[],
   opts: {
     relations: Record<string, AnyRelations>;
     population: Population<any, any>;
     schema: AnySchema;
+    nextVar?: (relation: AnyRelation) => string;
   },
 ): Populations {
   const populations: Populations = {};
@@ -87,12 +107,15 @@ export function addPopulations(
       populationPipeline.push({ $project: projection });
     }
 
+    const nextVar = opts.nextVar ?? createPopulationVarGenerator();
+
     // add nested populations to population pipeline
     const populationPopulations = _options.populate
       ? addPopulations(populationPipeline, {
           population: _options.populate,
           relations: opts.relations,
           schema: relation.target,
+          nextVar,
         })
       : undefined;
 
@@ -106,6 +129,7 @@ export function addPopulations(
     const { fieldVariable } = addPopulationPipeline(pipeline, {
       relation,
       populationPipeline,
+      nextVar,
     });
 
     populations[field] = {
@@ -167,11 +191,12 @@ function addPopulationPipeline(
   opts: {
     relation: AnyRelation;
     populationPipeline: Lookup<any>["$lookup"]["pipeline"];
+    nextVar: (relation: AnyRelation) => string;
   },
 ): { fieldVariable: string } {
   const { relation } = opts;
   const collectionName = relation.target.name;
-  const fieldVariable = `mn_${relation.schemaField}_${relation.targetField}`;
+  const fieldVariable = opts.nextVar(relation);
 
   if (relation.relation === "many") {
     pipeline.push({

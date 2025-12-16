@@ -43,12 +43,18 @@ describe("Tests for refs population", async () => {
           "contributors",
           ({ contributors }) => contributors?.length ?? 0,
         ),
-        secretSize: virtual("secret", ({ secret }) => secret.length),
+        secretSize: virtual("secret", ({ secret }) => secret?.length),
       });
+
+    const BookSchema = createSchema("books", {
+      title: string(),
+      author: objectId().optional(),
+    });
 
     const UserSchemaRelations = createRelations(UserSchema, ({ one, ref }) => ({
       tutor: one(UserSchema, { field: "tutor", references: "_id" }),
       posts: ref(PostSchema, { field: "_id", references: "author" }),
+      books: ref(BookSchema, { field: "_id", references: "author" }),
     }));
     const PostSchemaRelations = createRelations(
       PostSchema,
@@ -61,12 +67,18 @@ describe("Tests for refs population", async () => {
         }),
       }),
     );
+    const BookSchemaRelations = createRelations(BookSchema, ({ one }) => ({
+      author: one(UserSchema, { field: "author", references: "_id" }),
+    }));
+
     // Create database collections
     return createDatabase(client.db(), {
       users: UserSchema,
       posts: PostSchema,
+      books: BookSchema,
       UserSchemaRelations,
       PostSchemaRelations,
+      BookSchemaRelations,
     });
   };
 
@@ -275,6 +287,112 @@ describe("Tests for refs population", async () => {
     expect(populatedPost?.author?.tutor?.name).toBe("Master Tutor");
     expect(populatedPost?.author?.posts).toHaveLength(1);
     expect(populatedPost?.author?.posts[0].title).toBe("Student's Post");
+  });
+
+  it("It should handle multiple population with same field", async () => {
+    const { collections } = setupSchemasAndCollections();
+
+    const user = await collections.users
+      .insertOne({
+        name: "Test User",
+        isAdmin: false,
+        createdAt: new Date(),
+      })
+      .exec();
+
+    await collections.posts
+      .insertOne({
+        title: "Post 1",
+        contents: "Content 1",
+        author: user._id,
+        editor: user._id,
+      })
+      .exec();
+    await collections.books
+      .insertOne({
+        title: "Book 1",
+        author: user._id,
+      })
+      .exec();
+
+    const populatedUser = await collections.users
+      .findById(user._id)
+      .populate({ posts: true, books: true })
+      .exec();
+
+    expect(populatedUser).toBeTruthy();
+    expect(populatedUser?.posts).toHaveLength(1);
+    expect(populatedUser?.books).toHaveLength(1);
+    expect(populatedUser?.posts?.[0]?.title).toBe("Post 1");
+    expect(populatedUser?.books?.[0]?.title).toBe("Book 1");
+  });
+
+  it("It should handle deep nested populations with same relation fields", async () => {
+    const { collections } = setupSchemasAndCollections();
+
+    const user = await collections.users
+      .insertOne({
+        name: "Test User",
+        isAdmin: false,
+        createdAt: new Date(),
+      })
+      .exec();
+
+    const user2 = await collections.users
+      .insertOne({
+        name: "Test User 2",
+        isAdmin: false,
+        createdAt: new Date(),
+      })
+      .exec();
+
+    await collections.posts
+      .insertOne({
+        title: "Post 1",
+        contents: "Content 1",
+        author: user._id,
+        editor: user2._id,
+      })
+      .exec();
+
+    await collections.posts
+      .insertOne({
+        title: "Post 2",
+        contents: "Content 2",
+        author: user2._id,
+        editor: user2._id,
+      })
+      .exec();
+
+    await collections.books
+      .insertOne({
+        title: "Book 1",
+        author: user._id,
+      })
+      .exec();
+
+    const populatedUser = await collections.users
+      .findById(user._id)
+      .populate({
+        posts: {
+          populate: {
+            editor: {
+              populate: {
+                posts: true,
+              },
+            },
+          },
+        },
+        books: true,
+      })
+      .exec();
+
+    expect(populatedUser).toBeTruthy();
+    expect(populatedUser?.posts).toHaveLength(1);
+    expect(populatedUser?.books).toHaveLength(1);
+    expect(populatedUser?.posts?.[0]?.title).toBe("Post 1");
+    expect(populatedUser?.posts?.[0]?.editor?.posts).toHaveLength(1);
+    expect(populatedUser?.books?.[0]?.title).toBe("Book 1");
   });
 
   describe("Monarch Population Options", () => {
