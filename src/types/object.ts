@@ -1,4 +1,4 @@
-import { MonarchParseError } from "../errors";
+import { FieldError } from "../errors";
 import { type AnyMonarchType, MonarchType } from "./type";
 import type {
   InferTypeInput,
@@ -17,7 +17,7 @@ export class MonarchObject<
       if (typeof input === "object" && input !== null) {
         for (const key of Object.keys(input)) {
           if (!(key in types)) {
-            throw new MonarchParseError(
+            throw new FieldError(
               `unknown field '${key}', object may only specify known fields`,
             );
           }
@@ -33,17 +33,18 @@ export class MonarchObject<
               input[key as keyof typeof input] as InferTypeInput<T[keyof T]>,
             );
           } catch (error) {
-            if (error instanceof MonarchParseError) {
-              throw new MonarchParseError(`field '${key}' ${error.message}'`);
+            if (error instanceof FieldError) {
+              throw new FieldError(error.message, [
+                key,
+                ...(error.fieldPath ?? []),
+              ]);
             }
             throw error;
           }
         }
         return parsed;
       }
-      throw new MonarchParseError(
-        `expected 'object' received '${typeof input}'`,
-      );
+      throw new FieldError(`expected 'object' received '${typeof input}'`);
     });
   }
 }

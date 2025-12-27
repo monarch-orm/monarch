@@ -14,7 +14,7 @@ import { tuple } from "./types/tuple";
 import { defaulted, nullable, optional } from "./types/type";
 import { union } from "./types/union";
 
-export { ObjectId } from "mongodb";
+export { MongoClient, MongoError, ObjectId } from "mongodb";
 export { Collection } from "./collection/collection";
 export {
   createClient,

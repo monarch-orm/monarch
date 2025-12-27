@@ -1,4 +1,4 @@
-import { MonarchParseError } from "../errors";
+import { FieldError } from "../errors";
 import { type AnyMonarchType, MonarchType } from "./type";
 import type { InferTypeTupleInput, InferTypeTupleOutput } from "./type-helpers";
 
@@ -15,7 +15,7 @@ export class MonarchTuple<
     super((input) => {
       if (Array.isArray(input)) {
         if (input.length > types.length) {
-          throw new MonarchParseError(
+          throw new FieldError(
             `expected array with ${types.length} elements received ${input.length} elements`,
           );
         }
@@ -25,19 +25,18 @@ export class MonarchTuple<
             const parser = MonarchType.parser(type);
             parsed[index] = parser(input[index]);
           } catch (error) {
-            if (error instanceof MonarchParseError) {
-              throw new MonarchParseError(
-                `element at index '${index}' ${error.message}`,
-              );
+            if (error instanceof FieldError) {
+              throw new FieldError(error.message, [
+                index,
+                ...(error.fieldPath ?? []),
+              ]);
             }
             throw error;
           }
         }
         return parsed;
       }
-      throw new MonarchParseError(
-        `expected 'array' received '${typeof input}'`,
-      );
+      throw new FieldError(`expected 'array' received '${typeof input}'`);
     });
   }
 }

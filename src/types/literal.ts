@@ -1,4 +1,4 @@
-import { MonarchParseError } from "../errors";
+import { FieldError } from "../errors";
 import { MonarchType } from "./type";
 
 export const literal = <T extends string | number | boolean>(...values: T[]) =>
@@ -11,7 +11,7 @@ export class MonarchLiteral<
     super((input) => {
       const _values = new Set(values);
       if (_values.has(input)) return input;
-      throw new MonarchParseError(
+      throw new FieldError(
         `unknown value '${input}', literal may only specify known values`,
       );
     });
