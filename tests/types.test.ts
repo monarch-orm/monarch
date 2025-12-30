@@ -232,7 +232,7 @@ describe("Types", () => {
     expect(() => Schema.toData(schema, {})).toThrowError("expected 'array' received 'undefined'");
     // @ts-expect-error
     expect(() => Schema.toData(schema, { items: [] })).toThrowError(
-      "element at index '0' expected 'number' received 'undefined'",
+      "expected array with 2 elements received 0 elements",
     );
     const data = Schema.toData(schema, { items: [0, "1"] });
     expect(data).toStrictEqual({ items: [0, "1"] });
@@ -473,9 +473,17 @@ describe("Types", () => {
       });
 
       expect(() => Schema.toData(schema, { afterDate: past, beforeDate: future })).toThrowError(
-        `date must be after ${now}`,
+        `date must be after ${now.toISOString()}`,
       );
       expect(() => Schema.toData(schema, { afterDate: future, beforeDate: future })).toThrowError(
+        `date must be before ${now.toISOString()}`,
+      );
+
+      // Edge case: date equal to boundary should fail
+      expect(() => Schema.toData(schema, { afterDate: now, beforeDate: past })).toThrowError(
+        `date must be after ${now.toISOString()}`,
+      );
+      expect(() => Schema.toData(schema, { afterDate: future, beforeDate: now })).toThrowError(
         `date must be before ${now.toISOString()}`,
       );
 
@@ -497,12 +505,26 @@ describe("Types", () => {
           afterDate: past.toISOString(),
           beforeDate: future.toISOString(),
         }),
-      ).toThrowError(`date must be after ${now}`);
+      ).toThrowError(`date must be after ${now.toISOString()}`);
 
       expect(() =>
         Schema.toData(schema, {
           afterDate: future.toISOString(),
           beforeDate: future.toISOString(),
+        }),
+      ).toThrowError(`date must be before ${now.toISOString()}`);
+
+      // Edge case: date equal to boundary should fail
+      expect(() =>
+        Schema.toData(schema, {
+          afterDate: now.toISOString(),
+          beforeDate: past.toISOString(),
+        }),
+      ).toThrowError(`date must be after ${now.toISOString()}`);
+      expect(() =>
+        Schema.toData(schema, {
+          afterDate: future.toISOString(),
+          beforeDate: now.toISOString(),
         }),
       ).toThrowError(`date must be before ${now.toISOString()}`);
 

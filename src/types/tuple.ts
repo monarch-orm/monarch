@@ -13,7 +13,7 @@ export class MonarchTuple<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
   constructor(types: T) {
     super((input) => {
       if (Array.isArray(input)) {
-        if (input.length > types.length) {
+        if (input.length !== types.length) {
           throw new MonarchParseError(`expected array with ${types.length} elements received ${input.length} elements`);
         }
         const parsed = [] as InferTypeTupleOutput<T>;
