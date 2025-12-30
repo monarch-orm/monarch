@@ -136,11 +136,7 @@ export type InferOutput<
     InferSchemaOutput<TDatabase["collections"][TCollection]["schema"]>,
     TDatabase["relations"],
     TCollection
-  > = {
-    omit: BoolProjection<
-      InferSchemaOmit<TDatabase["collections"][TCollection]["schema"]>
-    >;
-  },
+  > = {},
 > = Pretty<
   IdFirst<
     Merge<
@@ -148,7 +144,9 @@ export type InferOutput<
         TOptions["select"] extends BoolProjection<any> ? "select" : "omit",
         TOptions["select"] extends BoolProjection<any>
           ? keyof TOptions["select"]
-          : keyof TOptions["omit"],
+          : unknown extends TOptions["omit"]
+            ? InferSchemaOmit<TDatabase["collections"][TCollection]["schema"]>
+            : keyof TOptions["omit"],
         InferSchemaOutput<TDatabase["collections"][TCollection]["schema"]>
       >,
       TOptions["populate"] extends Population<any, any>
