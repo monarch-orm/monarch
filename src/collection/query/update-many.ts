@@ -30,9 +30,15 @@ export class UpdateManyQuery<TSchema extends AnySchema> extends Query<TSchema, U
   public async exec(): Promise<UpdateResult<InferSchemaData<TSchema>>> {
     await this._readyPromise;
     const fieldUpdates = Schema.getFieldUpdates(this._schema) as MatchKeysAndValues<InferSchemaData<TSchema>>;
-    this._update.$set = { ...fieldUpdates, ...this._update.$set };
 
-    const res = await this._collection.updateMany(this._filter, this._update, this._options);
+    // Create a new update object to avoid mutating the user's input
+    // User-provided $set values take precedence over schema field updates
+    const update = {
+      ...this._update,
+      $set: { ...fieldUpdates, ...this._update.$set },
+    };
+
+    const res = await this._collection.updateMany(this._filter, update, this._options);
     return res;
   }
 }

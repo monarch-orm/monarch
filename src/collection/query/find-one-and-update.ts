@@ -49,10 +49,16 @@ export class FindOneAndUpdateQuery<
   public async exec(): Promise<QueryOutput<TOutput, TOmit> | null> {
     await this._readyPromise;
     const fieldUpdates = Schema.getFieldUpdates(this._schema) as MatchKeysAndValues<InferSchemaData<TSchema>>;
-    this._update.$set = { ...fieldUpdates, ...this._update.$set };
+
+    // Create a new update object to avoid mutating the user's input
+    // User-provided $set values take precedence over schema field updates
+    const update = {
+      ...this._update,
+      $set: { ...fieldUpdates, ...this._update.$set },
+    };
 
     const extras = addExtraInputsToProjection(this._projection, this._schema.options.virtuals);
-    const res = await this._collection.findOneAndUpdate(this._filter, this._update, {
+    const res = await this._collection.findOneAndUpdate(this._filter, update, {
       ...this._options,
       projection: this._projection,
     });

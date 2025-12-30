@@ -85,6 +85,11 @@ export class Schema<
     return output;
   }
 
+  /**
+   * Get field updates for all top-level schema fields that have onUpdate configured.
+   *
+   * NOTE: Only top-level schema fields are processed. Nested fields within objects or arrays are not included.
+   */
   public static getFieldUpdates<T extends AnySchema>(schema: T) {
     return schema.getFieldUpdates();
   }

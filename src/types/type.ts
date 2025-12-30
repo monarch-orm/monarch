@@ -52,6 +52,13 @@ export class MonarchType<TInput, TOutput> {
     return defaulted(this, defaultInput as InferTypeInput<this> | (() => InferTypeInput<this>));
   }
 
+  /**
+   * Auto-update field on every update operation.
+   *
+   * NOTE: onUpdate only works on top-level schema fields. It does not work on nested fields within objects or array elements.
+   *
+   * @param updateFn function that returns the new value for this field on update operations.
+   */
   public onUpdate(updateFn: () => TInput) {
     return type(this._parser, pipeParser(updateFn, this._parser));
   }
