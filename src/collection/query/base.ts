@@ -15,23 +15,14 @@ export abstract class Query<TSchema extends AnySchema, TOutput> {
 
   // biome-ignore lint/suspicious/noThenProperty: We need automatic promise resolution
   then<TResult1 = TOutput, TResult2 = never>(
-    onfulfilled?:
-      | ((value: TOutput) => TResult1 | PromiseLike<TResult1>)
-      | undefined
-      | null,
-    onrejected?:
-      | ((reason: any) => TResult2 | PromiseLike<TResult2>)
-      | undefined
-      | null,
+    onfulfilled?: ((value: TOutput) => TResult1 | PromiseLike<TResult1>) | undefined | null,
+    onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null,
   ): Promise<TResult1 | TResult2> {
     return this.exec().then(onfulfilled, onrejected);
   }
 
   catch<TResult = never>(
-    onrejected?:
-      | ((reason: any) => TResult | PromiseLike<TResult>)
-      | undefined
-      | null,
+    onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null,
   ): Promise<TOutput | TResult> {
     return this.exec().catch(onrejected);
   }
@@ -45,6 +36,4 @@ export type QueryOutput<
   TOutput,
   TOmit extends ["omit" | "select", keyof any] = ["omit", never],
   TPopulate = {},
-> = Pretty<
-  IdFirst<Merge<WithProjection<TOmit[0], TOmit[1], TOutput>, TPopulate>>
->;
+> = Pretty<IdFirst<Merge<WithProjection<TOmit[0], TOmit[1], TOutput>, TPopulate>>>;

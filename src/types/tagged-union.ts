@@ -1,17 +1,10 @@
 import { MonarchParseError } from "../errors";
 import { type AnyMonarchType, MonarchType } from "./type";
-import type {
-  InferTypeTaggedUnionInput,
-  InferTypeTaggedUnionOutput,
-} from "./type-helpers";
+import type { InferTypeTaggedUnionInput, InferTypeTaggedUnionOutput } from "./type-helpers";
 
-export const taggedUnion = <T extends Record<string, AnyMonarchType>>(
-  variants: T,
-) => new MonarchTaggedUnion(variants);
+export const taggedUnion = <T extends Record<string, AnyMonarchType>>(variants: T) => new MonarchTaggedUnion(variants);
 
-export class MonarchTaggedUnion<
-  T extends Record<string, AnyMonarchType>,
-> extends MonarchType<
+export class MonarchTaggedUnion<T extends Record<string, AnyMonarchType>> extends MonarchType<
   InferTypeTaggedUnionInput<T>,
   InferTypeTaggedUnionOutput<T>
 > {
@@ -42,16 +35,12 @@ export class MonarchTaggedUnion<
           return { tag: input.tag, value: parser(input.value) };
         } catch (error) {
           if (error instanceof MonarchParseError) {
-            throw new MonarchParseError(
-              `invalid value for tag '${input.tag.toString()}' ${error.message}'`,
-            );
+            throw new MonarchParseError(`invalid value for tag '${input.tag.toString()}' ${error.message}'`);
           }
           throw error;
         }
       }
-      throw new MonarchParseError(
-        `expected 'object' received '${typeof input}'`,
-      );
+      throw new MonarchParseError(`expected 'object' received '${typeof input}'`);
     });
   }
 }

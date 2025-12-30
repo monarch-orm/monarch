@@ -1,17 +1,9 @@
-import type {
-  AnyBulkWriteOperation,
-  BulkWriteOptions,
-  BulkWriteResult,
-  Collection as MongoCollection,
-} from "mongodb";
+import type { AnyBulkWriteOperation, BulkWriteOptions, BulkWriteResult, Collection as MongoCollection } from "mongodb";
 import type { AnySchema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";
 import { Query } from "./base";
 
-export class BulkWriteQuery<TSchema extends AnySchema> extends Query<
-  TSchema,
-  BulkWriteResult
-> {
+export class BulkWriteQuery<TSchema extends AnySchema> extends Query<TSchema, BulkWriteResult> {
   constructor(
     protected _schema: TSchema,
     protected _collection: MongoCollection<InferSchemaData<TSchema>>,

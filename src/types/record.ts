@@ -2,8 +2,7 @@ import { MonarchParseError } from "../errors";
 import { type AnyMonarchType, MonarchType } from "./type";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
 
-export const record = <T extends AnyMonarchType>(type: T) =>
-  new MonarchRecord(type);
+export const record = <T extends AnyMonarchType>(type: T) => new MonarchRecord(type);
 
 export class MonarchRecord<T extends AnyMonarchType> extends MonarchType<
   Record<string, InferTypeInput<T>>,
@@ -26,9 +25,7 @@ export class MonarchRecord<T extends AnyMonarchType> extends MonarchType<
         }
         return parsed;
       }
-      throw new MonarchParseError(
-        `expected 'object' received '${typeof input}'`,
-      );
+      throw new MonarchParseError(`expected 'object' received '${typeof input}'`);
     });
   }
 }

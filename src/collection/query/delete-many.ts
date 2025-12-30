@@ -1,17 +1,9 @@
-import type {
-  DeleteOptions,
-  DeleteResult,
-  Filter,
-  Collection as MongoCollection,
-} from "mongodb";
+import type { DeleteOptions, DeleteResult, Filter, Collection as MongoCollection } from "mongodb";
 import type { AnySchema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";
 import { Query } from "./base";
 
-export class DeleteManyQuery<TSchema extends AnySchema> extends Query<
-  TSchema,
-  DeleteResult
-> {
+export class DeleteManyQuery<TSchema extends AnySchema> extends Query<TSchema, DeleteResult> {
   constructor(
     protected _schema: TSchema,
     protected _collection: MongoCollection<InferSchemaData<TSchema>>,

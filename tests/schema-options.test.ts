@@ -106,9 +106,7 @@ describe("Schema options", async () => {
         isAdmin: true,
       })
       .virtuals({
-        role: virtual("isAdmin", ({ isAdmin }) =>
-          isAdmin !== undefined ? "known" : "unknown",
-        ),
+        role: virtual("isAdmin", ({ isAdmin }) => (isAdmin !== undefined ? "known" : "unknown")),
       });
     const db = createDatabase(client.db(), { users: schema });
     const res = await db.collections.users
@@ -131,19 +129,13 @@ describe("Schema options", async () => {
       age: 0,
       role: "known",
     });
-    const doc2 = await db.collections.users
-      .findOne({ _id: res._id })
-      .omit({ age: true, isAdmin: true })
-      .exec();
+    const doc2 = await db.collections.users.findOne({ _id: res._id }).omit({ age: true, isAdmin: true }).exec();
     expect(doc2).toStrictEqual({
       _id: res._id,
       name: "tom",
       role: "known",
     });
-    const doc3 = await db.collections.users
-      .findOne({ _id: res._id })
-      .select({ role: true })
-      .exec();
+    const doc3 = await db.collections.users.findOne({ _id: res._id }).select({ role: true }).exec();
     expect(doc3).toStrictEqual({
       _id: res._id,
       role: "known",

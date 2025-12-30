@@ -4,12 +4,7 @@ import { objectId } from "../types/objectId";
 import { type AnyMonarchType, MonarchType } from "../types/type";
 import type { Pretty, WithOptionalId } from "../utils/type-helpers";
 import type { SchemaIndexes } from "./indexes";
-import type {
-  InferSchemaData,
-  InferSchemaInput,
-  InferSchemaOutput,
-  InferSchemaTypes,
-} from "./type-helpers";
+import type { InferSchemaData, InferSchemaInput, InferSchemaOutput, InferSchemaTypes } from "./type-helpers";
 import type { SchemaVirtuals, Virtual } from "./virtuals";
 
 type SchemaOmit<TTypes extends Record<string, AnyMonarchType>> = {
@@ -41,10 +36,7 @@ export class Schema<
     return schema._types;
   }
 
-  public static toData<T extends AnySchema>(
-    schema: T,
-    data: InferSchemaInput<T>,
-  ) {
+  public static toData<T extends AnySchema>(schema: T, data: InferSchemaInput<T>) {
     return schema.toData(data);
   }
   private toData(input: InferSchemaInput<this>): InferSchemaData<this> {
@@ -146,9 +138,9 @@ export class Schema<
   }
 }
 
-export function createSchema<
-  TName extends string,
-  TTypes extends Record<string, AnyMonarchType>,
->(name: TName, types: TTypes): Schema<TName, TTypes, {}, {}> {
+export function createSchema<TName extends string, TTypes extends Record<string, AnyMonarchType>>(
+  name: TName,
+  types: TTypes,
+): Schema<TName, TTypes, {}, {}> {
   return new Schema(name, types, {});
 }

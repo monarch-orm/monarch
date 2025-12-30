@@ -1,26 +1,13 @@
 import type { Sort as MongoSort } from "mongodb";
 import { MonarchError } from "../../errors";
 import type { AnyRelation, AnyRelations } from "../../relations/relations";
-import type {
-  Population,
-  PopulationOptions,
-} from "../../relations/type-helpers";
+import type { Population, PopulationOptions } from "../../relations/type-helpers";
 import { type AnySchema, Schema } from "../../schema/schema";
 import { hashString, mapOneOrArray } from "../../utils/misc";
 import type { Meta } from "../types/expressions";
-import type {
-  Limit,
-  Lookup,
-  PipelineStage,
-  Skip,
-  Sort,
-} from "../types/pipeline-stage";
+import type { Limit, Lookup, PipelineStage, Skip, Sort } from "../types/pipeline-stage";
 import type { Projection } from "../types/query-options";
-import {
-  addExtraInputsToProjection,
-  makePopulationProjection,
-  makeProjection,
-} from "./projection";
+import { addExtraInputsToProjection, makePopulationProjection, makeProjection } from "./projection";
 
 type Populations = Record<
   string,
@@ -66,17 +53,13 @@ export function addPopulations(
   for (const [field, options] of Object.entries(opts.population)) {
     if (!options) continue;
 
-    // Validate that relations exist for the schema
-    if (
-      !opts.relations[opts.schema.name] ||
-      !opts.relations[opts.schema.name][field]
-    ) {
-      throw new MonarchError(
-        `No relations found for schema '${opts.schema.name}'`,
-      );
-    }
+    const relations = opts.relations[opts.schema.name];
+    const relation = relations?.[field];
 
-    const relation = opts.relations[opts.schema.name][field];
+    // Validate that relations exist for the schema
+    if (!relations || !relation) {
+      throw new MonarchError(`No relations found for schema '${opts.schema.name}'`);
+    }
 
     // Validate relation target exists
     if (!relation.target) {
@@ -85,20 +68,14 @@ export function addPopulations(
         Ensure all schemas are initialized before defining their relations.`);
     }
 
-    const _options =
-      options === true ? {} : (options as PopulationOptions<any, any, any>);
+    const _options = options === true ? {} : (options as PopulationOptions<any, any, any>);
 
     // get population projection or fallback to schema omit projection
     const projection =
-      makePopulationProjection(_options) ??
-      makeProjection("omit", relation.target.options?.omit ?? {});
+      makePopulationProjection(_options) ?? makeProjection("omit", relation.target.options?.omit ?? {});
 
     // ensure required fields are in projection
-    const extras = addExtraInputsToProjection(
-      projection,
-      relation.target.options?.virtuals,
-      _options.populate,
-    );
+    const extras = addExtraInputsToProjection(projection, relation.target.options?.virtuals, _options.populate);
 
     // create pipeline for this poulation
     const populationPipeline: Lookup<any>["$lookup"]["pipeline"] = [];
@@ -151,33 +128,20 @@ export function expandPopulations(opts: {
   schema: AnySchema;
   doc: any;
 }) {
-  const populatedDoc = Schema.fromData(
-    opts.schema,
-    opts.doc,
-    opts.projection,
-    opts.extras,
-  );
+  const populatedDoc = Schema.fromData(opts.schema, opts.doc, opts.projection, opts.extras);
   for (const [key, population] of Object.entries(opts.populations)) {
-    populatedDoc[key] = mapOneOrArray(
-      opts.doc[population.fieldVariable],
-      (doc) => {
-        if (population.populations) {
-          return expandPopulations({
-            populations: population.populations,
-            projection: population.projection,
-            extras: population.extras,
-            schema: population.relation.target,
-            doc,
-          });
-        }
-        return Schema.fromData(
-          population.relation.target,
+    populatedDoc[key] = mapOneOrArray(opts.doc[population.fieldVariable], (doc) => {
+      if (population.populations) {
+        return expandPopulations({
+          populations: population.populations,
+          projection: population.projection,
+          extras: population.extras,
+          schema: population.relation.target,
           doc,
-          population.projection,
-          population.extras,
-        );
-      },
-    );
+        });
+      }
+      return Schema.fromData(population.relation.target, doc, population.projection, population.extras);
+    });
     delete populatedDoc[population.fieldVariable];
   }
   return populatedDoc;
@@ -291,19 +255,14 @@ type MetaOptions = {
   limit?: Limit["$limit"];
 };
 
-export function addPipelineMetas(
-  pipeline: PipelineStage<any>[],
-  options: MetaOptions,
-) {
+export function addPipelineMetas(pipeline: PipelineStage<any>[], options: MetaOptions) {
   if (options.sort) pipeline.push({ $sort: options.sort });
   if (options.skip) pipeline.push({ $skip: options.skip });
   if (options.limit) pipeline.push({ $limit: options.limit });
 }
 
 // TODO: handle all MongoSort variants
-export function getSortDirection(
-  order?: MongoSort,
-): Record<string, 1 | -1 | Meta> | undefined {
+export function getSortDirection(order?: MongoSort): Record<string, 1 | -1 | Meta> | undefined {
   // Handle Record<string, SortDirection>
   const sortDirections: Record<string, 1 | -1 | Meta> = {};
   if (Array.isArray(order)) {

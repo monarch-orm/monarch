@@ -1,29 +1,13 @@
 import { MongoClient, type Db, type MongoClientOptions } from "mongodb";
 import { version } from "../package.json";
 import { Collection } from "./collection/collection";
-import type {
-  BoolProjection,
-  WithProjection,
-} from "./collection/types/query-options";
+import type { BoolProjection, WithProjection } from "./collection/types/query-options";
 import { MonarchError } from "./errors";
 import { Relations, type AnyRelations } from "./relations/relations";
-import type {
-  InferRelationObjectPopulation,
-  Population,
-  PopulationBaseOptions,
-} from "./relations/type-helpers";
+import type { InferRelationObjectPopulation, Population, PopulationBaseOptions } from "./relations/type-helpers";
 import type { AnySchema } from "./schema/schema";
-import type {
-  InferSchemaInput,
-  InferSchemaOmit,
-  InferSchemaOutput,
-} from "./schema/type-helpers";
-import type {
-  ExtractObject,
-  IdFirst,
-  Merge,
-  Pretty,
-} from "./utils/type-helpers";
+import type { InferSchemaInput, InferSchemaOmit, InferSchemaOutput } from "./schema/type-helpers";
+import type { ExtractObject, IdFirst, Merge, Pretty } from "./utils/type-helpers";
 
 export function createClient(uri: string, options: MongoClientOptions = {}) {
   if (!options.driverInfo) {
@@ -57,9 +41,7 @@ export class Database<
     const _collectionNames = new Set<string>();
     for (const [key, schema] of Object.entries(schemas)) {
       if (_collectionNames.has(schema.name)) {
-        throw new MonarchError(
-          `Schema with name '${schema.name}' already exists.`,
-        );
+        throw new MonarchError(`Schema with name '${schema.name}' already exists.`);
       }
       _collectionNames.add(schema.name);
       _collections[key as keyof typeof _collections] = new Collection(
@@ -74,14 +56,8 @@ export class Database<
     this.listCollections = this.listCollections.bind(this);
   }
 
-  public use<S extends AnySchema>(
-    schema: S,
-  ): Collection<S, DbRelations<TRelations>> {
-    return new Collection(
-      this.db,
-      schema,
-      this.relations[schema.name as keyof DbRelations<TRelations>],
-    );
+  public use<S extends AnySchema>(schema: S): Collection<S, DbRelations<TRelations>> {
+    return new Collection(this.db, schema, this.relations[schema.name as keyof DbRelations<TRelations>]);
   }
 
   public listCollections() {
@@ -89,35 +65,25 @@ export class Database<
   }
 }
 
-export function createDatabase<
-  T extends Record<string, AnySchema | Relations<any, any>>,
->(
+export function createDatabase<T extends Record<string, AnySchema | Relations<any, any>>>(
   db: Db,
   schemas: T,
-): Database<
-  ExtractObject<T, AnySchema>,
-  ExtractObject<T, Relations<any, any>>
-> {
+): Database<ExtractObject<T, AnySchema>, ExtractObject<T, Relations<any, any>>> {
   const collections = {} as ExtractObject<T, AnySchema>;
   const relations = {} as ExtractObject<T, Relations<any, any>>;
 
   for (const [key, schema] of Object.entries(schemas)) {
     if (schema instanceof Relations) {
-      relations[key as keyof typeof relations] =
-        schema as (typeof relations)[keyof typeof relations];
+      relations[key as keyof typeof relations] = schema as (typeof relations)[keyof typeof relations];
     } else {
-      collections[key as keyof typeof collections] =
-        schema as (typeof collections)[keyof typeof collections];
+      collections[key as keyof typeof collections] = schema as (typeof collections)[keyof typeof collections];
     }
   }
 
   return new Database(db, collections, relations);
 }
 
-type DbCollections<
-  TSchemas extends Record<string, AnySchema>,
-  TRelations extends Record<string, AnyRelations>,
-> = {
+type DbCollections<TSchemas extends Record<string, AnySchema>, TRelations extends Record<string, AnyRelations>> = {
   [K in keyof TSchemas]: Collection<TSchemas[K], TRelations>;
 } & {};
 type DbRelations<TRelations extends Record<string, Relations<any, any>>> = {
@@ -150,11 +116,7 @@ export type InferOutput<
         InferSchemaOutput<TDatabase["collections"][TCollection]["schema"]>
       >,
       TOptions["populate"] extends Population<any, any>
-        ? InferRelationObjectPopulation<
-            TDatabase["relations"],
-            TCollection,
-            TOptions["populate"]
-          >
+        ? InferRelationObjectPopulation<TDatabase["relations"], TCollection, TOptions["populate"]>
         : {}
     >
   >

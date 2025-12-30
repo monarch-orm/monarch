@@ -1,34 +1,13 @@
-import type {
-  AbstractCursor,
-  Filter,
-  FindOptions,
-  Collection as MongoCollection,
-  Sort as MongoSort,
-} from "mongodb";
+import type { AbstractCursor, Filter, FindOptions, Collection as MongoCollection, Sort as MongoSort } from "mongodb";
 import type { AnyRelations } from "../../relations/relations";
-import type {
-  InferRelationObjectPopulation,
-  Population,
-} from "../../relations/type-helpers";
+import type { InferRelationObjectPopulation, Population } from "../../relations/type-helpers";
 import { type AnySchema, Schema } from "../../schema/schema";
-import type {
-  InferSchemaData,
-  InferSchemaOmit,
-  InferSchemaOutput,
-} from "../../schema/type-helpers";
+import type { InferSchemaData, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
 import type { TrueKeys } from "../../utils/type-helpers";
 import type { PipelineStage } from "../types/pipeline-stage";
 import type { BoolProjection, Projection, Sort } from "../types/query-options";
-import {
-  addPipelineMetas,
-  addPopulations,
-  expandPopulations,
-  getSortDirection,
-} from "../utils/population";
-import {
-  addExtraInputsToProjection,
-  makeProjection,
-} from "../utils/projection";
+import { addPipelineMetas, addPopulations, expandPopulations, getSortDirection } from "../utils/population";
+import { addExtraInputsToProjection, makeProjection } from "../utils/projection";
 import { Query, type QueryOutput } from "./base";
 
 export class FindQuery<
@@ -36,10 +15,7 @@ export class FindQuery<
   TDbRelations extends Record<string, AnyRelations>,
   TPopulate extends Record<string, any> = {},
   TOutput = InferSchemaOutput<TSchema>,
-  TOmit extends ["omit" | "select", keyof any] = [
-    "omit",
-    InferSchemaOmit<TSchema>,
-  ],
+  TOmit extends ["omit" | "select", keyof any] = ["omit", InferSchemaOmit<TSchema>],
 > extends Query<TSchema, QueryOutput<TOutput, TOmit, TPopulate>[]> {
   private _projection: Projection<InferSchemaOutput<TSchema>>;
   private _population: Population<TDbRelations, TSchema["name"]> = {};
@@ -76,35 +52,17 @@ export class FindQuery<
     return this;
   }
 
-  public omit<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(
-    projection: TProjection,
-  ) {
+  public omit<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
     this._projection = makeProjection("omit", projection);
-    return this as FindQuery<
-      TSchema,
-      TDbRelations,
-      TPopulate,
-      TOutput,
-      ["omit", TrueKeys<TProjection>]
-    >;
+    return this as FindQuery<TSchema, TDbRelations, TPopulate, TOutput, ["omit", TrueKeys<TProjection>]>;
   }
 
-  public select<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(
-    projection: TProjection,
-  ) {
+  public select<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
     this._projection = makeProjection("select", projection);
-    return this as FindQuery<
-      TSchema,
-      TDbRelations,
-      TPopulate,
-      TOutput,
-      ["select", TrueKeys<TProjection>]
-    >;
+    return this as FindQuery<TSchema, TDbRelations, TPopulate, TOutput, ["select", TrueKeys<TProjection>]>;
   }
 
-  public populate<
-    TPopulation extends Population<TDbRelations, TSchema["name"]>,
-  >(population: TPopulation) {
+  public populate<TPopulation extends Population<TDbRelations, TSchema["name"]>>(population: TPopulation) {
     this._population = population;
     return this as FindQuery<
       TSchema,
@@ -115,9 +73,7 @@ export class FindQuery<
     >;
   }
 
-  public async cursor(): Promise<
-    AbstractCursor<QueryOutput<TOutput, TOmit, TPopulate>>
-  > {
+  public async cursor(): Promise<AbstractCursor<QueryOutput<TOutput, TOmit, TPopulate>>> {
     await this._readyPromise;
     if (Object.keys(this._population).length) {
       return this._execWithPopulate();
@@ -129,39 +85,27 @@ export class FindQuery<
     return (await this.cursor()).toArray();
   }
 
-  private _execWithoutPopulate(): AbstractCursor<
-    QueryOutput<TOutput, TOmit, TPopulate>
-  > {
-    const extras = addExtraInputsToProjection(
-      this._projection,
-      this._schema.options.virtuals,
-    );
+  private _execWithoutPopulate(): AbstractCursor<QueryOutput<TOutput, TOmit, TPopulate>> {
+    const extras = addExtraInputsToProjection(this._projection, this._schema.options.virtuals);
     const res = this._collection
       .find(this._filter, { ...this._options, projection: this._projection })
       .map(
         (doc) =>
-          Schema.fromData(
-            this._schema,
-            doc as InferSchemaData<TSchema>,
-            this._projection,
-            extras,
-          ) as QueryOutput<TOutput, TOmit, TPopulate>,
+          Schema.fromData(this._schema, doc as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
+            TOutput,
+            TOmit,
+            TPopulate
+          >,
       );
     return res;
   }
 
-  private _execWithPopulate(): AbstractCursor<
-    QueryOutput<TOutput, TOmit, TPopulate>
-  > {
+  private _execWithPopulate(): AbstractCursor<QueryOutput<TOutput, TOmit, TPopulate>> {
     const pipeline: PipelineStage<InferSchemaOutput<TSchema>>[] = [
       // @ts-ignore
       { $match: this._filter },
     ];
-    const extras = addExtraInputsToProjection(
-      this._projection,
-      this._schema.options.virtuals,
-      this._population,
-    );
+    const extras = addExtraInputsToProjection(this._projection, this._schema.options.virtuals, this._population);
     if (Object.keys(this._projection).length) {
       // @ts-ignore
       pipeline.push({ $project: this._projection });

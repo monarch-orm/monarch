@@ -1,14 +1,8 @@
-import type {
-  Population,
-  PopulationOptions,
-} from "../../relations/type-helpers";
+import type { Population, PopulationOptions } from "../../relations/type-helpers";
 import type { Virtual } from "../../schema/virtuals";
 import type { BoolProjection, Projection } from "../types/query-options";
 
-export function makeProjection<T>(
-  type: "omit" | "select",
-  projection: BoolProjection<T>,
-) {
+export function makeProjection<T>(type: "omit" | "select", projection: BoolProjection<T>) {
   const _projection: Projection<T> = {};
   for (const key of Object.keys(projection) as (keyof T)[]) {
     if (projection[key]) _projection[key] = type === "omit" ? 0 : 1;
@@ -16,9 +10,7 @@ export function makeProjection<T>(
   return _projection;
 }
 
-export function makePopulationProjection<T>(
-  options: PopulationOptions<T, any, any>,
-) {
+export function makePopulationProjection<T>(options: PopulationOptions<T, any, any>) {
   if (options.omit) return makeProjection("omit", options.omit);
   if (options.select) return makeProjection("select", options.select);
   return null;

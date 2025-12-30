@@ -6,11 +6,7 @@ export type Projection<T> = {
 export type BoolProjection<T> = {
   [K in keyof T]?: true;
 };
-export type WithProjection<
-  Type extends "omit" | "select",
-  Keys extends keyof any,
-  T,
-> = [Keys] extends [never]
+export type WithProjection<Type extends "omit" | "select", Keys extends keyof any, T> = [Keys] extends [never]
   ? T
   : Type extends "omit"
     ? {

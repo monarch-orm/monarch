@@ -26,10 +26,7 @@ export class Relations<TName extends string, TRelations extends AnyRelations> {
   ) {}
 }
 
-export function createRelations<
-  TSchema extends AnySchema,
-  TRelations extends Record<string, AnyRelation>,
->(
+export function createRelations<TSchema extends AnySchema, TRelations extends Record<string, AnyRelation>>(
   schema: TSchema,
   relations: (relation: CreateRelation<TSchema>) => TRelations,
 ) {
@@ -70,10 +67,7 @@ type One<TSchema extends AnySchema> = RelationFactory<"one", TSchema>;
 type Many<TSchema extends AnySchema> = RelationFactory<"many", TSchema>;
 type Ref<TSchema extends AnySchema> = RelationFactory<"ref", TSchema>;
 
-type RelationFactory<
-  TRelation extends "one" | "many" | "ref",
-  TSchema extends AnySchema,
-> = <
+type RelationFactory<TRelation extends "one" | "many" | "ref", TSchema extends AnySchema> = <
   TTarget extends AnySchema,
   TSchemaField extends SchemaRelatableField<TSchema, TRelation>,
   TTargetField extends SchemaRelatableField<TTarget, undefined>,

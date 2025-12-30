@@ -39,10 +39,7 @@ describe("Tests for refs population", async () => {
     })
       .omit({ secret: true })
       .virtuals({
-        contributorsCount: virtual(
-          "contributors",
-          ({ contributors }) => contributors?.length ?? 0,
-        ),
+        contributorsCount: virtual("contributors", ({ contributors }) => contributors?.length ?? 0),
         secretSize: virtual("secret", ({ secret }) => secret?.length),
       });
 
@@ -56,17 +53,14 @@ describe("Tests for refs population", async () => {
       posts: ref(PostSchema, { field: "_id", references: "author" }),
       books: ref(BookSchema, { field: "_id", references: "author" }),
     }));
-    const PostSchemaRelations = createRelations(
-      PostSchema,
-      ({ one, many }) => ({
-        author: one(UserSchema, { field: "author", references: "_id" }),
-        editor: one(UserSchema, { field: "editor", references: "_id" }),
-        contributors: many(UserSchema, {
-          field: "contributors",
-          references: "_id",
-        }),
+    const PostSchemaRelations = createRelations(PostSchema, ({ one, many }) => ({
+      author: one(UserSchema, { field: "author", references: "_id" }),
+      editor: one(UserSchema, { field: "editor", references: "_id" }),
+      contributors: many(UserSchema, {
+        field: "contributors",
+        references: "_id",
       }),
-    );
+    }));
     const BookSchemaRelations = createRelations(BookSchema, ({ one }) => ({
       author: one(UserSchema, { field: "author", references: "_id" }),
     }));
@@ -102,10 +96,7 @@ describe("Tests for refs population", async () => {
       })
       .exec();
 
-    const populatedUser2 = await collections.users
-      .findById(user2._id)
-      .populate({ tutor: true })
-      .exec();
+    const populatedUser2 = await collections.users.findById(user2._id).populate({ tutor: true }).exec();
 
     expect(populatedUser2).toStrictEqual({
       ...user2,
@@ -210,10 +201,7 @@ describe("Tests for refs population", async () => {
       .exec();
 
     // Fetch and populate posts for all users using find
-    const populatedUsers = await collections.users
-      .find()
-      .populate({ posts: true, tutor: true })
-      .exec();
+    const populatedUsers = await collections.users.find().populate({ posts: true, tutor: true }).exec();
 
     expect(populatedUsers.length).toBe(2);
     expect(populatedUsers[0].posts.length).toBe(2);
@@ -315,10 +303,7 @@ describe("Tests for refs population", async () => {
       })
       .exec();
 
-    const populatedUser = await collections.users
-      .findById(user._id)
-      .populate({ posts: true, books: true })
-      .exec();
+    const populatedUser = await collections.users.findById(user._id).populate({ posts: true, books: true }).exec();
 
     expect(populatedUser).toBeTruthy();
     expect(populatedUser?.posts).toHaveLength(1);
@@ -658,9 +643,7 @@ describe("Tests for refs population", async () => {
       // Attempt to populate undefined relation
       await expect(async () => {
         await db.collections.users.find().populate({ posts: true }).exec();
-      }).rejects.toThrow(
-        "Target schema not found for relation 'posts' in schema 'users'",
-      );
+      }).rejects.toThrow("Target schema not found for relation 'posts' in schema 'users'");
     });
 
     it("should throw error when schema has no relations defined", async () => {
