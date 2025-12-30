@@ -1,5 +1,11 @@
 # monarch-orm
 
+## 0.8.2
+
+### Patch Changes
+
+- 9addbcc: fix build
+
 ## 0.8.1
 
 ### Patch Changes
@@ -74,7 +80,6 @@
 ### Patch Changes
 
 - 3549240: Fix populate method behavior in different edgecases
-
   - Improve handling of different reference types in populate function
   - Implement projection handling
   - Update schema definitions for optional fields
