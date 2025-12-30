@@ -39,14 +39,9 @@ describe("Types", () => {
     const schema = createSchema("test", {
       name: string()
         .uppercase() // should have made everything uppercase
-        .validate(
-          (input) => input.toUpperCase() === input,
-          "String is not in all caps",
-        ),
+        .validate((input) => input.toUpperCase() === input, "String is not in all caps"),
     });
-    expect(() =>
-      Schema.toData(schema, { name: "somename" }),
-    ).not.toThrowError();
+    expect(() => Schema.toData(schema, { name: "somename" })).not.toThrowError();
   });
 
   test("nullable", () => {
@@ -109,9 +104,7 @@ describe("Types", () => {
 
     const schema1 = createSchema("test", {
       count: pipe(
-        string()
-          .validate(outerValidateFnTrap, "invalid count string")
-          .transform(Number.parseInt),
+        string().validate(outerValidateFnTrap, "invalid count string").transform(Number.parseInt),
         number()
           .validate(innerValidateFnTrap, "invalid count number")
           .transform((num) => num * 1000)
@@ -128,10 +121,7 @@ describe("Types", () => {
     // pipe in default
     const schema2 = createSchema("test", {
       count: pipe(
-        string()
-          .validate(outerValidateFnTrap, "invalid count string")
-          .transform(Number.parseInt)
-          .default("2"),
+        string().validate(outerValidateFnTrap, "invalid count string").transform(Number.parseInt).default("2"),
         number()
           .validate(innerValidateFnTrap, "invalid count number")
           .transform((num) => num * 1000)
@@ -148,9 +138,7 @@ describe("Types", () => {
     // pipe default
     const schema3 = createSchema("test", {
       count: pipe(
-        string()
-          .validate(outerValidateFnTrap, "invalid count string")
-          .transform(Number.parseInt),
+        string().validate(outerValidateFnTrap, "invalid count string").transform(Number.parseInt),
         number()
           .validate(innerValidateFnTrap, "invalid count number")
           .transform((num) => num * 1000)
@@ -167,10 +155,7 @@ describe("Types", () => {
     // pipe out default
     const schema4 = createSchema("test", {
       count: pipe(
-        string()
-          .validate(outerValidateFnTrap, "invalid count string")
-          .transform(Number.parseInt)
-          .optional(),
+        string().validate(outerValidateFnTrap, "invalid count string").transform(Number.parseInt).optional(),
         number()
           .validate(innerValidateFnTrap, "invalid count number")
           .transform((num) => num * 1000)
@@ -196,9 +181,7 @@ describe("Types", () => {
     });
 
     // @ts-expect-error
-    expect(() => Schema.toData(schema, {})).toThrowError(
-      "expected 'object' received 'undefined'",
-    );
+    expect(() => Schema.toData(schema, {})).toThrowError("expected 'object' received 'undefined'");
     expect(() =>
       // @ts-expect-error
       Schema.toData(schema, { permissions: { canUpdate: "yes" } }),
@@ -214,9 +197,7 @@ describe("Types", () => {
         // @ts-expect-error
         permissions: { canUpdate: true, role: "admin", canCreate: true },
       }),
-    ).toThrowError(
-      "unknown field 'canCreate', object may only specify known fields",
-    );
+    ).toThrowError("unknown field 'canCreate', object may only specify known fields");
     const data = Schema.toData(schema, {
       permissions: { canUpdate: true, role: "moderator" },
     });
@@ -231,9 +212,7 @@ describe("Types", () => {
     });
 
     // @ts-expect-error
-    expect(() => Schema.toData(schema, {})).toThrowError(
-      "expected 'object' received 'undefined'",
-    );
+    expect(() => Schema.toData(schema, {})).toThrowError("expected 'object' received 'undefined'");
     // empty object is ok
     expect(() => Schema.toData(schema, { grades: {} })).not.toThrowError();
     expect(() =>
@@ -250,9 +229,7 @@ describe("Types", () => {
     });
 
     // @ts-expect-error
-    expect(() => Schema.toData(schema, {})).toThrowError(
-      "expected 'array' received 'undefined'",
-    );
+    expect(() => Schema.toData(schema, {})).toThrowError("expected 'array' received 'undefined'");
     // @ts-expect-error
     expect(() => Schema.toData(schema, { items: [] })).toThrowError(
       "element at index '0' expected 'number' received 'undefined'",
@@ -271,9 +248,7 @@ describe("Types", () => {
     });
 
     // @ts-expect-error
-    expect(() => Schema.toData(schema, {})).toThrowError(
-      "expected 'array' received 'undefined'",
-    );
+    expect(() => Schema.toData(schema, {})).toThrowError("expected 'array' received 'undefined'");
     // empty array is ok
     expect(() => Schema.toData(schema, { items: [] })).not.toThrowError();
     // @ts-expect-error
@@ -306,20 +281,14 @@ describe("Types", () => {
       color: taggedUnion({
         rgba: object({ r: number(), g: number(), b: number(), a: string() }),
         hex: string(),
-        hsl: tuple([string(), string(), string()]).transform(
-          ([f, s, t]) => f + s + t,
-        ),
+        hsl: tuple([string(), string(), string()]).transform(([f, s, t]) => f + s + t),
       }),
     });
 
     // @ts-expect-error
-    expect(() => Schema.toData(schema, {})).toThrowError(
-      "expected 'object' received 'undefined'",
-    );
+    expect(() => Schema.toData(schema, {})).toThrowError("expected 'object' received 'undefined'");
     // @ts-expect-error
-    expect(() => Schema.toData(schema, { color: {} })).toThrowError(
-      "missing field",
-    );
+    expect(() => Schema.toData(schema, { color: {} })).toThrowError("missing field");
     // @ts-expect-error
     expect(() => Schema.toData(schema, { color: { tag: "hex" } })).toThrowError(
       "missing field 'value' in tagged union",
@@ -333,9 +302,7 @@ describe("Types", () => {
         // @ts-expect-error
         color: { tag: "hex", value: "#fff", extra: "user" },
       }),
-    ).toThrowError(
-      "unknown field 'extra', tagged union may only specify 'tag' and 'value' fields",
-    );
+    ).toThrowError("unknown field 'extra', tagged union may only specify 'tag' and 'value' fields");
     expect(() =>
       // @ts-expect-error
       Schema.toData(schema, { color: { tag: "hwb", value: "#fff" } }),
@@ -370,13 +337,9 @@ describe("Types", () => {
     });
 
     // @ts-expect-error
-    expect(() => Schema.toData(schema, { emailOrPhone: {} })).toThrowError(
-      "no matching variant found for union type",
-    );
+    expect(() => Schema.toData(schema, { emailOrPhone: {} })).toThrowError("no matching variant found for union type");
     // @ts-expect-error
-    expect(() => Schema.toData(schema, { emailOrPhone: [] })).toThrowError(
-      "no matching variant found for union type",
-    );
+    expect(() => Schema.toData(schema, { emailOrPhone: [] })).toThrowError("no matching variant found for union type");
     // @ts-expect-error
     expect(() => Schema.toData(schema, { emailOrPhone: null })).toThrowError(
       "no matching variant found for union type",
@@ -405,15 +368,15 @@ describe("Types", () => {
         exact: string().length(4),
       });
 
-      expect(() =>
-        Schema.toData(schema, { min: "ab", max: "test", exact: "test" }),
-      ).toThrowError("string must be at least 3 characters long");
-      expect(() =>
-        Schema.toData(schema, { min: "test", max: "toolong", exact: "test" }),
-      ).toThrowError("string must be at most 5 characters long");
-      expect(() =>
-        Schema.toData(schema, { min: "test", max: "test", exact: "toolong" }),
-      ).toThrowError("string must be exactly 4 characters long");
+      expect(() => Schema.toData(schema, { min: "ab", max: "test", exact: "test" })).toThrowError(
+        "string must be at least 3 characters long",
+      );
+      expect(() => Schema.toData(schema, { min: "test", max: "toolong", exact: "test" })).toThrowError(
+        "string must be at most 5 characters long",
+      );
+      expect(() => Schema.toData(schema, { min: "test", max: "test", exact: "toolong" })).toThrowError(
+        "string must be exactly 4 characters long",
+      );
 
       const data = Schema.toData(schema, {
         min: "abc",
@@ -450,9 +413,7 @@ describe("Types", () => {
         required: string().nonEmpty(),
       });
 
-      expect(() => Schema.toData(schema, { required: "" })).toThrowError(
-        "string must not be empty",
-      );
+      expect(() => Schema.toData(schema, { required: "" })).toThrowError("string must not be empty");
 
       const data = Schema.toData(schema, { required: "hello" });
       expect(data).toStrictEqual({ required: "hello" });
@@ -463,9 +424,7 @@ describe("Types", () => {
         contains: string().includes("world"),
       });
 
-      expect(() => Schema.toData(schema, { contains: "hello" })).toThrowError(
-        'string must include "world"',
-      );
+      expect(() => Schema.toData(schema, { contains: "hello" })).toThrowError('string must include "world"');
 
       const data = Schema.toData(schema, { contains: "hello world" });
       expect(data).toStrictEqual({ contains: "hello world" });
@@ -486,13 +445,9 @@ describe("Types", () => {
       expect(validData).toStrictEqual({ date: now });
 
       // @ts-expect-error
-      expect(() => Schema.toData(schema, { date: "not a date" })).toThrowError(
-        "expected 'Date' received 'string'",
-      );
+      expect(() => Schema.toData(schema, { date: "not a date" })).toThrowError("expected 'Date' received 'string'");
       // @ts-expect-error
-      expect(() => Schema.toData(schema, { date: 123 })).toThrowError(
-        "expected 'Date' received 'number'",
-      );
+      expect(() => Schema.toData(schema, { date: 123 })).toThrowError("expected 'Date' received 'number'");
     });
 
     test("MonarchDateString", () => {
@@ -504,13 +459,11 @@ describe("Types", () => {
       const validData = Schema.toData(schema, { date: now.toISOString() });
       expect(validData).toStrictEqual({ date: now });
 
-      expect(() =>
-        Schema.toData(schema, { date: "invalid date" }),
-      ).toThrowError("expected 'ISO Date string' received 'string'");
-      // @ts-expect-error
-      expect(() => Schema.toData(schema, { date: 123 })).toThrowError(
-        "expected 'ISO Date string' received 'number'",
+      expect(() => Schema.toData(schema, { date: "invalid date" })).toThrowError(
+        "expected 'ISO Date string' received 'string'",
       );
+      // @ts-expect-error
+      expect(() => Schema.toData(schema, { date: 123 })).toThrowError("expected 'ISO Date string' received 'number'");
     });
 
     test("MonarchDate after() and before()", () => {
@@ -519,12 +472,12 @@ describe("Types", () => {
         beforeDate: date().before(now),
       });
 
-      expect(() =>
-        Schema.toData(schema, { afterDate: past, beforeDate: future }),
-      ).toThrowError(`date must be after ${now}`);
-      expect(() =>
-        Schema.toData(schema, { afterDate: future, beforeDate: future }),
-      ).toThrowError(`date must be before ${now.toISOString()}`);
+      expect(() => Schema.toData(schema, { afterDate: past, beforeDate: future })).toThrowError(
+        `date must be after ${now}`,
+      );
+      expect(() => Schema.toData(schema, { afterDate: future, beforeDate: future })).toThrowError(
+        `date must be before ${now.toISOString()}`,
+      );
 
       const data = Schema.toData(schema, {
         afterDate: future,
@@ -598,9 +551,7 @@ describe("Types", () => {
       expect(data).toStrictEqual({ value: 42 });
 
       // @ts-expect-error
-      expect(() => Schema.toData(schema, { value: "42" })).toThrowError(
-        "expected 'number' received 'string'",
-      );
+      expect(() => Schema.toData(schema, { value: "42" })).toThrowError("expected 'number' received 'string'");
     });
 
     test("min and max constraints", () => {
@@ -609,12 +560,8 @@ describe("Types", () => {
         max: number().max(10),
       });
 
-      expect(() => Schema.toData(schema, { min: 3, max: 8 })).toThrowError(
-        "number must be greater than or equal to 5",
-      );
-      expect(() => Schema.toData(schema, { min: 6, max: 12 })).toThrowError(
-        "number must be less than or equal to 10",
-      );
+      expect(() => Schema.toData(schema, { min: 3, max: 8 })).toThrowError("number must be greater than or equal to 5");
+      expect(() => Schema.toData(schema, { min: 6, max: 12 })).toThrowError("number must be less than or equal to 10");
 
       const data = Schema.toData(schema, { min: 7, max: 8 });
       expect(data).toStrictEqual({ min: 7, max: 8 });
@@ -634,9 +581,7 @@ describe("Types", () => {
         value: number().multipleOf(3),
       });
 
-      expect(() => Schema.toData(schema, { value: 7 })).toThrowError(
-        "number must be a multiple of 3",
-      );
+      expect(() => Schema.toData(schema, { value: 7 })).toThrowError("number must be a multiple of 3");
 
       const data = Schema.toData(schema, { value: 9 });
       expect(data).toStrictEqual({ value: 9 });

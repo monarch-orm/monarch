@@ -10,9 +10,7 @@ import type { WithRequiredId } from "../../utils/type-helpers";
 
 export interface NativeDate extends Date {}
 type RegExpOrString<T> = T extends string ? RegExp | BSON.BSONRegExp | T : T;
-export type AlternativeType<T> = T extends ReadonlyArray<infer U>
-  ? T | RegExpOrString<U>
-  : RegExpOrString<T>;
+export type AlternativeType<T> = T extends ReadonlyArray<infer U> ? T | RegExpOrString<U> : RegExpOrString<T>;
 
 export type Condition<T> = AlternativeType<T> | ComparisonOperator<T>;
 // export type Condition<T> = T | RootQuerySelector<T> | ComparisonOperator<T>
@@ -67,13 +65,7 @@ export interface AnyObject {
 }
 
 type Path = string;
-type AggregationVariables =
-  | SpecialPathVariables
-  | "$$NOW"
-  | "$$CLUSTER_TIME"
-  | "$$DESCEND"
-  | "$$PRUNE"
-  | "$$KEEP";
+type AggregationVariables = SpecialPathVariables | "$$NOW" | "$$CLUSTER_TIME" | "$$DESCEND" | "$$PRUNE" | "$$KEEP";
 
 type SpecialPathVariables = "$$ROOT" | "$$CURRENT" | "$$REMOVE";
 
@@ -490,8 +482,7 @@ export interface DateFromParts {
    * @version 3.6
    * @see https://www.mongodb.com/docs/manual/reference/operator/aggregation/dateFromParts/#mongodb-expression-exp.-dateFromParts
    */
-  $dateFromParts: (DateFromPartsWithYear | DateFromPartsWithIsoWeekYear) &
-    DateFromPartsCommon;
+  $dateFromParts: (DateFromPartsWithYear | DateFromPartsWithIsoWeekYear) & DateFromPartsCommon;
 }
 
 export interface DateFromString {
@@ -988,10 +979,7 @@ export interface Cmp {
    *
    * @see https://www.mongodb.com/docs/manual/reference/operator/aggregation/cmp/#mongodb-expression-exp.-cmp
    */
-  $cmp: [
-    Record<string, AnyExpression> | Expression,
-    Record<string, AnyExpression> | Expression,
-  ];
+  $cmp: [Record<string, AnyExpression> | Expression, Record<string, AnyExpression> | Expression];
 }
 
 export interface Eq {
@@ -1264,9 +1252,7 @@ export interface Range {
    *
    * @see https://www.mongodb.com/docs/manual/reference/operator/aggregation/range/#mongodb-expression-exp.-range
    */
-  $range:
-    | [NumberExpression, NumberExpression]
-    | [NumberExpression, NumberExpression, NumberExpression];
+  $range: [NumberExpression, NumberExpression] | [NumberExpression, NumberExpression, NumberExpression];
 }
 
 export interface Reduce {
@@ -1326,9 +1312,7 @@ export interface Slice {
    * @version 3.2
    * @see https://www.mongodb.com/docs/manual/reference/operator/aggregation/slice/#mongodb-expression-exp.-slice
    */
-  $slice:
-    | [ArrayExpression, NumberExpression]
-    | [ArrayExpression, NumberExpression, NumberExpression];
+  $slice: [ArrayExpression, NumberExpression] | [ArrayExpression, NumberExpression, NumberExpression];
 }
 
 export interface Zip {
@@ -1814,11 +1798,7 @@ export interface MergeObjects {
    * @version 3.6
    * @see https://www.mongodb.com/docs/manual/reference/operator/aggregation/mergeObjects/#mongodb-expression-exp.-mergeObjects
    */
-  $mergeObjects:
-    | ObjectExpression
-    | ObjectExpression[]
-    | ArrayExpression
-    | Record<string, string>;
+  $mergeObjects: ObjectExpression | ObjectExpression[] | ArrayExpression | Record<string, string>;
 }
 
 export interface SetField {
@@ -2628,8 +2608,7 @@ export type ArrayExpressionOperator =
 
 export type LiteralExpressionOperator = Literal;
 
-export type LiteralExpressionReturningAny =
-  LiteralExpressionOperatorReturningAny;
+export type LiteralExpressionReturningAny = LiteralExpressionOperatorReturningAny;
 
 export type LiteralExpressionOperatorReturningAny = Literal;
 
@@ -2637,11 +2616,7 @@ export type MiscellaneousExpressionOperator = Rand | SampleRate;
 
 export type MiscellaneousExpressionOperatorReturningNumber = Rand;
 
-export type ArrayExpressionOperatorReturningAny =
-  | ArrayElemAt
-  | First
-  | Last
-  | Reduce;
+export type ArrayExpressionOperatorReturningAny = ArrayElemAt | First | Last | Reduce;
 
 export type ArrayExpressionOperatorReturningArray =
   | ConcatArrays
@@ -2665,13 +2640,7 @@ export type ComparisonExpressionOperator =
   | ComparisonExpressionOperatorReturningBoolean
   | ComparisonExpressionOperatorReturningNumber;
 
-export type ComparisonExpressionOperatorReturningBoolean =
-  | Eq
-  | Gt
-  | Gte
-  | Lt
-  | Lte
-  | Ne;
+export type ComparisonExpressionOperatorReturningBoolean = Eq | Gt | Gte | Lt | Lte | Ne;
 
 export type ComparisonExpressionOperatorReturningNumber = Cmp;
 
@@ -2688,12 +2657,7 @@ export type StringExpressionOperatorReturningArray = RegexFindAll | Split;
 
 export type StringExpressionOperatorReturningBoolean = RegexMatch;
 
-export type StringExpressionOperatorReturningNumber =
-  | IndexOfBytes
-  | IndexOfCP
-  | Strcasecmp
-  | StrLenBytes
-  | StrLenCP;
+export type StringExpressionOperatorReturningNumber = IndexOfBytes | IndexOfCP | Strcasecmp | StrLenBytes | StrLenCP;
 
 export type StringExpressionOperatorReturningObject = RegexFind;
 
@@ -2711,18 +2675,11 @@ export type StringExpressionOperatorReturningString =
   | ToUpper
   | Trim;
 
-export type ObjectExpressionOperator =
-  | MergeObjects
-  | ObjectToArray
-  | SetField
-  | UnsetField;
+export type ObjectExpressionOperator = MergeObjects | ObjectToArray | SetField | UnsetField;
 
 export type ObjectExpressionOperatorReturningArray = ObjectToArray;
 
-export type ObjectExpressionOperatorReturningObject =
-  | MergeObjects
-  | SetField
-  | UnsetField;
+export type ObjectExpressionOperatorReturningObject = MergeObjects | SetField | UnsetField;
 
 export type VariableExpressionOperator = Let;
 
@@ -2737,16 +2694,9 @@ export type SetExpressionOperator =
   | SetIsSubset
   | SetUnion;
 
-export type SetExpressionOperatorReturningBoolean =
-  | AllElementsTrue
-  | AnyElementsTrue
-  | SetEquals
-  | SetIsSubset;
+export type SetExpressionOperatorReturningBoolean = AllElementsTrue | AnyElementsTrue | SetEquals | SetIsSubset;
 
-export type SetExpressionOperatorReturningArray =
-  | SetDifference
-  | SetIntersection
-  | SetUnion;
+export type SetExpressionOperatorReturningArray = SetDifference | SetIntersection | SetUnion;
 
 /**
  * Trigonometry expressions perform trigonometric operations on numbers.
@@ -2836,19 +2786,11 @@ export type TypeExpressionOperatorReturningNumber =
   | ToInt
   | ToLong;
 
-export type TypeExpressionOperatorReturningBoolean =
-  | Convert<"bool" | 8>
-  | IsNumber
-  | ToBool;
+export type TypeExpressionOperatorReturningBoolean = Convert<"bool" | 8> | IsNumber | ToBool;
 
-export type TypeExpressionOperatorReturningString =
-  | Convert<"string" | 2>
-  | ToString
-  | Type;
+export type TypeExpressionOperatorReturningString = Convert<"string" | 2> | ToString | Type;
 
-export type TypeExpressionOperatorReturningObjectId =
-  | Convert<"objectId" | 7>
-  | ToObjectId;
+export type TypeExpressionOperatorReturningObjectId = Convert<"objectId" | 7> | ToObjectId;
 
 export type TypeExpressionOperatorReturningDate = Convert<"date" | 9> | ToDate;
 
@@ -2877,10 +2819,7 @@ export type AccumulatorOperator =
   | Top
   | TopN;
 
-export type tzExpression =
-  | UTCOffset
-  | StringExpressionOperatorReturningBoolean
-  | string;
+export type tzExpression = UTCOffset | StringExpressionOperatorReturningBoolean | string;
 
 type hh =
   | "-00"
@@ -2997,16 +2936,7 @@ type StartOfWeek =
   | "sunday"
   | "sun";
 
-type DateUnit =
-  | "year"
-  | "quarter"
-  | "week"
-  | "month"
-  | "day"
-  | "hour"
-  | "minute"
-  | "second"
-  | "millisecond";
+type DateUnit = "year" | "quarter" | "week" | "month" | "day" | "hour" | "minute" | "second" | "millisecond";
 
 type FormatString = string;
 

@@ -113,16 +113,7 @@ export interface Densify {
     partitionByFields?: string[];
     range: {
       step: number;
-      unit?:
-        | "millisecond"
-        | "second"
-        | "minute"
-        | "hour"
-        | "day"
-        | "week"
-        | "month"
-        | "quarter"
-        | "year";
+      unit?: "millisecond" | "second" | "minute" | "hour" | "day" | "week" | "month" | "quarter" | "year";
       bounds: number[] | globalThis.Date[] | "full" | "partition";
     };
   };
@@ -134,10 +125,7 @@ export interface Fill {
     partitionBy?: Expression;
     partitionByFields?: string[];
     sortBy?: Record<string, 1 | -1>;
-    output: Record<
-      string,
-      { value: Expression } | { method: "linear" | "locf" }
-    >;
+    output: Record<string, { value: Expression } | { method: "linear" | "locf" }>;
   };
 }
 
@@ -202,9 +190,7 @@ export interface Limit {
 
 export interface ListSessions {
   /** [`$listSessions` reference](https://www.mongodb.com/docs/manual/reference/operator/aggregation/listSessions/) */
-  $listSessions:
-    | { users?: { user: string; db: string }[] }
-    | { allUsers?: true };
+  $listSessions: { users?: { user: string; db: string }[] } | { allUsers?: true };
 }
 
 export interface Lookup<T> {
@@ -235,10 +221,7 @@ export interface Merge<T> {
       | "keepExisting"
       | "merge"
       | "fail"
-      | Extract<
-          PipelineStage<T>,
-          AddFields | Set | Project | Unset | ReplaceRoot | ReplaceWith
-        >[];
+      | Extract<PipelineStage<T>, AddFields | Set | Project | Unset | ReplaceRoot | ReplaceWith>[];
     whenNotMatched?: "insert" | "discard" | "fail";
   };
 }
@@ -272,10 +255,7 @@ export interface ReplaceRoot {
 
 export interface ReplaceWith {
   /** [`$replaceWith` reference](https://www.mongodb.com/docs/manual/reference/operator/aggregation/replaceWith/) */
-  $replaceWith:
-    | ObjectExpressionOperator
-    | { [field: string]: Expression }
-    | `$${string}`;
+  $replaceWith: ObjectExpressionOperator | { [field: string]: Expression } | `$${string}`;
 }
 
 export interface Sample {
@@ -327,16 +307,7 @@ export interface SetWindowFields {
         window?: {
           documents?: [string | number, string | number];
           range?: [string | number, string | number];
-          unit?:
-            | "year"
-            | "quarter"
-            | "month"
-            | "week"
-            | "day"
-            | "hour"
-            | "minute"
-            | "second"
-            | "millisecond";
+          unit?: "year" | "quarter" | "month" | "week" | "day" | "hour" | "minute" | "second" | "millisecond";
         };
       }
     >;

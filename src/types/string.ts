@@ -7,9 +7,7 @@ export class MonarchString extends MonarchType<string, string> {
   constructor() {
     super((input) => {
       if (typeof input === "string") return input;
-      throw new MonarchParseError(
-        `expected 'string' received '${typeof input}'`,
-      );
+      throw new MonarchParseError(`expected 'string' received '${typeof input}'`);
     });
   }
 
@@ -29,9 +27,7 @@ export class MonarchString extends MonarchType<string, string> {
     return string().extend(this, {
       postParse: (input) => {
         if (input.length < length) {
-          throw new MonarchParseError(
-            `string must be at least ${length} characters long`,
-          );
+          throw new MonarchParseError(`string must be at least ${length} characters long`);
         }
         return input;
       },
@@ -42,9 +38,7 @@ export class MonarchString extends MonarchType<string, string> {
     return string().extend(this, {
       postParse: (input) => {
         if (input.length > length) {
-          throw new MonarchParseError(
-            `string must be at most ${length} characters long`,
-          );
+          throw new MonarchParseError(`string must be at most ${length} characters long`);
         }
         return input;
       },
@@ -55,9 +49,7 @@ export class MonarchString extends MonarchType<string, string> {
     return string().extend(this, {
       postParse: (input) => {
         if (input.length !== length) {
-          throw new MonarchParseError(
-            `string must be exactly ${length} characters long`,
-          );
+          throw new MonarchParseError(`string must be exactly ${length} characters long`);
         }
         return input;
       },

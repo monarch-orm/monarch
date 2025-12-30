@@ -1,18 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createDatabase, createSchema } from "../src";
-import {
-  and,
-  eq,
-  gt,
-  gte,
-  inArray,
-  lt,
-  lte,
-  neq,
-  nor,
-  notInArray,
-  or,
-} from "../src/operators";
+import { and, eq, gt, gte, inArray, lt, lte, neq, nor, notInArray, or } from "../src/operators";
 import { boolean, number, string } from "../src/types";
 import { createMockDatabase, mockUsers } from "./mock";
 
@@ -59,10 +47,7 @@ describe("Query operators", async () => {
       )
       .exec();
 
-    expect(users.length).toBe(
-      mockUsers.filter((user) => user.name === "anon" && user.age === 17)
-        .length,
-    );
+    expect(users.length).toBe(mockUsers.filter((user) => user.name === "anon" && user.age === 17).length);
   });
 
   it("or operator", async () => {
@@ -80,10 +65,7 @@ describe("Query operators", async () => {
       )
       .exec();
 
-    expect(users.length).toBe(
-      mockUsers.filter((user) => user.name === "anon" || user.name === "anon1")
-        .length,
-    );
+    expect(users.length).toBe(mockUsers.filter((user) => user.name === "anon" || user.name === "anon1").length);
   });
 
   it("nor operator", async () => {
@@ -145,9 +127,7 @@ describe("Query operators", async () => {
       })
       .exec();
 
-    expect(users.length).toBe(
-      mockUsers.filter((user) => user.age >= 17).length,
-    );
+    expect(users.length).toBe(mockUsers.filter((user) => user.age >= 17).length);
   });
 
   it("lt operator", async () => {
@@ -169,9 +149,7 @@ describe("Query operators", async () => {
       })
       .exec();
 
-    expect(users.length).toBe(
-      mockUsers.filter((user) => user.age <= 17).length,
-    );
+    expect(users.length).toBe(mockUsers.filter((user) => user.age <= 17).length);
   });
 
   it("in operator", async () => {
@@ -184,9 +162,7 @@ describe("Query operators", async () => {
       })
       .exec();
 
-    expect(users.length).toBe(
-      mockUsers.filter((user) => ageArray.includes(user.age)).length,
-    );
+    expect(users.length).toBe(mockUsers.filter((user) => ageArray.includes(user.age)).length);
   });
 
   it("nin operator", async () => {
@@ -200,8 +176,6 @@ describe("Query operators", async () => {
       })
       .exec();
 
-    expect(users.length).toBe(
-      mockUsers.filter((user) => !ageArray.includes(user.age)).length,
-    );
+    expect(users.length).toBe(mockUsers.filter((user) => !ageArray.includes(user.age)).length);
   });
 });

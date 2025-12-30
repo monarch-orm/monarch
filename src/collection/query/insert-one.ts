@@ -1,15 +1,6 @@
-import type {
-  InsertOneOptions,
-  Collection as MongoCollection,
-  OptionalUnlessRequiredId,
-} from "mongodb";
+import type { InsertOneOptions, Collection as MongoCollection, OptionalUnlessRequiredId } from "mongodb";
 import { type AnySchema, Schema } from "../../schema/schema";
-import type {
-  InferSchemaData,
-  InferSchemaInput,
-  InferSchemaOmit,
-  InferSchemaOutput,
-} from "../../schema/type-helpers";
+import type { InferSchemaData, InferSchemaInput, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
 import type { Projection } from "../types/query-options";
 import { makeProjection } from "../utils/projection";
 import { Query, type QueryOutput } from "./base";
@@ -17,10 +8,7 @@ import { Query, type QueryOutput } from "./base";
 export class InsertOneQuery<
   TSchema extends AnySchema,
   TOutput = InferSchemaOutput<TSchema>,
-  TOmit extends ["omit" | "select", keyof any] = [
-    "omit",
-    InferSchemaOmit<TSchema>,
-  ],
+  TOmit extends ["omit" | "select", keyof any] = ["omit", InferSchemaOmit<TSchema>],
 > extends Query<TSchema, QueryOutput<TOutput, TOmit>> {
   private _projection: Projection<InferSchemaOutput<TSchema>>;
 

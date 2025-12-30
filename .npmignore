@@ -3,6 +3,7 @@
 .vscode
 src
 tests
+coverage
 pnpm-lock.yaml
 tsconfig.json
 biome.json

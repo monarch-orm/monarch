@@ -24,9 +24,7 @@ export class MonarchDate extends MonarchType<Date, Date> {
     return date().extend(this, {
       preParse: (input) => {
         if (input > targetDate) {
-          throw new MonarchParseError(
-            `date must be before ${targetDate.toISOString()}`,
-          );
+          throw new MonarchParseError(`date must be before ${targetDate.toISOString()}`);
         }
         return input;
       },
@@ -38,9 +36,7 @@ export const createdAt = () => date().default(() => new Date());
 
 export const updatedAt = () => {
   const base = date();
-  return base
-    .extend(base, { onUpdate: () => new Date() })
-    .default(() => new Date());
+  return base.extend(base, { onUpdate: () => new Date() }).default(() => new Date());
 };
 
 export const dateString = () => new MonarchDateString();
@@ -51,9 +47,7 @@ export class MonarchDateString extends MonarchType<string, Date> {
       if (typeof input === "string" && !Number.isNaN(Date.parse(input))) {
         return new Date(input);
       }
-      throw new MonarchParseError(
-        `expected 'ISO Date string' received '${typeof input}'`,
-      );
+      throw new MonarchParseError(`expected 'ISO Date string' received '${typeof input}'`);
     });
   }
 
@@ -72,9 +66,7 @@ export class MonarchDateString extends MonarchType<string, Date> {
       preParse: (input) => {
         const date = new Date(input);
         if (date > targetDate) {
-          throw new MonarchParseError(
-            `date must be before ${targetDate.toISOString()}`,
-          );
+          throw new MonarchParseError(`date must be before ${targetDate.toISOString()}`);
         }
         return input;
       },

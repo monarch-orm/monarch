@@ -7,9 +7,7 @@ export class MonarchNumber extends MonarchType<number, number> {
   constructor() {
     super((input) => {
       if (typeof input === "number") return input;
-      throw new MonarchParseError(
-        `expected 'number' received '${typeof input}'`,
-      );
+      throw new MonarchParseError(`expected 'number' received '${typeof input}'`);
     });
   }
 
@@ -17,9 +15,7 @@ export class MonarchNumber extends MonarchType<number, number> {
     return number().extend(this, {
       preParse: (input) => {
         if (input < value) {
-          throw new MonarchParseError(
-            `number must be greater than or equal to ${value}`,
-          );
+          throw new MonarchParseError(`number must be greater than or equal to ${value}`);
         }
         return input;
       },
@@ -30,9 +26,7 @@ export class MonarchNumber extends MonarchType<number, number> {
     return number().extend(this, {
       preParse: (input) => {
         if (input > value) {
-          throw new MonarchParseError(
-            `number must be less than or equal to ${value}`,
-          );
+          throw new MonarchParseError(`number must be less than or equal to ${value}`);
         }
         return input;
       },

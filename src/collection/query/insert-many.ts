@@ -5,10 +5,7 @@ import type {
   OptionalUnlessRequiredId,
 } from "mongodb";
 import { type AnySchema, Schema } from "../../schema/schema";
-import type {
-  InferSchemaData,
-  InferSchemaInput,
-} from "../../schema/type-helpers";
+import type { InferSchemaData, InferSchemaInput } from "../../schema/type-helpers";
 import { Query } from "./base";
 
 export class InsertManyQuery<TSchema extends AnySchema> extends Query<

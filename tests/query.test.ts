@@ -1,13 +1,5 @@
 import { ObjectId } from "mongodb";
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createDatabase, createSchema } from "../src";
 import { boolean, number, objectId, pipe, string, type } from "../src/types";
 import { createMockDatabase, mockUsers } from "./mock";
@@ -58,17 +50,13 @@ describe("Query methods Tests", async () => {
 
     // insert with existing id
     const id3 = new ObjectId();
-    const newUser3 = await collections.users
-      .insertOne({ _id: id3, ...mockUsers[0] })
-      .exec();
+    const newUser3 = await collections.users.insertOne({ _id: id3, ...mockUsers[0] }).exec();
     expect(newUser3).toMatchObject(mockUsers[0]);
     expect(newUser3._id).toStrictEqual(id3);
 
     // insert with existing string id
     const id4 = new ObjectId();
-    const newUser4 = await collections.users
-      .insertOne({ _id: id4.toString(), ...mockUsers[0] })
-      .exec();
+    const newUser4 = await collections.users.insertOne({ _id: id4.toString(), ...mockUsers[0] }).exec();
     expect(newUser4).toMatchObject(mockUsers[0]);
     expect(newUser4._id).toStrictEqual(id4);
 
@@ -78,9 +66,7 @@ describe("Query methods Tests", async () => {
 
     // insert with invalid string id
     await expect(async () => {
-      await collections.users
-        .insertOne({ _id: "not_an_object_id", ...mockUsers[0] })
-        .exec();
+      await collections.users.insertOne({ _id: "not_an_object_id", ...mockUsers[0] }).exec();
     }).rejects.toThrow("expected valid ObjectId received");
 
     // Test edge case: Insert empty document
@@ -172,9 +158,7 @@ describe("Query methods Tests", async () => {
     const userId = new ObjectId();
     const todoId = 1;
     await collections.users.insertOne({ _id: userId, ...mockUsers[0] }).exec();
-    await collections.todos
-      .insertOne({ _id: todoId, title: "todo 1", userId })
-      .exec();
+    await collections.todos.insertOne({ _id: todoId, title: "todo 1", userId }).exec();
 
     // find with object id
     const user1 = await collections.users.findOne({ _id: userId }).exec();
@@ -196,9 +180,7 @@ describe("Query methods Tests", async () => {
     const userId = new ObjectId();
     const todoId = 1;
     await collections.users.insertOne({ _id: userId, ...mockUsers[0] }).exec();
-    await collections.todos
-      .insertOne({ _id: todoId, title: "todo 1", userId })
-      .exec();
+    await collections.todos.insertOne({ _id: todoId, title: "todo 1", userId }).exec();
 
     // find with object id
     const user1 = await collections.users.findById(userId).exec();
@@ -227,28 +209,21 @@ describe("Query methods Tests", async () => {
       const users = await collections.users.find().exec();
       expect(users.length).toBeGreaterThanOrEqual(mockUsers.length);
 
-      const firstUser = await collections.users
-        .findOne({ name: "anon" })
-        .exec();
+      const firstUser = await collections.users.findOne({ name: "anon" }).exec();
       expect(firstUser?.name).toBe("anon");
     });
 
     it("query where with multiple conditions", async () => {
       await collections.users.insertMany(mockUsers).exec();
 
-      const users = await collections.users
-        .find({ name: "anon", age: 17 })
-        .exec();
+      const users = await collections.users.find({ name: "anon", age: 17 }).exec();
       expect(users.length).toBe(1);
     });
 
     it("query select/omit", async () => {
       await collections.users.insertMany(mockUsers).exec();
 
-      const users1 = await collections.users
-        .find()
-        .select({ name: true, email: true })
-        .exec();
+      const users1 = await collections.users.find().select({ name: true, email: true }).exec();
       expect(users1[0].name).toBe("anon");
       expect(users1[0].email).toBe("anon@gmail.com");
       // @ts-expect-error
@@ -256,10 +231,7 @@ describe("Query methods Tests", async () => {
       // @ts-expect-error
       expect(users1[0].isVerified).toBeUndefined();
 
-      const users2 = await collections.users
-        .find()
-        .omit({ name: true, email: true })
-        .exec();
+      const users2 = await collections.users.find().omit({ name: true, email: true }).exec();
       // @ts-expect-error
       expect(users2[0].name).toBeUndefined();
       // @ts-expect-error
@@ -336,9 +308,7 @@ describe("Query methods Tests", async () => {
   it("finds one and deletes", async () => {
     await collections.users.insertOne(mockUsers[0]).exec();
 
-    const deletedUser = await collections.users
-      .findOneAndDelete({ email: "anon@gmail.com" })
-      .exec();
+    const deletedUser = await collections.users.findOneAndDelete({ email: "anon@gmail.com" }).exec();
 
     expect(deletedUser).not.toBe(null);
     expect(deletedUser?.email).toBe("anon@gmail.com");
@@ -346,18 +316,14 @@ describe("Query methods Tests", async () => {
 
   it("updates one document", async () => {
     await collections.users.insertOne(mockUsers[1]).exec();
-    const updated = await collections.users
-      .updateOne({ email: "anon1@gmail.com" }, { $set: { age: 35 } })
-      .exec();
+    const updated = await collections.users.updateOne({ email: "anon1@gmail.com" }, { $set: { age: 35 } }).exec();
 
     expect(updated.acknowledged).toBe(true);
   });
 
   it("updates many documents", async () => {
     await collections.users.insertMany(mockUsers).exec();
-    const updated = await collections.users
-      .updateMany({ isVerified: false }, { $set: { age: 40 } })
-      .exec();
+    const updated = await collections.users.updateMany({ isVerified: false }, { $set: { age: 40 } }).exec();
 
     expect(updated.acknowledged).toBe(true);
   });
@@ -379,9 +345,7 @@ describe("Query methods Tests", async () => {
 
   it("deletes one document", async () => {
     await collections.users.insertOne(mockUsers[2]).exec();
-    const deleted = await collections.users
-      .deleteOne({ email: "anon2@gmail.com" })
-      .exec();
+    const deleted = await collections.users.deleteOne({ email: "anon2@gmail.com" }).exec();
 
     expect(deleted.deletedCount).toBe(1);
   });

@@ -1,10 +1,7 @@
 import { type AnyMonarchType, MonarchType, pipeParser } from "./type";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
 
-export const pipe = <
-  TPipeIn extends AnyMonarchType,
-  TPipeOut extends AnyMonarchType<InferTypeOutput<TPipeIn>, any>,
->(
+export const pipe = <TPipeIn extends AnyMonarchType, TPipeOut extends AnyMonarchType<InferTypeOutput<TPipeIn>, any>>(
   pipeIn: TPipeIn,
   pipeOut: TPipeOut,
 ) => new MonarchPipe(pipeIn, pipeOut);

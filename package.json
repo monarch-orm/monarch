@@ -3,14 +3,14 @@
   "version": "0.8.1",
   "description": "Type safe Object Document Mapper (ODM) for MongoDB",
   "private": false,
-  "main": "./dist/index.js",
+  "main": "./dist/index.cjs",
   "module": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/index.d.cts",
   "exports": {
     ".": {
       "require": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
       },
       "import": {
         "types": "./dist/index.d.mts",
@@ -19,8 +19,8 @@
     },
     "./types": {
       "require": {
-        "types": "./dist/types/index.d.ts",
-        "default": "./dist/types/index.js"
+        "types": "./dist/types/index.d.cts",
+        "default": "./dist/types/index.cjs"
       },
       "import": {
         "types": "./dist/types/index.d.mts",
@@ -29,8 +29,8 @@
     },
     "./operators": {
       "require": {
-        "types": "./dist/operators/index.d.ts",
-        "default": "./dist/operators/index.js"
+        "types": "./dist/operators/index.d.cts",
+        "default": "./dist/operators/index.cjs"
       },
       "import": {
         "types": "./dist/operators/index.d.mts",
@@ -39,18 +39,19 @@
     }
   },
   "scripts": {
-    "build": "tsup",
-    "release": "npm run build && changeset publish",
-    "check": "npm run lint && npm run format && tsc --noEmit",
-    "format": "biome format",
-    "format:fix": "biome format --write",
-    "lint": "biome lint",
-    "lint:fix": "biome lint --write",
+    "build": "tsdown",
+    "release": "pnpm run build && changeset publish",
+    "check": "tsc && pnpm run format",
+    "format": "prettier . --check",
+    "format:fix": "prettier . --write",
     "watch": "vitest",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["mongodb-memory-server"]
+    "onlyBuiltDependencies": [
+      "mongodb-memory-server"
+    ]
   },
   "keywords": [
     "mongodb",
@@ -76,12 +77,14 @@
     "mongodb": ">= 6.0.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.9.3",
-    "@changesets/cli": "^2.28.0",
-    "@types/node": "^18.19.76",
-    "mongodb-memory-server": "^10.1.3",
-    "tsup": "^8.3.6",
-    "typescript": "^5.7.3",
-    "vitest": "^3.0.5"
+    "@changesets/cli": "^2.29.8",
+    "@types/node": "^20.19.27",
+    "@vitest/coverage-v8": "^4.0.16",
+    "mongodb-memory-server": "^11.0.1",
+    "prettier": "^3.7.4",
+    "prettier-plugin-organize-imports": "^4.3.0",
+    "tsdown": "^0.18.3",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.16"
   }
 }

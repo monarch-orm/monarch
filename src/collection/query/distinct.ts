@@ -1,8 +1,4 @@
-import type {
-  DistinctOptions,
-  Filter,
-  Collection as MongoCollection,
-} from "mongodb";
+import type { DistinctOptions, Filter, Collection as MongoCollection } from "mongodb";
 import type { AnyRelations } from "../../relations/relations";
 import type { AnySchema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";
@@ -33,13 +29,9 @@ export class DistinctQuery<
   public async exec(): Promise<TOutput> {
     await this._readyPromise;
 
-    const res = await this._collection.distinct(
-      this._key as string,
-      this._filter,
-      {
-        ...this._options,
-      },
-    );
+    const res = await this._collection.distinct(this._key as string, this._filter, {
+      ...this._options,
+    });
     return res as any;
   }
 }
