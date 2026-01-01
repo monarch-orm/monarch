@@ -91,12 +91,9 @@ describe("long()", () => {
     test("accepts Long (large value) and returns Long", async () => {
       const testLong = Long.fromString("9223372036854775807");
 
-      const inserted = await collections.bsonData
-        .insertOne({
-          longField: testLong,
-        })
-        ;
-
+      const inserted = await collections.bsonData.insertOne({
+        longField: testLong,
+      });
       expect(Long.isLong(inserted.longField)).toBe(true);
       expect((inserted.longField as Long).toString()).toBe("9223372036854775807");
 
@@ -109,12 +106,9 @@ describe("long()", () => {
     });
 
     test("accepts number (safe integer) and returns number", async () => {
-      const inserted = await collections.bsonData
-        .insertOne({
-          longField: 123456789,
-        })
-        ;
-
+      const inserted = await collections.bsonData.insertOne({
+        longField: 123456789,
+      });
       expect(typeof inserted.longField).toBe("number");
       expect(inserted.longField).toBe(123456789);
 
@@ -127,12 +121,9 @@ describe("long()", () => {
     });
 
     test("accepts bigint (outside safe range) and returns Long", async () => {
-      const inserted = await collections.bsonData
-        .insertOne({
-          longField: BigInt("9223372036854775807"),
-        })
-        ;
-
+      const inserted = await collections.bsonData.insertOne({
+        longField: BigInt("9223372036854775807"),
+      });
       expect(Long.isLong(inserted.longField)).toBe(true);
       expect((inserted.longField as Long).toString()).toBe("9223372036854775807");
 

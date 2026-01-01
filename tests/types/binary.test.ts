@@ -70,12 +70,9 @@ describe("binary()", () => {
     test("accepts Buffer and returns Binary on insert", async () => {
       const testBuffer = Buffer.from("hello world");
 
-      const inserted = await collections.bsonData
-        .insertOne({
-          binaryField: testBuffer,
-        })
-        ;
-
+      const inserted = await collections.bsonData.insertOne({
+        binaryField: testBuffer,
+      });
       expect(inserted.binaryField).toBeInstanceOf(Binary);
       expect(inserted.binaryField!.buffer.toString()).toBe("hello world");
 
@@ -89,12 +86,9 @@ describe("binary()", () => {
     test("accepts Binary and returns Binary on insert", async () => {
       const testBinary = new Binary(Buffer.from("binary data"));
 
-      const inserted = await collections.bsonData
-        .insertOne({
-          binaryField: testBinary,
-        })
-        ;
-
+      const inserted = await collections.bsonData.insertOne({
+        binaryField: testBinary,
+      });
       expect(inserted.binaryField).toBeInstanceOf(Binary);
       expect(inserted.binaryField!.buffer.toString()).toBe("binary data");
 

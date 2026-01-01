@@ -59,23 +59,17 @@ describe("one() relation tests", async () => {
   it("should populate one() relation (tutor)", async () => {
     const { collections } = setupSchemasAndCollections();
 
-    const user = await collections.users
-      .insertOne({
-        name: "Bob",
-        isAdmin: false,
-        createdAt: new Date(),
-      })
-      ;
-
-    const user2 = await collections.users
-      .insertOne({
-        name: "Alex",
-        isAdmin: false,
-        tutor: user._id,
-        createdAt: new Date(),
-      })
-      ;
-
+    const user = await collections.users.insertOne({
+      name: "Bob",
+      isAdmin: false,
+      createdAt: new Date(),
+    });
+    const user2 = await collections.users.insertOne({
+      name: "Alex",
+      isAdmin: false,
+      tutor: user._id,
+      createdAt: new Date(),
+    });
     const populatedUser2 = await collections.users.findById(user2._id).populate({ tutor: true });
 
     expect(populatedUser2).toStrictEqual({
@@ -87,29 +81,22 @@ describe("one() relation tests", async () => {
   it("should populate one() relation (author)", async () => {
     const { collections } = setupSchemasAndCollections();
 
-    const user = await collections.users
-      .insertOne({
-        name: "Bob",
-        isAdmin: false,
-        createdAt: new Date(),
-      })
-      ;
-
-    await collections.posts
-      .insertOne({
-        title: "Pilot",
-        contents: "Lorem",
-        author: user._id,
-      })
-      ;
+    const user = await collections.users.insertOne({
+      name: "Bob",
+      isAdmin: false,
+      createdAt: new Date(),
+    });
+    await collections.posts.insertOne({
+      title: "Pilot",
+      contents: "Lorem",
+      author: user._id,
+    });
 
     const populatedPost = await collections.posts
       .findOne({
         title: "Pilot",
       })
-      .populate({ author: true })
-      ;
-
+      .populate({ author: true });
     expect(populatedPost?.author).toStrictEqual(user);
   });
 
@@ -144,40 +131,29 @@ describe("one() relation tests", async () => {
     });
 
     // Create users with tutor relationship
-    const tutor = await db.collections.users
-      .insertOne({
-        name: "Master Tutor",
-        isAdmin: true,
-        createdAt: new Date(),
-      })
-      ;
-
-    const author = await db.collections.users
-      .insertOne({
-        name: "Student Author",
-        isAdmin: false,
-        createdAt: new Date(),
-        tutor: tutor._id,
-      })
-      ;
-
+    const tutor = await db.collections.users.insertOne({
+      name: "Master Tutor",
+      isAdmin: true,
+      createdAt: new Date(),
+    });
+    const author = await db.collections.users.insertOne({
+      name: "Student Author",
+      isAdmin: false,
+      createdAt: new Date(),
+      tutor: tutor._id,
+    });
     // Create posts for both users
-    await db.collections.posts
-      .insertOne({
-        title: "Tutor's Post",
-        contents: "Wisdom",
-        author: tutor._id,
-      })
-      ;
+    await db.collections.posts.insertOne({
+      title: "Tutor's Post",
+      contents: "Wisdom",
+      author: tutor._id,
+    });
 
-    const studentPost = await db.collections.posts
-      .insertOne({
-        title: "Student's Post",
-        contents: "Learning",
-        author: author._id,
-      })
-      ;
-
+    const studentPost = await db.collections.posts.insertOne({
+      title: "Student's Post",
+      contents: "Learning",
+      author: author._id,
+    });
     // Test nested population
     const populatedPost = await db.collections.posts
       .findById(studentPost._id)
@@ -193,9 +169,7 @@ describe("one() relation tests", async () => {
             posts: true,
           },
         },
-      })
-      ;
-
+      });
     // Verify the nested population results
     expect(populatedPost).toBeTruthy();
     expect(populatedPost?.author).toBeTruthy();

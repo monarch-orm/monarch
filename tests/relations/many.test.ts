@@ -57,38 +57,28 @@ describe("many() relation tests", async () => {
   it("should populate many() relation (contributors)", async () => {
     const { collections } = setupSchemasAndCollections();
 
-    const user = await collections.users
-      .insertOne({
-        name: "Bob",
-        isAdmin: false,
-        createdAt: new Date(),
-      })
-      ;
-
-    const user2 = await collections.users
-      .insertOne({
-        name: "Alex",
-        isAdmin: false,
-        createdAt: new Date(),
-      })
-      ;
-
-    await collections.posts
-      .insertOne({
-        title: "Pilot",
-        contents: "Lorem",
-        author: user._id,
-        contributors: [user2._id],
-      })
-      ;
+    const user = await collections.users.insertOne({
+      name: "Bob",
+      isAdmin: false,
+      createdAt: new Date(),
+    });
+    const user2 = await collections.users.insertOne({
+      name: "Alex",
+      isAdmin: false,
+      createdAt: new Date(),
+    });
+    await collections.posts.insertOne({
+      title: "Pilot",
+      contents: "Lorem",
+      author: user._id,
+      contributors: [user2._id],
+    });
 
     const populatedPost = await collections.posts
       .findOne({
         title: "Pilot",
       })
-      .populate({ contributors: true })
-      ;
-
+      .populate({ contributors: true });
     expect(populatedPost?.contributors).toBeDefined();
     expect(populatedPost?.contributors).toHaveLength(1);
     expect(populatedPost?.contributors[0]).toStrictEqual(user2);
@@ -97,46 +87,33 @@ describe("many() relation tests", async () => {
   it("should populate many() relation with multiple contributors", async () => {
     const { collections } = setupSchemasAndCollections();
 
-    const user1 = await collections.users
-      .insertOne({
-        name: "Bob",
-        isAdmin: false,
-        createdAt: new Date(),
-      })
-      ;
-
-    const user2 = await collections.users
-      .insertOne({
-        name: "Alex",
-        isAdmin: false,
-        createdAt: new Date(),
-      })
-      ;
-
-    const user3 = await collections.users
-      .insertOne({
-        name: "Charlie",
-        isAdmin: false,
-        createdAt: new Date(),
-      })
-      ;
-
-    await collections.posts
-      .insertOne({
-        title: "Multi Author Post",
-        contents: "Content",
-        author: user1._id,
-        contributors: [user2._id, user3._id],
-      })
-      ;
+    const user1 = await collections.users.insertOne({
+      name: "Bob",
+      isAdmin: false,
+      createdAt: new Date(),
+    });
+    const user2 = await collections.users.insertOne({
+      name: "Alex",
+      isAdmin: false,
+      createdAt: new Date(),
+    });
+    const user3 = await collections.users.insertOne({
+      name: "Charlie",
+      isAdmin: false,
+      createdAt: new Date(),
+    });
+    await collections.posts.insertOne({
+      title: "Multi Author Post",
+      contents: "Content",
+      author: user1._id,
+      contributors: [user2._id, user3._id],
+    });
 
     const populatedPost = await collections.posts
       .findOne({
         title: "Multi Author Post",
       })
-      .populate({ contributors: true, author: true })
-      ;
-
+      .populate({ contributors: true, author: true });
     expect(populatedPost?.author).toStrictEqual(user1);
     expect(populatedPost?.contributors).toBeDefined();
     expect(populatedPost?.contributors).toHaveLength(2);
@@ -147,40 +124,28 @@ describe("many() relation tests", async () => {
   it("should access original many() field in virtuals", async () => {
     const { collections } = setupSchemasAndCollections();
 
-    const user1 = await collections.users
-      .insertOne({
-        name: "Test User 1",
-        isAdmin: false,
-        createdAt: new Date(),
-      })
-      ;
+    const user1 = await collections.users.insertOne({
+      name: "Test User 1",
+      isAdmin: false,
+      createdAt: new Date(),
+    });
+    const user2 = await collections.users.insertOne({
+      name: "Test User 2",
+      isAdmin: false,
+      createdAt: new Date(),
+    });
+    await collections.posts.insertOne({
+      title: "Post 6",
+      contents: "Content 6",
+      contributors: [user1._id, user2._id],
+      secret: "12345",
+    });
 
-    const user2 = await collections.users
-      .insertOne({
-        name: "Test User 2",
-        isAdmin: false,
-        createdAt: new Date(),
-      })
-      ;
-
-    await collections.posts
-      .insertOne({
-        title: "Post 6",
-        contents: "Content 6",
-        contributors: [user1._id, user2._id],
-        secret: "12345",
-      })
-      ;
-
-    const populatedPost = await collections.posts
-      .find()
-      .populate({
-        contributors: {
-          select: { name: true },
-        },
-      })
-      ;
-
+    const populatedPost = await collections.posts.find().populate({
+      contributors: {
+        select: { name: true },
+      },
+    });
     expect(populatedPost.length).toBe(1);
     expect(populatedPost[0].contributorsCount).toBe(2);
     expect(populatedPost[0].contributors.length).toBe(2);

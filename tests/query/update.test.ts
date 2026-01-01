@@ -64,14 +64,13 @@ describe("Update Operations", async () => {
 
   it("replaces one document", async () => {
     const original = await collections.users.insertOne(mockUsers[0]);
-    const replaced = await collections.users
-      .replaceOne(
-        { email: "anon@gmail.com" },
-        {
-          ...original,
-          name: "New Name",
-        },
-      );
+    const replaced = await collections.users.replaceOne(
+      { email: "anon@gmail.com" },
+      {
+        ...original,
+        name: "New Name",
+      },
+    );
     expect(replaced.modifiedCount).toBe(1);
   });
 
@@ -148,12 +147,8 @@ describe("Update Operations", async () => {
       const updateObj = { $set: { name: "Updated" } };
 
       // Use the same update object twice
-      await db.collections.users
-        .findOneAndUpdate({ _id: user1._id }, updateObj)
-        .options({ returnDocument: "after" });
-      await db.collections.users
-        .findOneAndUpdate({ _id: user2._id }, updateObj)
-        .options({ returnDocument: "after" });
+      await db.collections.users.findOneAndUpdate({ _id: user1._id }, updateObj).options({ returnDocument: "after" });
+      await db.collections.users.findOneAndUpdate({ _id: user2._id }, updateObj).options({ returnDocument: "after" });
 
       // Verify users were updated
       const updatedUser1 = await db.collections.users.findOne({ _id: user1._id });

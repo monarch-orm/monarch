@@ -62,35 +62,24 @@ describe("Population Options", async () => {
   it("should populate with limit and skip options", async () => {
     const { collections } = setupSchemasAndCollections();
 
-    const user = await collections.users
-      .insertOne({
-        name: "Test User",
-        isAdmin: false,
-        createdAt: new Date(),
-      })
-      ;
+    const user = await collections.users.insertOne({
+      name: "Test User",
+      isAdmin: false,
+      createdAt: new Date(),
+    });
+    await collections.posts.insertOne({
+      title: "Post 1",
+      contents: "Content 1",
+      author: user._id,
+    });
 
-    await collections.posts
-      .insertOne({
-        title: "Post 1",
-        contents: "Content 1",
-        author: user._id,
-      })
-      ;
+    await collections.posts.insertOne({
+      title: "Post 2",
+      contents: "Content 2",
+      author: user._id,
+    });
 
-    await collections.posts
-      .insertOne({
-        title: "Post 2",
-        contents: "Content 2",
-        author: user._id,
-      })
-      ;
-
-    const populatedUser = await collections.users
-      .find()
-      .populate({ posts: { limit: 1, skip: 0 } })
-      ;
-
+    const populatedUser = await collections.users.find().populate({ posts: { limit: 1, skip: 0 } });
     expect(populatedUser.length).toBe(1);
     expect(populatedUser[0].posts.length).toBe(1);
     expect(populatedUser[0].posts[0].title).toBe("Post 1");
@@ -99,29 +88,20 @@ describe("Population Options", async () => {
   it("should populate with default omit option", async () => {
     const { collections } = setupSchemasAndCollections();
 
-    const user = await collections.users
-      .insertOne({
-        name: "Test User 2",
-        isAdmin: false,
-        createdAt: new Date(),
-      })
-      ;
+    const user = await collections.users.insertOne({
+      name: "Test User 2",
+      isAdmin: false,
+      createdAt: new Date(),
+    });
+    await collections.posts.insertOne({
+      title: "Post 3",
+      contents: "Content 3",
+      author: user._id,
+    });
 
-    await collections.posts
-      .insertOne({
-        title: "Post 3",
-        contents: "Content 3",
-        author: user._id,
-      })
-      ;
-
-    const populatedUser = await collections.users
-      .find()
-      .populate({
-        posts: true,
-      })
-      ;
-
+    const populatedUser = await collections.users.find().populate({
+      posts: true,
+    });
     expect(populatedUser.length).toBe(1);
     expect(populatedUser[0].posts.length).toBe(1);
     expect(populatedUser[0].posts[0]).toHaveProperty("contents");
@@ -131,31 +111,22 @@ describe("Population Options", async () => {
   it("should populate with omit option", async () => {
     const { collections } = setupSchemasAndCollections();
 
-    const user = await collections.users
-      .insertOne({
-        name: "Test User 2",
-        isAdmin: false,
-        createdAt: new Date(),
-      })
-      ;
+    const user = await collections.users.insertOne({
+      name: "Test User 2",
+      isAdmin: false,
+      createdAt: new Date(),
+    });
+    await collections.posts.insertOne({
+      title: "Post 3",
+      contents: "Content 3",
+      author: user._id,
+    });
 
-    await collections.posts
-      .insertOne({
-        title: "Post 3",
-        contents: "Content 3",
-        author: user._id,
-      })
-      ;
-
-    const populatedUser = await collections.users
-      .find()
-      .populate({
-        posts: {
-          omit: { title: true },
-        },
-      })
-      ;
-
+    const populatedUser = await collections.users.find().populate({
+      posts: {
+        omit: { title: true },
+      },
+    });
     expect(populatedUser.length).toBe(1);
     expect(populatedUser[0].posts.length).toBe(1);
     expect(populatedUser[0].posts[0]).toHaveProperty("secret");
@@ -165,31 +136,22 @@ describe("Population Options", async () => {
   it("should populate with select option", async () => {
     const { collections } = setupSchemasAndCollections();
 
-    const user = await collections.users
-      .insertOne({
-        name: "Test User 2",
-        isAdmin: false,
-        createdAt: new Date(),
-      })
-      ;
+    const user = await collections.users.insertOne({
+      name: "Test User 2",
+      isAdmin: false,
+      createdAt: new Date(),
+    });
+    await collections.posts.insertOne({
+      title: "Post 3",
+      contents: "Content 3",
+      author: user._id,
+    });
 
-    await collections.posts
-      .insertOne({
-        title: "Post 3",
-        contents: "Content 3",
-        author: user._id,
-      })
-      ;
-
-    const populatedUser = await collections.users
-      .find()
-      .populate({
-        posts: {
-          select: { title: true },
-        },
-      })
-      ;
-
+    const populatedUser = await collections.users.find().populate({
+      posts: {
+        select: { title: true },
+      },
+    });
     expect(populatedUser.length).toBe(1);
     expect(populatedUser[0].posts.length).toBe(1);
     expect(populatedUser[0].posts[0]).toHaveProperty("title");
@@ -200,39 +162,28 @@ describe("Population Options", async () => {
   it("should populate with sort option", async () => {
     const { collections } = setupSchemasAndCollections();
 
-    const user = await collections.users
-      .insertOne({
-        name: "Test User 5",
-        isAdmin: false,
-        createdAt: new Date(),
-      })
-      ;
+    const user = await collections.users.insertOne({
+      name: "Test User 5",
+      isAdmin: false,
+      createdAt: new Date(),
+    });
+    await collections.posts.insertOne({
+      title: "Post 6",
+      contents: "Content 6",
+      author: user._id,
+    });
 
-    await collections.posts
-      .insertOne({
-        title: "Post 6",
-        contents: "Content 6",
-        author: user._id,
-      })
-      ;
+    await collections.posts.insertOne({
+      title: "Post 7",
+      contents: "Content 7",
+      author: user._id,
+    });
 
-    await collections.posts
-      .insertOne({
-        title: "Post 7",
-        contents: "Content 7",
-        author: user._id,
-      })
-      ;
-
-    const populatedUser = await collections.users
-      .find()
-      .populate({
-        posts: {
-          sort: { title: -1 },
-        },
-      })
-      ;
-
+    const populatedUser = await collections.users.find().populate({
+      posts: {
+        sort: { title: -1 },
+      },
+    });
     expect(populatedUser.length).toBe(1);
     expect(populatedUser[0].posts.length).toBe(2);
     expect(populatedUser[0].posts[0]).toHaveProperty("title", "Post 7");

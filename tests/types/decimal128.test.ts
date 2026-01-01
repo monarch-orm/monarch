@@ -92,12 +92,9 @@ describe("decimal128()", () => {
     test("accepts Decimal128 and returns Decimal128", async () => {
       const testDecimal = Decimal128.fromString("123456789.123456789123456789");
 
-      const inserted = await collections.bsonData
-        .insertOne({
-          decimalField: testDecimal,
-        })
-        ;
-
+      const inserted = await collections.bsonData.insertOne({
+        decimalField: testDecimal,
+      });
       expect(inserted.decimalField).toBeInstanceOf(Decimal128);
       expect(inserted.decimalField!.toString()).toBe("123456789.123456789123456789");
 
@@ -109,12 +106,9 @@ describe("decimal128()", () => {
     });
 
     test("accepts string and returns Decimal128", async () => {
-      const inserted = await collections.bsonData
-        .insertOne({
-          decimalField: "999.999999",
-        })
-        ;
-
+      const inserted = await collections.bsonData.insertOne({
+        decimalField: "999.999999",
+      });
       expect(inserted.decimalField).toBeInstanceOf(Decimal128);
       expect(inserted.decimalField!.toString()).toBe("999.999999");
 
@@ -127,12 +121,9 @@ describe("decimal128()", () => {
 
     test("handles high precision decimals", async () => {
       const highPrecision = "99999999999999.999999999999999999";
-      const inserted = await collections.bsonData
-        .insertOne({
-          decimalField: highPrecision,
-        })
-        ;
-
+      const inserted = await collections.bsonData.insertOne({
+        decimalField: highPrecision,
+      });
       expect(inserted.decimalField).toBeInstanceOf(Decimal128);
       expect(inserted.decimalField!.toString()).toBe(highPrecision);
 

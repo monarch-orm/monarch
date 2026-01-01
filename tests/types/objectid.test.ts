@@ -80,12 +80,9 @@ describe("objectId()", () => {
     test("accepts ObjectId and returns ObjectId", async () => {
       const testId = new ObjectId();
 
-      const inserted = await collections.testData
-        .insertOne({
-          refId: testId,
-        })
-        ;
-
+      const inserted = await collections.testData.insertOne({
+        refId: testId,
+      });
       expect(inserted.refId).toBeInstanceOf(ObjectId);
       expect(inserted.refId?.toString()).toBe(testId.toString());
 
@@ -99,12 +96,9 @@ describe("objectId()", () => {
     test("accepts valid string and returns ObjectId", async () => {
       const validId = "507f1f77bcf86cd799439011";
 
-      const inserted = await collections.testData
-        .insertOne({
-          refId: validId,
-        })
-        ;
-
+      const inserted = await collections.testData.insertOne({
+        refId: validId,
+      });
       expect(inserted.refId).toBeInstanceOf(ObjectId);
       expect(inserted.refId?.toString()).toBe(validId);
 

@@ -28,13 +28,11 @@ describe("Schema", async () => {
       isAdmin: true,
     });
     const db = createDatabase(client.db(), { users: schema });
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom",
-        age: 0,
-        isAdmin: true,
-      })
-      ;
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      age: 0,
+      isAdmin: true,
+    });
     expect(res).toStrictEqual({ _id: res._id, name: "tom", age: 0 });
     const doc = await db.collections.users.findOne({ _id: res._id });
     expect(doc).toStrictEqual({ _id: res._id, name: "tom", age: 0 });
@@ -49,13 +47,11 @@ describe("Schema", async () => {
       role: virtual("isAdmin", ({ isAdmin }) => (isAdmin ? "admin" : "user")),
     });
     const db = createDatabase(client.db(), { users: schema });
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom cruise",
-        age: 0,
-        isAdmin: true,
-      })
-      ;
+    const res = await db.collections.users.insertOne({
+      name: "tom cruise",
+      age: 0,
+      isAdmin: true,
+    });
     const doc = await db.collections.users.findOne({ _id: res._id });
     expect(doc).toStrictEqual({
       _id: res._id,
@@ -80,13 +76,11 @@ describe("Schema", async () => {
         role: virtual("isAdmin", ({ isAdmin }) => (isAdmin ? "admin" : "user")),
       });
     const db = createDatabase(client.db(), { users: schema });
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom",
-        age: 0,
-        isAdmin: true,
-      })
-      ;
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      age: 0,
+      isAdmin: true,
+    });
     const doc = await db.collections.users.findOne({ _id: res._id });
     expect(doc).toStrictEqual({
       _id: res._id,
@@ -109,13 +103,11 @@ describe("Schema", async () => {
         role: virtual("isAdmin", ({ isAdmin }) => (isAdmin !== undefined ? "known" : "unknown")),
       });
     const db = createDatabase(client.db(), { users: schema });
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom",
-        age: 0,
-        isAdmin: true,
-      })
-      ;
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      age: 0,
+      isAdmin: true,
+    });
     expect(res).toStrictEqual({
       _id: res._id,
       name: "tom",
@@ -152,14 +144,12 @@ describe("Schema", async () => {
       role: virtual("isAdmin", ({ isAdmin }) => (isAdmin ? "admin" : "user")),
     });
     const db = createDatabase(client.db(), { users: schema });
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom",
-        age: 0,
-        isAdmin: true,
-        role: 1,
-      })
-      ;
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      age: 0,
+      isAdmin: true,
+      role: 1,
+    });
     const doc = await db.collections.users.findOne({ _id: res._id });
     expect(doc).toStrictEqual({
       _id: res._id,
@@ -183,43 +173,35 @@ describe("Schema", async () => {
     const db = createDatabase(client.db(), { users: schema });
 
     // duplicate username
-    await db.collections.users
-      .insertOne({
-        firstname: "bob",
+    await db.collections.users.insertOne({
+      firstname: "bob",
+      surname: "paul",
+      username: "bobpaul",
+      age: 0,
+    });
+    await expect(async () => {
+      await db.collections.users.insertOne({
+        firstname: "bobby",
         surname: "paul",
         username: "bobpaul",
         age: 0,
-      })
-      ;
-    await expect(async () => {
-      await db.collections.users
-        .insertOne({
-          firstname: "bobby",
-          surname: "paul",
-          username: "bobpaul",
-          age: 0,
-        })
-        ;
+      });
     }).rejects.toThrowError("E11000 duplicate key error");
 
     // duplicate firstname and lastname pair
-    await db.collections.users
-      .insertOne({
+    await db.collections.users.insertOne({
+      firstname: "alice",
+      surname: "wonder",
+      username: "alicewonder",
+      age: 0,
+    });
+    await expect(async () => {
+      await db.collections.users.insertOne({
         firstname: "alice",
         surname: "wonder",
-        username: "alicewonder",
+        username: "allywon",
         age: 0,
-      })
-      ;
-    await expect(async () => {
-      await db.collections.users
-        .insertOne({
-          firstname: "alice",
-          surname: "wonder",
-          username: "allywon",
-          age: 0,
-        })
-        ;
+      });
     }).rejects.toThrowError("E11000 duplicate key error");
   });
 
@@ -231,14 +213,11 @@ describe("Schema", async () => {
     });
     const db = createDatabase(client.db(), { products: schema });
 
-    const product = await db.collections.products
-      .insertOne({
-        _id: "product-123",
-        name: "Laptop",
-        price: 999,
-      })
-      ;
-
+    const product = await db.collections.products.insertOne({
+      _id: "product-123",
+      name: "Laptop",
+      price: 999,
+    });
     expect(product).toStrictEqual({
       _id: "product-123",
       name: "Laptop",
@@ -261,14 +240,11 @@ describe("Schema", async () => {
     });
     const db = createDatabase(client.db(), { orders: schema });
 
-    const order = await db.collections.orders
-      .insertOne({
-        _id: 12345,
-        customerId: "cust-001",
-        total: 150.5,
-      })
-      ;
-
+    const order = await db.collections.orders.insertOne({
+      _id: 12345,
+      customerId: "cust-001",
+      total: 150.5,
+    });
     expect(order).toStrictEqual({
       _id: 12345,
       customerId: "cust-001",
