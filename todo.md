@@ -26,7 +26,6 @@ Here are some features we need to implement.
 
 ### API Improvements
 
-- [] Add `findByIdAndUpdate()` / `findByIdAndDelete()` shortcuts
 - [] Add batch operations helper methods
 - [] Fully document public API
 - [] Remove need for `ref` by auto reversing `one` relation
