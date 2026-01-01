@@ -94,6 +94,33 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
     );
   }
 
+  public findByIdAndUpdate(id: Index<SchemaInputWithId<TSchema>, "_id">, update: UpdateFilter<InferSchemaData<TSchema>>) {
+    const _idType = Schema.types(this.schema)._id;
+    const isObjectIdType = MonarchType.isInstanceOf(_idType, MonarchObjectId);
+
+    return new FindOneAndUpdateQuery(
+      this.schema,
+      this._collection,
+      this._readyPromise,
+      // @ts-ignore
+      { _id: isObjectIdType ? new ObjectId(id) : id },
+      update,
+    );
+  }
+
+  public findByIdAndDelete(id: Index<SchemaInputWithId<TSchema>, "_id">) {
+    const _idType = Schema.types(this.schema)._id;
+    const isObjectIdType = MonarchType.isInstanceOf(_idType, MonarchObjectId);
+
+    return new FindOneAndDeleteQuery(
+      this.schema,
+      this._collection,
+      this._readyPromise,
+      // @ts-ignore
+      { _id: isObjectIdType ? new ObjectId(id) : id },
+    );
+  }
+
   public findOne(filter: Filter<InferSchemaData<TSchema>>) {
     return new FindOneQuery(this.schema, this.relations, this._collection, this._readyPromise, filter);
   }

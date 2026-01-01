@@ -74,6 +74,47 @@ describe("Update Operations", async () => {
     expect(replaced.modifiedCount).toBe(1);
   });
 
+  it("finds and updates one by ObjectId", async () => {
+    const user = await collections.users.insertOne(mockUsers[0]);
+
+    const updatedUser = await collections.users
+      .findByIdAndUpdate(user._id, { $set: { age: 99 } })
+      .options({ returnDocument: "after" });
+
+    expect(updatedUser).not.toBe(null);
+    expect(updatedUser?._id).toStrictEqual(user._id);
+    expect(updatedUser?.age).toBe(99);
+  });
+
+  it("finds and updates one by ObjectId string", async () => {
+    const user = await collections.users.insertOne(mockUsers[1]);
+
+    const updatedUser = await collections.users
+      .findByIdAndUpdate(user._id.toString(), { $set: { age: 77 } })
+      .options({ returnDocument: "after" });
+
+    expect(updatedUser).not.toBe(null);
+    expect(updatedUser?._id).toStrictEqual(user._id);
+    expect(updatedUser?.age).toBe(77);
+  });
+
+  it("findByIdAndUpdate triggers onUpdate hooks", async () => {
+    const schema = createSchema("users", {
+      name: string(),
+      age: number().onUpdate(() => 555),
+    });
+    const db = createDatabase(client.db(), { users: schema });
+
+    const user = await db.collections.users.insertOne({ name: "Alice", age: 20 });
+
+    const updatedUser = await db.collections.users
+      .findByIdAndUpdate(user._id, { $set: { name: "Bob" } })
+      .options({ returnDocument: "after" });
+
+    expect(updatedUser?.name).toBe("Bob");
+    expect(updatedUser?.age).toBe(555);
+  });
+
   describe("edge cases", () => {
     it("should not mutate reused update object in updateOne", async () => {
       const schema = createSchema("users", {
