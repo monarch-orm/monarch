@@ -68,7 +68,7 @@ describe("Population Options", async () => {
         isAdmin: false,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     await collections.posts
       .insertOne({
@@ -76,7 +76,7 @@ describe("Population Options", async () => {
         contents: "Content 1",
         author: user._id,
       })
-      .exec();
+      ;
 
     await collections.posts
       .insertOne({
@@ -84,12 +84,12 @@ describe("Population Options", async () => {
         contents: "Content 2",
         author: user._id,
       })
-      .exec();
+      ;
 
     const populatedUser = await collections.users
       .find()
       .populate({ posts: { limit: 1, skip: 0 } })
-      .exec();
+      ;
 
     expect(populatedUser.length).toBe(1);
     expect(populatedUser[0].posts.length).toBe(1);
@@ -105,7 +105,7 @@ describe("Population Options", async () => {
         isAdmin: false,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     await collections.posts
       .insertOne({
@@ -113,14 +113,14 @@ describe("Population Options", async () => {
         contents: "Content 3",
         author: user._id,
       })
-      .exec();
+      ;
 
     const populatedUser = await collections.users
       .find()
       .populate({
         posts: true,
       })
-      .exec();
+      ;
 
     expect(populatedUser.length).toBe(1);
     expect(populatedUser[0].posts.length).toBe(1);
@@ -137,7 +137,7 @@ describe("Population Options", async () => {
         isAdmin: false,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     await collections.posts
       .insertOne({
@@ -145,7 +145,7 @@ describe("Population Options", async () => {
         contents: "Content 3",
         author: user._id,
       })
-      .exec();
+      ;
 
     const populatedUser = await collections.users
       .find()
@@ -154,7 +154,7 @@ describe("Population Options", async () => {
           omit: { title: true },
         },
       })
-      .exec();
+      ;
 
     expect(populatedUser.length).toBe(1);
     expect(populatedUser[0].posts.length).toBe(1);
@@ -171,7 +171,7 @@ describe("Population Options", async () => {
         isAdmin: false,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     await collections.posts
       .insertOne({
@@ -179,7 +179,7 @@ describe("Population Options", async () => {
         contents: "Content 3",
         author: user._id,
       })
-      .exec();
+      ;
 
     const populatedUser = await collections.users
       .find()
@@ -188,7 +188,7 @@ describe("Population Options", async () => {
           select: { title: true },
         },
       })
-      .exec();
+      ;
 
     expect(populatedUser.length).toBe(1);
     expect(populatedUser[0].posts.length).toBe(1);
@@ -206,7 +206,7 @@ describe("Population Options", async () => {
         isAdmin: false,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     await collections.posts
       .insertOne({
@@ -214,7 +214,7 @@ describe("Population Options", async () => {
         contents: "Content 6",
         author: user._id,
       })
-      .exec();
+      ;
 
     await collections.posts
       .insertOne({
@@ -222,7 +222,7 @@ describe("Population Options", async () => {
         contents: "Content 7",
         author: user._id,
       })
-      .exec();
+      ;
 
     const populatedUser = await collections.users
       .find()
@@ -231,7 +231,7 @@ describe("Population Options", async () => {
           sort: { title: -1 },
         },
       })
-      .exec();
+      ;
 
     expect(populatedUser.length).toBe(1);
     expect(populatedUser[0].posts.length).toBe(2);

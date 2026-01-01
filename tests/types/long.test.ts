@@ -85,7 +85,7 @@ describe("long()", () => {
     });
 
     afterAll(async () => {
-      await collections.bsonData.deleteMany({}).exec();
+      await collections.bsonData.deleteMany({});
     });
 
     test("accepts Long (large value) and returns Long", async () => {
@@ -95,12 +95,12 @@ describe("long()", () => {
         .insertOne({
           longField: testLong,
         })
-        .exec();
+        ;
 
       expect(Long.isLong(inserted.longField)).toBe(true);
       expect((inserted.longField as Long).toString()).toBe("9223372036854775807");
 
-      const retrieved = await collections.bsonData.findOne({ _id: inserted._id }).exec();
+      const retrieved = await collections.bsonData.findOne({ _id: inserted._id });
       expect(retrieved).not.toBeNull();
       expect(retrieved!.longField).toBeDefined();
       expect(Long.isLong(retrieved!.longField)).toBe(true);
@@ -113,12 +113,12 @@ describe("long()", () => {
         .insertOne({
           longField: 123456789,
         })
-        .exec();
+        ;
 
       expect(typeof inserted.longField).toBe("number");
       expect(inserted.longField).toBe(123456789);
 
-      const retrieved = await collections.bsonData.findOne({ _id: inserted._id }).exec();
+      const retrieved = await collections.bsonData.findOne({ _id: inserted._id });
       expect(retrieved).not.toBeNull();
       expect(retrieved!.longField).toBeDefined();
       expect(typeof retrieved!.longField).toBe("number");
@@ -131,12 +131,12 @@ describe("long()", () => {
         .insertOne({
           longField: BigInt("9223372036854775807"),
         })
-        .exec();
+        ;
 
       expect(Long.isLong(inserted.longField)).toBe(true);
       expect((inserted.longField as Long).toString()).toBe("9223372036854775807");
 
-      const retrieved = await collections.bsonData.findOne({ _id: inserted._id }).exec();
+      const retrieved = await collections.bsonData.findOne({ _id: inserted._id });
       expect(retrieved).not.toBeNull();
       expect(retrieved!.longField).toBeDefined();
       expect(Long.isLong(retrieved!.longField)).toBe(true);

@@ -22,7 +22,7 @@ describe("Delete Operations", async () => {
   });
 
   afterEach(async () => {
-    await collections.users.deleteMany({}).exec();
+    await collections.users.deleteMany({});
   });
 
   afterAll(async () => {
@@ -31,15 +31,15 @@ describe("Delete Operations", async () => {
   });
 
   it("finds one and deletes", async () => {
-    await collections.users.insertOne(mockUsers[0]).exec();
-    const deletedUser = await collections.users.findOneAndDelete({ email: "anon@gmail.com" }).exec();
+    await collections.users.insertOne(mockUsers[0]);
+    const deletedUser = await collections.users.findOneAndDelete({ email: "anon@gmail.com" });
     expect(deletedUser).not.toBe(null);
     expect(deletedUser?.email).toBe("anon@gmail.com");
   });
 
   it("deletes one document", async () => {
-    await collections.users.insertOne(mockUsers[2]).exec();
-    const deleted = await collections.users.deleteOne({ email: "anon2@gmail.com" }).exec();
+    await collections.users.insertOne(mockUsers[2]);
+    const deleted = await collections.users.deleteOne({ email: "anon2@gmail.com" });
     expect(deleted.deletedCount).toBe(1);
   });
 });

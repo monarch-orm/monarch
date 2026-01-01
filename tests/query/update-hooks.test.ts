@@ -26,14 +26,12 @@ describe("Update Hooks", async () => {
       isAdmin: boolean(),
     });
     const db = createDatabase(client.db(), { users: schema });
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom",
-        age: 0,
-        isAdmin: true,
-      })
-      .exec();
-    const doc = await db.collections.users.findOne({ _id: res._id }).exec();
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      age: 0,
+      isAdmin: true,
+    });
+    const doc = await db.collections.users.findOne({ _id: res._id });
     expect(doc).toStrictEqual({
       _id: res._id,
       name: "tom",
@@ -44,8 +42,7 @@ describe("Update Hooks", async () => {
       .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
       .options({
         returnDocument: "after",
-      })
-      .exec();
+      });
     expect(updatedDoc).toStrictEqual({
       _id: res._id,
       name: "jerry",
@@ -63,12 +60,10 @@ describe("Update Hooks", async () => {
       nonce: number().onUpdate(onUpdateTrap).transform(transformTrap),
     });
     const db = createDatabase(client.db(), { users: schema });
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom",
-        nonce: 0,
-      })
-      .exec();
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      nonce: 0,
+    });
     expect(onUpdateTrap).toBeCalledTimes(0);
     expect(transformTrap).toBeCalledTimes(1);
     expect(res).toStrictEqual({ _id: res._id, name: "tom", nonce: "0" });
@@ -77,8 +72,7 @@ describe("Update Hooks", async () => {
       .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
       .options({
         returnDocument: "after",
-      })
-      .exec();
+      });
     expect(onUpdateTrap).toBeCalledTimes(1);
     expect(transformTrap).toBeCalledTimes(2);
     expect(updatedDoc).toStrictEqual({
@@ -98,12 +92,10 @@ describe("Update Hooks", async () => {
         .validate(() => true, ""),
     });
     const db = createDatabase(client.db(), { users: schema });
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom",
-        nonce: 0,
-      })
-      .exec();
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      nonce: 0,
+    });
     expect(onUpdateTrap).toBeCalledTimes(0);
     expect(res).toStrictEqual({ _id: res._id, name: "tom", nonce: 0 });
 
@@ -111,8 +103,7 @@ describe("Update Hooks", async () => {
       .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
       .options({
         returnDocument: "after",
-      })
-      .exec();
+      });
     expect(onUpdateTrap).toBeCalledTimes(1);
     expect(updatedDoc).toStrictEqual({
       _id: res._id,
@@ -129,11 +120,9 @@ describe("Update Hooks", async () => {
       nonce: number().onUpdate(onUpdateTrap).optional(),
     });
     const db = createDatabase(client.db(), { users: schema });
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom",
-      })
-      .exec();
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+    });
     expect(onUpdateTrap).toBeCalledTimes(0);
     expect(res).toStrictEqual({ _id: res._id, name: "tom" });
 
@@ -141,8 +130,7 @@ describe("Update Hooks", async () => {
       .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
       .options({
         returnDocument: "after",
-      })
-      .exec();
+      });
     expect(onUpdateTrap).toBeCalledTimes(1);
     expect(updatedDoc).toStrictEqual({
       _id: res._id,
@@ -159,12 +147,10 @@ describe("Update Hooks", async () => {
       nonce: number().onUpdate(onUpdateTrap).nullable(),
     });
     const db = createDatabase(client.db(), { users: schema });
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom",
-        nonce: null,
-      })
-      .exec();
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      nonce: null,
+    });
     expect(onUpdateTrap).toBeCalledTimes(0);
     expect(res).toStrictEqual({ _id: res._id, name: "tom", nonce: null });
 
@@ -172,8 +158,7 @@ describe("Update Hooks", async () => {
       .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
       .options({
         returnDocument: "after",
-      })
-      .exec();
+      });
     expect(onUpdateTrap).toBeCalledTimes(1);
     expect(updatedDoc).toStrictEqual({
       _id: res._id,
@@ -190,11 +175,9 @@ describe("Update Hooks", async () => {
       nonce: number().onUpdate(onUpdateTrap).default(0),
     });
     const db = createDatabase(client.db(), { users: schema });
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom",
-      })
-      .exec();
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+    });
     expect(onUpdateTrap).toBeCalledTimes(0);
     expect(res).toStrictEqual({ _id: res._id, name: "tom", nonce: 0 });
 
@@ -202,8 +185,7 @@ describe("Update Hooks", async () => {
       .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
       .options({
         returnDocument: "after",
-      })
-      .exec();
+      });
     expect(onUpdateTrap).toBeCalledTimes(1);
     expect(updatedDoc).toStrictEqual({
       _id: res._id,
@@ -223,12 +205,10 @@ describe("Update Hooks", async () => {
       ).onUpdate(onUpdateTrap),
     });
     const db = createDatabase(client.db(), { users: schema });
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom",
-        nonce: 0,
-      })
-      .exec();
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      nonce: 0,
+    });
     expect(onUpdateTrap).toBeCalledTimes(0);
     expect(res).toStrictEqual({ _id: res._id, name: "tom", nonce: "0" });
 
@@ -236,8 +216,7 @@ describe("Update Hooks", async () => {
       .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
       .options({
         returnDocument: "after",
-      })
-      .exec();
+      });
     expect(onUpdateTrap).toBeCalledTimes(1);
     expect(updatedDoc).toStrictEqual({
       _id: res._id,
@@ -257,12 +236,10 @@ describe("Update Hooks", async () => {
     const db = createDatabase(client.db(), { users: schema });
 
     // Insert initial document
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom",
-        nonce: 50,
-      })
-      .exec();
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      nonce: 50,
+    });
     expect(onUpdateTrap).toBeCalledTimes(0);
     expect(transformTrap).toBeCalledTimes(1);
     expect(transformTrap).toHaveBeenNthCalledWith(1, 50);
@@ -273,8 +250,7 @@ describe("Update Hooks", async () => {
       .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
       .options({
         returnDocument: "after",
-      })
-      .exec();
+      });
     expect(onUpdateTrap).toBeCalledTimes(1);
     expect(onUpdateTrap).toHaveReturnedWith(100);
     expect(transformTrap).toBeCalledTimes(2);
@@ -297,12 +273,10 @@ describe("Update Hooks", async () => {
     const db = createDatabase(client.db(), { users: schema });
 
     // Insert initial document
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom",
-        nonce: 50,
-      })
-      .exec();
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      nonce: 50,
+    });
     expect(onUpdateTrap).toBeCalledTimes(0);
     expect(transformTrap).toBeCalledTimes(1);
     expect(transformTrap).toHaveBeenNthCalledWith(1, 50);
@@ -313,8 +287,7 @@ describe("Update Hooks", async () => {
       .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
       .options({
         returnDocument: "after",
-      })
-      .exec();
+      });
     expect(onUpdateTrap).toBeCalledTimes(1);
     expect(onUpdateTrap).toHaveReturnedWith(100);
     // Transform IS called because onUpdate uses the transformed parser
@@ -338,12 +311,10 @@ describe("Update Hooks", async () => {
     const db = createDatabase(client.db(), { users: schema });
 
     // Insert initial document with valid value
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom",
-        nonce: 25,
-      })
-      .exec();
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      nonce: 25,
+    });
     expect(onUpdateTrap).toBeCalledTimes(0);
     expect(validateTrap).toBeCalledTimes(1);
     expect(validateTrap).toHaveBeenNthCalledWith(1, 25);
@@ -355,8 +326,7 @@ describe("Update Hooks", async () => {
       .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
       .options({
         returnDocument: "after",
-      })
-      .exec();
+      });
     expect(onUpdateTrap).toBeCalledTimes(1);
     expect(onUpdateTrap).toHaveReturnedWith(100);
     // Validate should NOT be called on update value
@@ -379,12 +349,10 @@ describe("Update Hooks", async () => {
     const db = createDatabase(client.db(), { users: schema });
 
     // Insert initial document with valid value
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom",
-        nonce: 25,
-      })
-      .exec();
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      nonce: 25,
+    });
     expect(onUpdateTrap).toBeCalledTimes(0);
     expect(validateTrap).toBeCalledTimes(1);
     expect(validateTrap).toHaveBeenNthCalledWith(1, 25);
@@ -396,8 +364,7 @@ describe("Update Hooks", async () => {
       .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
       .options({
         returnDocument: "after",
-      })
-      .exec();
+      });
     expect(onUpdateTrap).toBeCalledTimes(1);
     expect(onUpdateTrap).toHaveReturnedWith(10);
     // Validate IS called because onUpdate uses the validated parser
@@ -426,12 +393,10 @@ describe("Update Hooks", async () => {
     const db = createDatabase(client.db(), { users: schema });
 
     // Insert initial document
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom",
-        nonce: 7,
-      })
-      .exec();
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      nonce: 7,
+    });
     expect(onUpdateTrap).toBeCalledTimes(0);
     expect(transformTrap).toBeCalledTimes(1);
     expect(transformTrap).toHaveBeenNthCalledWith(1, 7);
@@ -444,8 +409,7 @@ describe("Update Hooks", async () => {
       .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
       .options({
         returnDocument: "after",
-      })
-      .exec();
+      });
     expect(onUpdateTrap).toBeCalledTimes(1);
     expect(onUpdateTrap).toHaveReturnedWith(5);
     // Transform IS called (onUpdate uses transformed parser)
@@ -475,12 +439,10 @@ describe("Update Hooks", async () => {
     const db = createDatabase(client.db(), { users: schema });
 
     // Insert initial document
-    const res = await db.collections.users
-      .insertOne({
-        name: "tom",
-        nonce: 7,
-      })
-      .exec();
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      nonce: 7,
+    });
     expect(onUpdateTrap).toBeCalledTimes(0);
     expect(transformTrap).toBeCalledTimes(1);
     expect(transformTrap).toHaveBeenNthCalledWith(1, 7);
@@ -493,8 +455,7 @@ describe("Update Hooks", async () => {
       .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
       .options({
         returnDocument: "after",
-      })
-      .exec();
+      });
     expect(onUpdateTrap).toBeCalledTimes(1);
     expect(onUpdateTrap).toHaveReturnedWith(5);
     expect(transformTrap).toBeCalledTimes(2);

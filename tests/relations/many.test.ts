@@ -63,7 +63,7 @@ describe("many() relation tests", async () => {
         isAdmin: false,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     const user2 = await collections.users
       .insertOne({
@@ -71,7 +71,7 @@ describe("many() relation tests", async () => {
         isAdmin: false,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     await collections.posts
       .insertOne({
@@ -80,14 +80,14 @@ describe("many() relation tests", async () => {
         author: user._id,
         contributors: [user2._id],
       })
-      .exec();
+      ;
 
     const populatedPost = await collections.posts
       .findOne({
         title: "Pilot",
       })
       .populate({ contributors: true })
-      .exec();
+      ;
 
     expect(populatedPost?.contributors).toBeDefined();
     expect(populatedPost?.contributors).toHaveLength(1);
@@ -103,7 +103,7 @@ describe("many() relation tests", async () => {
         isAdmin: false,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     const user2 = await collections.users
       .insertOne({
@@ -111,7 +111,7 @@ describe("many() relation tests", async () => {
         isAdmin: false,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     const user3 = await collections.users
       .insertOne({
@@ -119,7 +119,7 @@ describe("many() relation tests", async () => {
         isAdmin: false,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     await collections.posts
       .insertOne({
@@ -128,14 +128,14 @@ describe("many() relation tests", async () => {
         author: user1._id,
         contributors: [user2._id, user3._id],
       })
-      .exec();
+      ;
 
     const populatedPost = await collections.posts
       .findOne({
         title: "Multi Author Post",
       })
       .populate({ contributors: true, author: true })
-      .exec();
+      ;
 
     expect(populatedPost?.author).toStrictEqual(user1);
     expect(populatedPost?.contributors).toBeDefined();
@@ -153,7 +153,7 @@ describe("many() relation tests", async () => {
         isAdmin: false,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     const user2 = await collections.users
       .insertOne({
@@ -161,7 +161,7 @@ describe("many() relation tests", async () => {
         isAdmin: false,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     await collections.posts
       .insertOne({
@@ -170,7 +170,7 @@ describe("many() relation tests", async () => {
         contributors: [user1._id, user2._id],
         secret: "12345",
       })
-      .exec();
+      ;
 
     const populatedPost = await collections.posts
       .find()
@@ -179,7 +179,7 @@ describe("many() relation tests", async () => {
           select: { name: true },
         },
       })
-      .exec();
+      ;
 
     expect(populatedPost.length).toBe(1);
     expect(populatedPost[0].contributorsCount).toBe(2);

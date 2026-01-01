@@ -81,7 +81,7 @@ export class FindQuery<
     return this._execWithoutPopulate();
   }
 
-  public async exec(): Promise<QueryOutput<TOutput, TOmit, TPopulate>[]> {
+  protected async exec(): Promise<QueryOutput<TOutput, TOmit, TPopulate>[]> {
     return (await this.cursor()).toArray();
   }
 

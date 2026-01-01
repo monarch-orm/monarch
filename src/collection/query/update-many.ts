@@ -27,7 +27,7 @@ export class UpdateManyQuery<TSchema extends AnySchema> extends Query<TSchema, U
     return this;
   }
 
-  public async exec(): Promise<UpdateResult<InferSchemaData<TSchema>>> {
+  protected async exec(): Promise<UpdateResult<InferSchemaData<TSchema>>> {
     await this._readyPromise;
     const fieldUpdates = Schema.getFieldUpdates(this._schema) as MatchKeysAndValues<InferSchemaData<TSchema>>;
 

@@ -24,7 +24,7 @@ describe("Query operators", async () => {
 
   afterEach(async () => {
     await collections.users.raw().dropIndexes();
-    await collections.users.deleteMany({}).exec();
+    await collections.users.deleteMany({});
   });
 
   afterAll(async () => {
@@ -33,7 +33,7 @@ describe("Query operators", async () => {
   });
 
   it("and operator", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
     const users = await collections.users
       .find(
         and(
@@ -45,13 +45,13 @@ describe("Query operators", async () => {
           },
         ),
       )
-      .exec();
+      ;
 
     expect(users.length).toBe(mockUsers.filter((user) => user.name === "anon" && user.age === 17).length);
   });
 
   it("or operator", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
     const users = await collections.users
       .find(
         or(
@@ -63,13 +63,13 @@ describe("Query operators", async () => {
           },
         ),
       )
-      .exec();
+      ;
 
     expect(users.length).toBe(mockUsers.filter((user) => user.name === "anon" || user.name === "anon1").length);
   });
 
   it("nor operator", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
     const users = await collections.users
       .find(
         nor(
@@ -81,73 +81,73 @@ describe("Query operators", async () => {
           },
         ),
       )
-      .exec();
+      ;
 
     expect(users.length).toBe(mockUsers.length - 2);
   });
 
   it("eq operator", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
     const users = await collections.users
       .find({
         name: eq("anon1"),
       })
-      .exec();
+      ;
 
     expect(users.length).toBe(1);
   });
 
   it("ne operator", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
     const users = await collections.users
       .find({
         name: neq("anon1"),
       })
-      .exec();
+      ;
 
     expect(users.length).toBe(mockUsers.length - 1);
   });
 
   it("gt operator", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
     const users = await collections.users
       .find({
         age: gt(17),
       })
-      .exec();
+      ;
 
     expect(users.length).toBe(mockUsers.filter((user) => user.age > 17).length);
   });
 
   it("gte operator", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
     const users = await collections.users
       .find({
         age: gte(17),
       })
-      .exec();
+      ;
 
     expect(users.length).toBe(mockUsers.filter((user) => user.age >= 17).length);
   });
 
   it("lt operator", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
     const users = await collections.users
       .find({
         age: lt(17),
       })
-      .exec();
+      ;
 
     expect(users.length).toBe(mockUsers.filter((user) => user.age < 17).length);
   });
 
   it("lte operator", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
     const users = await collections.users
       .find({
         age: lte(17),
       })
-      .exec();
+      ;
 
     expect(users.length).toBe(mockUsers.filter((user) => user.age <= 17).length);
   });
@@ -155,12 +155,12 @@ describe("Query operators", async () => {
   it("in operator", async () => {
     const ageArray = [17];
 
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
     const users = await collections.users
       .find({
         age: inArray(ageArray),
       })
-      .exec();
+      ;
 
     expect(users.length).toBe(mockUsers.filter((user) => ageArray.includes(user.age)).length);
   });
@@ -168,13 +168,13 @@ describe("Query operators", async () => {
   it("nin operator", async () => {
     const ageArray = [17, 20, 25];
 
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
     const users = await collections.users
       .find({
         age: notInArray([17, 20, 25]),
         // age: 3
       })
-      .exec();
+      ;
 
     expect(users.length).toBe(mockUsers.filter((user) => !ageArray.includes(user.age)).length);
   });

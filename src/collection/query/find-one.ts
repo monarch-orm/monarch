@@ -58,7 +58,7 @@ export class FindOneQuery<
     >;
   }
 
-  public async exec(): Promise<QueryOutput<TOutput, TOmit, TPopulate> | null> {
+  protected async exec(): Promise<QueryOutput<TOutput, TOmit, TPopulate> | null> {
     await this._readyPromise;
     if (Object.keys(this._population).length) {
       return this._execWithPopulate();

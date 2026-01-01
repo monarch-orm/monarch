@@ -19,7 +19,7 @@ export class DeleteOneQuery<TSchema extends AnySchema> extends Query<TSchema, De
     return this;
   }
 
-  public async exec(): Promise<DeleteResult> {
+  protected async exec(): Promise<DeleteResult> {
     await this._readyPromise;
     const res = await this._collection.deleteOne(this._filter, this._options);
     return res;

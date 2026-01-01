@@ -20,7 +20,7 @@ export class ReplaceOneQuery<TSchema extends AnySchema> extends Query<TSchema, U
     return this;
   }
 
-  public async exec(): Promise<UpdateResult<InferSchemaData<TSchema>>> {
+  protected async exec(): Promise<UpdateResult<InferSchemaData<TSchema>>> {
     await this._readyPromise;
     const res = await this._collection.replaceOne(this._filter, this._replacement, this._options);
     return res as UpdateResult<InferSchemaData<TSchema>>;

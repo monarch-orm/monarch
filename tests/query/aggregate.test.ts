@@ -22,7 +22,7 @@ describe("Aggregation Operations", async () => {
   });
 
   afterEach(async () => {
-    await collections.users.deleteMany({}).exec();
+    await collections.users.deleteMany({});
   });
 
   afterAll(async () => {
@@ -31,12 +31,11 @@ describe("Aggregation Operations", async () => {
   });
 
   it("aggregates data", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
     const result = await collections.users
       .aggregate()
       .addStage({ $match: { isVerified: true } })
-      .addStage({ $group: { _id: "$isVerified", count: { $sum: 1 } } })
-      .exec();
+      .addStage({ $group: { _id: "$isVerified", count: { $sum: 1 } } });
     expect(result).toBeInstanceOf(Array);
     expect(result.length).toBeGreaterThanOrEqual(1);
   });

@@ -46,7 +46,7 @@ export class FindOneAndUpdateQuery<
     return this as FindOneAndUpdateQuery<TSchema, TOutput, ["select", TrueKeys<TProjection>]>;
   }
 
-  public async exec(): Promise<QueryOutput<TOutput, TOmit> | null> {
+  protected async exec(): Promise<QueryOutput<TOutput, TOmit> | null> {
     await this._readyPromise;
     const fieldUpdates = Schema.getFieldUpdates(this._schema) as MatchKeysAndValues<InferSchemaData<TSchema>>;
 

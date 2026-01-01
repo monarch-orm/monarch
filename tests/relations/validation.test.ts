@@ -36,7 +36,7 @@ describe("Relation Validations", async () => {
     });
 
     await expect(async () => {
-      await db.collections.users.find().populate({ posts: true }).exec();
+      await db.collections.users.find().populate({ posts: true });
     }).rejects.toThrowError("Target schema not found for relation 'posts' in schema 'users'");
   });
 
@@ -52,7 +52,7 @@ describe("Relation Validations", async () => {
     });
 
     await expect(async () => {
-      await db.collections.users.find().populate({ posts: true }).exec();
+      await db.collections.users.find().populate({ posts: true });
     }).rejects.toThrowError("No relations found for schema 'users'");
   });
 

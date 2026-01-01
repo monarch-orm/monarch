@@ -64,7 +64,7 @@ describe("binary()", () => {
     });
 
     afterAll(async () => {
-      await collections.bsonData.deleteMany({}).exec();
+      await collections.bsonData.deleteMany({});
     });
 
     test("accepts Buffer and returns Binary on insert", async () => {
@@ -74,12 +74,12 @@ describe("binary()", () => {
         .insertOne({
           binaryField: testBuffer,
         })
-        .exec();
+        ;
 
       expect(inserted.binaryField).toBeInstanceOf(Binary);
       expect(inserted.binaryField!.buffer.toString()).toBe("hello world");
 
-      const retrieved = await collections.bsonData.findOne({ _id: inserted._id }).exec();
+      const retrieved = await collections.bsonData.findOne({ _id: inserted._id });
       expect(retrieved).not.toBeNull();
       expect(retrieved!.binaryField).toBeInstanceOf(Binary);
       expect(retrieved!.binaryField!.buffer.toString()).toBe("hello world");
@@ -93,12 +93,12 @@ describe("binary()", () => {
         .insertOne({
           binaryField: testBinary,
         })
-        .exec();
+        ;
 
       expect(inserted.binaryField).toBeInstanceOf(Binary);
       expect(inserted.binaryField!.buffer.toString()).toBe("binary data");
 
-      const retrieved = await collections.bsonData.findOne({ _id: inserted._id }).exec();
+      const retrieved = await collections.bsonData.findOne({ _id: inserted._id });
       expect(retrieved).not.toBeNull();
       expect(retrieved!.binaryField).toBeInstanceOf(Binary);
       expect(retrieved!.binaryField!.buffer.toString()).toBe("binary data");

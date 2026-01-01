@@ -19,7 +19,7 @@ export class DeleteManyQuery<TSchema extends AnySchema> extends Query<TSchema, D
     return this;
   }
 
-  public async exec(): Promise<DeleteResult> {
+  protected async exec(): Promise<DeleteResult> {
     await this._readyPromise;
     const res = await this._collection.deleteMany(this._filter, this._options);
     return res;

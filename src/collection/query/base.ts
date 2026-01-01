@@ -11,22 +11,22 @@ export abstract class Query<TSchema extends AnySchema, TOutput> {
     protected _readyPromise: Promise<void>,
   ) {}
 
-  public abstract exec(): Promise<TOutput>;
+  protected abstract exec(): Promise<TOutput>;
 
-  then<TResult1 = TOutput, TResult2 = never>(
+  public then<TResult1 = TOutput, TResult2 = never>(
     onfulfilled?: ((value: TOutput) => TResult1 | PromiseLike<TResult1>) | undefined | null,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null,
   ): Promise<TResult1 | TResult2> {
     return this.exec().then(onfulfilled, onrejected);
   }
 
-  catch<TResult = never>(
+  public catch<TResult = never>(
     onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null,
   ): Promise<TOutput | TResult> {
     return this.exec().catch(onrejected);
   }
 
-  finally(onfinally?: (() => void) | undefined | null): Promise<TOutput> {
+  public finally(onfinally?: (() => void) | undefined | null): Promise<TOutput> {
     return this.exec().finally(onfinally);
   }
 }

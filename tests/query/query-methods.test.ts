@@ -22,7 +22,7 @@ describe("Query Methods", async () => {
   });
 
   afterEach(async () => {
-    await collections.users.deleteMany({}).exec();
+    await collections.users.deleteMany({});
   });
 
   afterAll(async () => {
@@ -31,23 +31,23 @@ describe("Query Methods", async () => {
   });
 
   it("queries with single where condition", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
 
-    const firstUser = await collections.users.findOne({ name: "anon" }).exec();
+    const firstUser = await collections.users.findOne({ name: "anon" });
     expect(firstUser?.name).toBe("anon");
   });
 
   it("queries with multiple where conditions", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
 
-    const users = await collections.users.find({ name: "anon", age: 17 }).exec();
+    const users = await collections.users.find({ name: "anon", age: 17 });
     expect(users.length).toBe(1);
   });
 
   it("selects specific fields", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
 
-    const users = await collections.users.find().select({ name: true, email: true }).exec();
+    const users = await collections.users.find().select({ name: true, email: true });
     expect(users[0].name).toBe("anon");
     expect(users[0].email).toBe("anon@gmail.com");
     // @ts-expect-error
@@ -57,9 +57,9 @@ describe("Query Methods", async () => {
   });
 
   it("omits specific fields", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
 
-    const users = await collections.users.find().omit({ name: true, email: true }).exec();
+    const users = await collections.users.find().omit({ name: true, email: true });
     // @ts-expect-error
     expect(users[0].name).toBeUndefined();
     // @ts-expect-error
@@ -69,23 +69,23 @@ describe("Query Methods", async () => {
   });
 
   it("limits query results", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
 
     const limit = 2;
-    const users = await collections.users.find().limit(limit).exec();
+    const users = await collections.users.find().limit(limit);
     expect(users.length).toBe(limit);
   });
 
   it("skips query results", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
 
     const skip = 2;
-    const users = await collections.users.find().skip(skip).exec();
+    const users = await collections.users.find().skip(skip);
     expect(users.length).toBe(mockUsers.length - skip);
   });
 
   it("sorts by numeric field descending", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
 
     const users = await collections.users.find().sort({ age: -1 });
     expect(users[0].age).toBe(25);
@@ -94,9 +94,9 @@ describe("Query Methods", async () => {
   });
 
   it("sorts by string field ascending", async () => {
-    await collections.users.insertMany(mockUsers).exec();
+    await collections.users.insertMany(mockUsers);
 
-    const users = await collections.users.find().sort({ email: "asc" }).exec();
+    const users = await collections.users.find().sort({ email: "asc" });
     expect(users[0].email).toBe("anon1@gmail.com");
     expect(users[1].email).toBe("anon2@gmail.com");
     expect(users[2].email).toBe("anon@gmail.com");

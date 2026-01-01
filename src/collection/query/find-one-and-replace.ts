@@ -40,7 +40,7 @@ export class FindOneAndReplaceQuery<
     return this as FindOneAndReplaceQuery<TSchema, TOutput, ["select", TrueKeys<TProjection>]>;
   }
 
-  public async exec(): Promise<QueryOutput<TOutput, TOmit> | null> {
+  protected async exec(): Promise<QueryOutput<TOutput, TOmit> | null> {
     await this._readyPromise;
     const extras = addExtraInputsToProjection(this._projection, this._schema.options.virtuals);
     const res = await this._collection.findOneAndReplace(this._filter, this._replacement, {

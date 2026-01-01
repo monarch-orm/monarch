@@ -65,7 +65,7 @@ describe("one() relation tests", async () => {
         isAdmin: false,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     const user2 = await collections.users
       .insertOne({
@@ -74,9 +74,9 @@ describe("one() relation tests", async () => {
         tutor: user._id,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
-    const populatedUser2 = await collections.users.findById(user2._id).populate({ tutor: true }).exec();
+    const populatedUser2 = await collections.users.findById(user2._id).populate({ tutor: true });
 
     expect(populatedUser2).toStrictEqual({
       ...user2,
@@ -93,7 +93,7 @@ describe("one() relation tests", async () => {
         isAdmin: false,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     await collections.posts
       .insertOne({
@@ -101,14 +101,14 @@ describe("one() relation tests", async () => {
         contents: "Lorem",
         author: user._id,
       })
-      .exec();
+      ;
 
     const populatedPost = await collections.posts
       .findOne({
         title: "Pilot",
       })
       .populate({ author: true })
-      .exec();
+      ;
 
     expect(populatedPost?.author).toStrictEqual(user);
   });
@@ -150,7 +150,7 @@ describe("one() relation tests", async () => {
         isAdmin: true,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     const author = await db.collections.users
       .insertOne({
@@ -159,7 +159,7 @@ describe("one() relation tests", async () => {
         createdAt: new Date(),
         tutor: tutor._id,
       })
-      .exec();
+      ;
 
     // Create posts for both users
     await db.collections.posts
@@ -168,7 +168,7 @@ describe("one() relation tests", async () => {
         contents: "Wisdom",
         author: tutor._id,
       })
-      .exec();
+      ;
 
     const studentPost = await db.collections.posts
       .insertOne({
@@ -176,7 +176,7 @@ describe("one() relation tests", async () => {
         contents: "Learning",
         author: author._id,
       })
-      .exec();
+      ;
 
     // Test nested population
     const populatedPost = await db.collections.posts
@@ -194,7 +194,7 @@ describe("one() relation tests", async () => {
           },
         },
       })
-      .exec();
+      ;
 
     // Verify the nested population results
     expect(populatedPost).toBeTruthy();

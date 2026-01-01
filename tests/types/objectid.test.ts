@@ -74,7 +74,7 @@ describe("objectId()", () => {
     });
 
     afterAll(async () => {
-      await collections.testData.deleteMany({}).exec();
+      await collections.testData.deleteMany({});
     });
 
     test("accepts ObjectId and returns ObjectId", async () => {
@@ -84,12 +84,12 @@ describe("objectId()", () => {
         .insertOne({
           refId: testId,
         })
-        .exec();
+        ;
 
       expect(inserted.refId).toBeInstanceOf(ObjectId);
       expect(inserted.refId?.toString()).toBe(testId.toString());
 
-      const retrieved = await collections.testData.findOne({ _id: inserted._id }).exec();
+      const retrieved = await collections.testData.findOne({ _id: inserted._id });
       expect(retrieved).not.toBeNull();
       expect(retrieved!.refId).toBeInstanceOf(ObjectId);
       expect(retrieved!.refId?.toString()).toBe(testId.toString());
@@ -103,12 +103,12 @@ describe("objectId()", () => {
         .insertOne({
           refId: validId,
         })
-        .exec();
+        ;
 
       expect(inserted.refId).toBeInstanceOf(ObjectId);
       expect(inserted.refId?.toString()).toBe(validId);
 
-      const retrieved = await collections.testData.findOne({ _id: inserted._id }).exec();
+      const retrieved = await collections.testData.findOne({ _id: inserted._id });
       expect(retrieved).not.toBeNull();
       expect(retrieved!.refId).toBeInstanceOf(ObjectId);
       expect(retrieved!.refId?.toString()).toBe(validId);

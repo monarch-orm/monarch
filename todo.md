@@ -28,7 +28,6 @@ Here are some features we need to implement.
 
 - [] Add `findByIdAndUpdate()` / `findByIdAndDelete()` shortcuts
 - [] Add batch operations helper methods
-- [] Make query `.exec()` protected
 - [] Fully document public API
 - [] Remove need for `ref` by auto reversing `one` relation
 

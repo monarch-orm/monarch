@@ -2,4 +2,4 @@
 "monarch-orm": patch
 ---
 
-fix build
+Use prettier for formatting

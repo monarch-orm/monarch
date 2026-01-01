@@ -72,7 +72,7 @@ describe("ref() relation tests", async () => {
         createdAt: new Date(),
         tutor: undefined,
       })
-      .exec();
+      ;
 
     const tutoredUser = await collections.users
       .insertOne({
@@ -81,7 +81,7 @@ describe("ref() relation tests", async () => {
         createdAt: new Date(),
         tutor: user._id,
       })
-      .exec();
+      ;
 
     await collections.posts
       .insertOne({
@@ -89,7 +89,7 @@ describe("ref() relation tests", async () => {
         contents: "Lorem",
         author: user._id,
       })
-      .exec();
+      ;
 
     await collections.posts
       .insertOne({
@@ -97,16 +97,16 @@ describe("ref() relation tests", async () => {
         contents: "Lorem2",
         author: user._id,
       })
-      .exec();
+      ;
 
     await collections.posts
       .insertOne({
         title: "No Author",
         contents: "Lorem",
       })
-      .exec();
+      ;
 
-    const populatedUsers = await collections.users.find().populate({ posts: true, tutor: true }).exec();
+    const populatedUsers = await collections.users.find().populate({ posts: true, tutor: true });
 
     expect(populatedUsers.length).toBe(2);
     expect(populatedUsers[0].posts.length).toBe(2);
@@ -123,7 +123,7 @@ describe("ref() relation tests", async () => {
         isAdmin: false,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     await collections.posts
       .insertOne({
@@ -131,16 +131,16 @@ describe("ref() relation tests", async () => {
         contents: "Content 1",
         author: user._id,
       })
-      .exec();
+      ;
 
     await collections.books
       .insertOne({
         title: "Book 1",
         author: user._id,
       })
-      .exec();
+      ;
 
-    const populatedUser = await collections.users.findById(user._id).populate({ posts: true, books: true }).exec();
+    const populatedUser = await collections.users.findById(user._id).populate({ posts: true, books: true });
 
     expect(populatedUser).toBeTruthy();
     expect(populatedUser?.posts).toHaveLength(1);
@@ -192,7 +192,7 @@ describe("ref() relation tests", async () => {
         isAdmin: false,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     const user2 = await db.collections.users
       .insertOne({
@@ -200,7 +200,7 @@ describe("ref() relation tests", async () => {
         isAdmin: false,
         createdAt: new Date(),
       })
-      .exec();
+      ;
 
     await db.collections.posts
       .insertOne({
@@ -209,7 +209,7 @@ describe("ref() relation tests", async () => {
         author: user._id,
         editor: user2._id,
       })
-      .exec();
+      ;
 
     await db.collections.posts
       .insertOne({
@@ -218,14 +218,14 @@ describe("ref() relation tests", async () => {
         author: user2._id,
         editor: user2._id,
       })
-      .exec();
+      ;
 
     await db.collections.books
       .insertOne({
         title: "Book 1",
         author: user._id,
       })
-      .exec();
+      ;
 
     const populatedUser = await db.collections.users
       .findById(user._id)
@@ -241,7 +241,7 @@ describe("ref() relation tests", async () => {
         },
         books: true,
       })
-      .exec();
+      ;
 
     expect(populatedUser).toBeTruthy();
     expect(populatedUser?.posts).toHaveLength(1);

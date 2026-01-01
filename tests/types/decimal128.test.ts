@@ -86,7 +86,7 @@ describe("decimal128()", () => {
     });
 
     afterAll(async () => {
-      await collections.bsonData.deleteMany({}).exec();
+      await collections.bsonData.deleteMany({});
     });
 
     test("accepts Decimal128 and returns Decimal128", async () => {
@@ -96,12 +96,12 @@ describe("decimal128()", () => {
         .insertOne({
           decimalField: testDecimal,
         })
-        .exec();
+        ;
 
       expect(inserted.decimalField).toBeInstanceOf(Decimal128);
       expect(inserted.decimalField!.toString()).toBe("123456789.123456789123456789");
 
-      const retrieved = await collections.bsonData.findOne({ _id: inserted._id }).exec();
+      const retrieved = await collections.bsonData.findOne({ _id: inserted._id });
       expect(retrieved).not.toBeNull();
       expect(retrieved!.decimalField).toBeInstanceOf(Decimal128);
       expect(retrieved!.decimalField!.toString()).toBe("123456789.123456789123456789");
@@ -113,12 +113,12 @@ describe("decimal128()", () => {
         .insertOne({
           decimalField: "999.999999",
         })
-        .exec();
+        ;
 
       expect(inserted.decimalField).toBeInstanceOf(Decimal128);
       expect(inserted.decimalField!.toString()).toBe("999.999999");
 
-      const retrieved = await collections.bsonData.findOne({ _id: inserted._id }).exec();
+      const retrieved = await collections.bsonData.findOne({ _id: inserted._id });
       expect(retrieved).not.toBeNull();
       expect(retrieved!.decimalField).toBeInstanceOf(Decimal128);
       expect(retrieved!.decimalField!.toString()).toBe("999.999999");
@@ -131,12 +131,12 @@ describe("decimal128()", () => {
         .insertOne({
           decimalField: highPrecision,
         })
-        .exec();
+        ;
 
       expect(inserted.decimalField).toBeInstanceOf(Decimal128);
       expect(inserted.decimalField!.toString()).toBe(highPrecision);
 
-      const retrieved = await collections.bsonData.findOne({ _id: inserted._id }).exec();
+      const retrieved = await collections.bsonData.findOne({ _id: inserted._id });
       expect(retrieved).not.toBeNull();
       expect(retrieved!.decimalField).toBeInstanceOf(Decimal128);
       expect(retrieved!.decimalField!.toString()).toBe(highPrecision);

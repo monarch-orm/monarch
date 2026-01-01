@@ -22,7 +22,7 @@ describe("Update Operations", async () => {
   });
 
   afterEach(async () => {
-    await collections.users.deleteMany({}).exec();
+    await collections.users.deleteMany({});
   });
 
   afterAll(async () => {
@@ -31,7 +31,7 @@ describe("Update Operations", async () => {
   });
 
   it("finds one and updates", async () => {
-    await collections.users.insertOne(mockUsers[0]).exec();
+    await collections.users.insertOne(mockUsers[0]);
 
     const updatedUser = await collections.users
       .findOneAndUpdate(
@@ -44,27 +44,26 @@ describe("Update Operations", async () => {
       )
       .options({
         returnDocument: "after",
-      })
-      .exec();
+      });
 
     expect(updatedUser).not.toBe(null);
     expect(updatedUser?.age).toBe(30);
   });
 
   it("updates one document", async () => {
-    await collections.users.insertOne(mockUsers[1]).exec();
-    const updated = await collections.users.updateOne({ email: "anon1@gmail.com" }, { $set: { age: 35 } }).exec();
+    await collections.users.insertOne(mockUsers[1]);
+    const updated = await collections.users.updateOne({ email: "anon1@gmail.com" }, { $set: { age: 35 } });
     expect(updated.acknowledged).toBe(true);
   });
 
   it("updates many documents", async () => {
-    await collections.users.insertMany(mockUsers).exec();
-    const updated = await collections.users.updateMany({ isVerified: false }, { $set: { age: 40 } }).exec();
+    await collections.users.insertMany(mockUsers);
+    const updated = await collections.users.updateMany({ isVerified: false }, { $set: { age: 40 } });
     expect(updated.acknowledged).toBe(true);
   });
 
   it("replaces one document", async () => {
-    const original = await collections.users.insertOne(mockUsers[0]).exec();
+    const original = await collections.users.insertOne(mockUsers[0]);
     const replaced = await collections.users
       .replaceOne(
         { email: "anon@gmail.com" },
@@ -72,8 +71,7 @@ describe("Update Operations", async () => {
           ...original,
           name: "New Name",
         },
-      )
-      .exec();
+      );
     expect(replaced.modifiedCount).toBe(1);
   });
 
@@ -85,22 +83,22 @@ describe("Update Operations", async () => {
       });
       const db = createDatabase(client.db(), { users: schema });
 
-      const user1 = await db.collections.users.insertOne({ name: "Alice", age: 20 }).exec();
-      const user2 = await db.collections.users.insertOne({ name: "Bob", age: 30 }).exec();
+      const user1 = await db.collections.users.insertOne({ name: "Alice", age: 20 });
+      const user2 = await db.collections.users.insertOne({ name: "Bob", age: 30 });
 
       // Create a reusable update object
       const updateObj = { $set: { name: "Updated" } };
 
       // Use the same update object twice
-      await db.collections.users.updateOne({ _id: user1._id }, updateObj).exec();
-      await db.collections.users.updateOne({ _id: user2._id }, updateObj).exec();
+      await db.collections.users.updateOne({ _id: user1._id }, updateObj);
+      await db.collections.users.updateOne({ _id: user2._id }, updateObj);
 
       // Verify users were updated correctly with auto-update
-      const updatedUser1 = await db.collections.users.findOne({ _id: user1._id }).exec();
+      const updatedUser1 = await db.collections.users.findOne({ _id: user1._id });
       expect(updatedUser1?.name).toBe("Updated");
       expect(updatedUser1?.age).toBe(999);
 
-      const updatedUser2 = await db.collections.users.findOne({ _id: user2._id }).exec();
+      const updatedUser2 = await db.collections.users.findOne({ _id: user2._id });
       expect(updatedUser2?.name).toBe("Updated");
       expect(updatedUser2?.age).toBe(999);
 
@@ -115,18 +113,18 @@ describe("Update Operations", async () => {
       });
       const db = createDatabase(client.db(), { users: schema });
 
-      await db.collections.users.insertOne({ name: "Alice", age: 20 }).exec();
-      await db.collections.users.insertOne({ name: "Bob", age: 30 }).exec();
-      await db.collections.users.insertOne({ name: "Charlie", age: 40 }).exec();
+      await db.collections.users.insertOne({ name: "Alice", age: 20 });
+      await db.collections.users.insertOne({ name: "Bob", age: 30 });
+      await db.collections.users.insertOne({ name: "Charlie", age: 40 });
 
       const updateObj = { $set: { name: "Updated" } };
 
       // Use the same update object twice for different filters
-      await db.collections.users.updateMany({ age: { $lt: 30 } }, updateObj).exec();
-      await db.collections.users.updateMany({ age: { $gte: 30 } }, updateObj).exec();
+      await db.collections.users.updateMany({ age: { $lt: 30 } }, updateObj);
+      await db.collections.users.updateMany({ age: { $gte: 30 } }, updateObj);
 
       // Verify all users were updated
-      const users = await db.collections.users.find({}).exec();
+      const users = await db.collections.users.find({});
       expect(users).toHaveLength(3);
       for (const user of users) {
         expect(user.name).toBe("Updated");
@@ -144,27 +142,25 @@ describe("Update Operations", async () => {
       });
       const db = createDatabase(client.db(), { users: schema });
 
-      const user1 = await db.collections.users.insertOne({ name: "Alice", age: 20 }).exec();
-      const user2 = await db.collections.users.insertOne({ name: "Bob", age: 30 }).exec();
+      const user1 = await db.collections.users.insertOne({ name: "Alice", age: 20 });
+      const user2 = await db.collections.users.insertOne({ name: "Bob", age: 30 });
 
       const updateObj = { $set: { name: "Updated" } };
 
       // Use the same update object twice
       await db.collections.users
         .findOneAndUpdate({ _id: user1._id }, updateObj)
-        .options({ returnDocument: "after" })
-        .exec();
+        .options({ returnDocument: "after" });
       await db.collections.users
         .findOneAndUpdate({ _id: user2._id }, updateObj)
-        .options({ returnDocument: "after" })
-        .exec();
+        .options({ returnDocument: "after" });
 
       // Verify users were updated
-      const updatedUser1 = await db.collections.users.findOne({ _id: user1._id }).exec();
+      const updatedUser1 = await db.collections.users.findOne({ _id: user1._id });
       expect(updatedUser1?.name).toBe("Updated");
       expect(updatedUser1?.age).toBe(777);
 
-      const updatedUser2 = await db.collections.users.findOne({ _id: user2._id }).exec();
+      const updatedUser2 = await db.collections.users.findOne({ _id: user2._id });
       expect(updatedUser2?.name).toBe("Updated");
       expect(updatedUser2?.age).toBe(777);
 

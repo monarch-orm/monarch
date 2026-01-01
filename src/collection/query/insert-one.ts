@@ -28,7 +28,7 @@ export class InsertOneQuery<
     return this;
   }
 
-  public async exec(): Promise<QueryOutput<TOutput, TOmit>> {
+  protected async exec(): Promise<QueryOutput<TOutput, TOmit>> {
     await this._readyPromise;
     const data = Schema.encode(this._schema, this._data);
     const res = await this._collection.insertOne(

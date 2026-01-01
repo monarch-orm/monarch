@@ -34,9 +34,9 @@ describe("Schema", async () => {
         age: 0,
         isAdmin: true,
       })
-      .exec();
+      ;
     expect(res).toStrictEqual({ _id: res._id, name: "tom", age: 0 });
-    const doc = await db.collections.users.findOne({ _id: res._id }).exec();
+    const doc = await db.collections.users.findOne({ _id: res._id });
     expect(doc).toStrictEqual({ _id: res._id, name: "tom", age: 0 });
   });
 
@@ -55,8 +55,8 @@ describe("Schema", async () => {
         age: 0,
         isAdmin: true,
       })
-      .exec();
-    const doc = await db.collections.users.findOne({ _id: res._id }).exec();
+      ;
+    const doc = await db.collections.users.findOne({ _id: res._id });
     expect(doc).toStrictEqual({
       _id: res._id,
       name: "tom cruise",
@@ -86,8 +86,8 @@ describe("Schema", async () => {
         age: 0,
         isAdmin: true,
       })
-      .exec();
-    const doc = await db.collections.users.findOne({ _id: res._id }).exec();
+      ;
+    const doc = await db.collections.users.findOne({ _id: res._id });
     expect(doc).toStrictEqual({
       _id: res._id,
       name: "tom",
@@ -115,27 +115,27 @@ describe("Schema", async () => {
         age: 0,
         isAdmin: true,
       })
-      .exec();
+      ;
     expect(res).toStrictEqual({
       _id: res._id,
       name: "tom",
       age: 0,
       role: "known",
     });
-    const doc1 = await db.collections.users.findOne({ _id: res._id }).exec();
+    const doc1 = await db.collections.users.findOne({ _id: res._id });
     expect(doc1).toStrictEqual({
       _id: res._id,
       name: "tom",
       age: 0,
       role: "known",
     });
-    const doc2 = await db.collections.users.findOne({ _id: res._id }).omit({ age: true, isAdmin: true }).exec();
+    const doc2 = await db.collections.users.findOne({ _id: res._id }).omit({ age: true, isAdmin: true });
     expect(doc2).toStrictEqual({
       _id: res._id,
       name: "tom",
       role: "known",
     });
-    const doc3 = await db.collections.users.findOne({ _id: res._id }).select({ role: true }).exec();
+    const doc3 = await db.collections.users.findOne({ _id: res._id }).select({ role: true });
     expect(doc3).toStrictEqual({
       _id: res._id,
       role: "known",
@@ -159,8 +159,8 @@ describe("Schema", async () => {
         isAdmin: true,
         role: 1,
       })
-      .exec();
-    const doc = await db.collections.users.findOne({ _id: res._id }).exec();
+      ;
+    const doc = await db.collections.users.findOne({ _id: res._id });
     expect(doc).toStrictEqual({
       _id: res._id,
       name: "tom",
@@ -190,7 +190,7 @@ describe("Schema", async () => {
         username: "bobpaul",
         age: 0,
       })
-      .exec();
+      ;
     await expect(async () => {
       await db.collections.users
         .insertOne({
@@ -199,7 +199,7 @@ describe("Schema", async () => {
           username: "bobpaul",
           age: 0,
         })
-        .exec();
+        ;
     }).rejects.toThrowError("E11000 duplicate key error");
 
     // duplicate firstname and lastname pair
@@ -210,7 +210,7 @@ describe("Schema", async () => {
         username: "alicewonder",
         age: 0,
       })
-      .exec();
+      ;
     await expect(async () => {
       await db.collections.users
         .insertOne({
@@ -219,7 +219,7 @@ describe("Schema", async () => {
           username: "allywon",
           age: 0,
         })
-        .exec();
+        ;
     }).rejects.toThrowError("E11000 duplicate key error");
   });
 
@@ -237,7 +237,7 @@ describe("Schema", async () => {
         name: "Laptop",
         price: 999,
       })
-      .exec();
+      ;
 
     expect(product).toStrictEqual({
       _id: "product-123",
@@ -245,7 +245,7 @@ describe("Schema", async () => {
       price: 999,
     });
 
-    const foundProduct = await db.collections.products.findById("product-123").exec();
+    const foundProduct = await db.collections.products.findById("product-123");
     expect(foundProduct).toStrictEqual({
       _id: "product-123",
       name: "Laptop",
@@ -267,7 +267,7 @@ describe("Schema", async () => {
         customerId: "cust-001",
         total: 150.5,
       })
-      .exec();
+      ;
 
     expect(order).toStrictEqual({
       _id: 12345,
@@ -275,7 +275,7 @@ describe("Schema", async () => {
       total: 150.5,
     });
 
-    const foundOrder = await db.collections.orders.findById(12345).exec();
+    const foundOrder = await db.collections.orders.findById(12345);
     expect(foundOrder).toStrictEqual({
       _id: 12345,
       customerId: "cust-001",
