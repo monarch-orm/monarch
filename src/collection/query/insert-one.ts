@@ -30,12 +30,12 @@ export class InsertOneQuery<
 
   public async exec(): Promise<QueryOutput<TOutput, TOmit>> {
     await this._readyPromise;
-    const data = Schema.toData(this._schema, this._data);
+    const data = Schema.encode(this._schema, this._data);
     const res = await this._collection.insertOne(
       data as OptionalUnlessRequiredId<InferSchemaData<TSchema>>,
       this._options,
     );
-    return Schema.fromData(
+    return Schema.decode(
       this._schema,
       {
         ...data,

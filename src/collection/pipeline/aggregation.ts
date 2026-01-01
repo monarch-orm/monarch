@@ -18,10 +18,6 @@ export class AggregationPipeline<TSchema extends AnySchema, TOutput extends any[
     return this;
   }
 
-  public cast<O extends any[]>() {
-    return this as unknown as AggregationPipeline<TSchema, O>;
-  }
-
   public async exec(): Promise<TOutput> {
     const res = await this._collection.aggregate(this._pipeline, this._options).toArray();
     return res as TOutput;

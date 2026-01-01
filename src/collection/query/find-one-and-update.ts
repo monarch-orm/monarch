@@ -63,7 +63,7 @@ export class FindOneAndUpdateQuery<
       projection: this._projection,
     });
     return res
-      ? (Schema.fromData(this._schema, res as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
+      ? (Schema.decode(this._schema, res as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
           TOutput,
           TOmit
         >)

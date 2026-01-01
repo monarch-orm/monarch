@@ -91,7 +91,7 @@ export class FindQuery<
       .find(this._filter, { ...this._options, projection: this._projection })
       .map(
         (doc) =>
-          Schema.fromData(this._schema, doc as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
+          Schema.decode(this._schema, doc as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
             TOutput,
             TOmit,
             TPopulate

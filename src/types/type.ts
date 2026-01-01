@@ -15,28 +15,28 @@ export const type = <TInput, TOutput = TInput>(parser: Parser<TInput, TOutput>, 
 
 export type AnyMonarchType<TInput = any, TOutput = TInput> = MonarchType<TInput, TOutput>;
 
-export class MonarchType<TInput, TOutput> {
+export class MonarchType<TInput, TOutput = TInput> {
   constructor(
-    private _parser: Parser<TInput, TOutput>,
-    private _updater?: Parser<void, TOutput>,
+    protected parser: Parser<TInput, TOutput>,
+    protected updater?: Parser<void, TOutput>,
   ) {}
 
   public static parser<T extends AnyMonarchType>(type: T): Parser<InferTypeInput<T>, InferTypeOutput<T>> {
-    return type._parser;
+    return type.parser;
   }
 
   public static updater<T extends AnyMonarchType>(type: T): Parser<void, InferTypeOutput<T>> | undefined {
-    return type._updater;
+    return type.updater;
   }
 
-  public static isInstanceOf<T extends new (...args: any[]) => AnyMonarchType>(
+  public static isInstanceOf<T extends new (...args: any) => AnyMonarchType>(
     type: AnyMonarchType,
     target: T,
   ): type is InstanceType<T> {
     return type.isInstanceOf(target);
   }
 
-  protected isInstanceOf(target: new (...args: any[]) => any) {
+  protected isInstanceOf(target: new (...args: any) => AnyMonarchType) {
     return this instanceof target;
   }
 
@@ -60,7 +60,7 @@ export class MonarchType<TInput, TOutput> {
    * @param updateFn function that returns the new value for this field on update operations.
    */
   public onUpdate(updateFn: () => TInput) {
-    return type(this._parser, pipeParser(updateFn, this._parser));
+    return type(this.parser, pipeParser(updateFn, this.parser));
   }
 
   /**
@@ -70,7 +70,7 @@ export class MonarchType<TInput, TOutput> {
    * @param fn function that returns a transformed input.
    */
   public transform<TTransformOutput>(fn: (input: TOutput) => TTransformOutput) {
-    return type(pipeParser(this._parser, fn), this._updater && pipeParser(this._updater, fn));
+    return type(pipeParser(this.parser, fn), this.updater && pipeParser(this.updater, fn));
   }
 
   /**
@@ -82,19 +82,19 @@ export class MonarchType<TInput, TOutput> {
    */
   public validate(fn: (input: TOutput) => boolean, message: string) {
     return type(
-      pipeParser(this._parser, (input) => {
+      pipeParser(this.parser, (input) => {
         const valid = fn(input);
         if (!valid) throw new MonarchParseError(message);
         return input;
       }),
-      this._updater,
+      this.updater,
     );
   }
 
   /**
    * Extends the parser and updater of this type from that of the base type.
    *
-   * Calling extend always mutates the type and changes it's parser and updater.
+   * Extends should be called on a new instance of the type as it always mutates the type.
    *
    * @param base type to copy parser and updater from.
    * @param options options to optionally modify the copied parser or replace the copied updater.
@@ -103,15 +103,15 @@ export class MonarchType<TInput, TOutput> {
   public extend<T extends MonarchType<TInput, TOutput>>(
     base: T,
     options: {
-      preParse?: Parser<TInput, TInput>;
-      postParse?: Parser<TOutput, TOutput>;
+      preprocess?: Parser<TInput, TInput>;
+      parse?: Parser<TOutput, TOutput>;
       onUpdate?: Parser<void, TInput>;
     },
   ) {
-    let parser = options.preParse ? pipeParser(options.preParse, base._parser) : base._parser;
-    if (options.postParse) parser = pipeParser(parser, options.postParse);
-    this._parser = parser;
-    this._updater = options.onUpdate ? pipeParser(options.onUpdate, parser) : base._updater;
+    let parser = options.preprocess ? pipeParser(options.preprocess, base.parser) : base.parser;
+    if (options.parse) parser = pipeParser(parser, options.parse);
+    this.parser = parser;
+    this.updater = options.onUpdate ? pipeParser(options.onUpdate, parser) : base.updater;
     return this;
   }
 }

@@ -11,11 +11,11 @@ export class MonarchDate extends MonarchType<Date, Date> {
     });
   }
 
-  public after(afterDate: Date) {
+  public after(targetDate: Date) {
     return date().extend(this, {
-      preParse: (input) => {
-        if (input <= afterDate) {
-          throw new MonarchParseError(`date must be after ${afterDate.toISOString()}`);
+      parse: (input) => {
+        if (input <= targetDate) {
+          throw new MonarchParseError(`date must be after ${targetDate.toISOString()}`);
         }
         return input;
       },
@@ -24,7 +24,7 @@ export class MonarchDate extends MonarchType<Date, Date> {
 
   public before(targetDate: Date) {
     return date().extend(this, {
-      preParse: (input) => {
+      parse: (input) => {
         if (input >= targetDate) {
           throw new MonarchParseError(`date must be before ${targetDate.toISOString()}`);
         }
@@ -53,12 +53,11 @@ export class MonarchDateString extends MonarchType<string, Date> {
     });
   }
 
-  public after(afterDate: Date) {
+  public after(targetDate: Date) {
     return dateString().extend(this, {
-      preParse: (input) => {
-        const date = new Date(input);
-        if (date <= afterDate) {
-          throw new MonarchParseError(`date must be after ${afterDate.toISOString()}`);
+      parse: (input) => {
+        if (input <= targetDate) {
+          throw new MonarchParseError(`date must be after ${targetDate.toISOString()}`);
         }
         return input;
       },
@@ -67,9 +66,8 @@ export class MonarchDateString extends MonarchType<string, Date> {
 
   public before(targetDate: Date) {
     return dateString().extend(this, {
-      preParse: (input) => {
-        const date = new Date(input);
-        if (date >= targetDate) {
+      parse: (input) => {
+        if (input >= targetDate) {
           throw new MonarchParseError(`date must be before ${targetDate.toISOString()}`);
         }
         return input;

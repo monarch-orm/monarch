@@ -29,7 +29,12 @@ export class Database<
     relations: TRelations,
   ) {
     const _relations = {} as DbRelations<TRelations>;
+    const _seenRelations = new Set<string>();
     for (const relation of Object.values(relations)) {
+      if (_seenRelations.has(relation.name)) {
+        throw new MonarchError(`Relations for schema '${relation.name}' already exists.`);
+      }
+      _seenRelations.add(relation.name);
       _relations[relation.name as keyof typeof _relations] = {
         ..._relations[relation.name as keyof typeof _relations],
         ...relation.relations,
@@ -38,12 +43,12 @@ export class Database<
     this.relations = _relations;
 
     const _collections = {} as DbCollections<TSchemas, DbRelations<TRelations>>;
-    const _collectionNames = new Set<string>();
+    const _seenCollection = new Set<string>();
     for (const [key, schema] of Object.entries(schemas)) {
-      if (_collectionNames.has(schema.name)) {
+      if (_seenCollection.has(schema.name)) {
         throw new MonarchError(`Schema with name '${schema.name}' already exists.`);
       }
-      _collectionNames.add(schema.name);
+      _seenCollection.add(schema.name);
       _collections[key as keyof typeof _collections] = new Collection(
         db,
         schema,

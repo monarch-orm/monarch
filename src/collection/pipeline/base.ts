@@ -18,7 +18,6 @@ export abstract class Pipeline<TSchema extends AnySchema, TOutput> {
 
   public abstract exec(): Promise<TOutput>;
 
-  // biome-ignore lint/suspicious/noThenProperty: We need automatic promise resolution
   then<TResult1 = TOutput, TResult2 = never>(
     onfulfilled?: ((value: TOutput) => TResult1 | PromiseLike<TResult1>) | undefined | null,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null,

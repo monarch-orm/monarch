@@ -128,7 +128,7 @@ export function expandPopulations(opts: {
   schema: AnySchema;
   doc: any;
 }) {
-  const populatedDoc = Schema.fromData(opts.schema, opts.doc, opts.projection, opts.extras);
+  const populatedDoc = Schema.decode(opts.schema, opts.doc, opts.projection, opts.extras);
   for (const [key, population] of Object.entries(opts.populations)) {
     populatedDoc[key] = mapOneOrArray(opts.doc[population.fieldVariable], (doc) => {
       if (population.populations) {
@@ -140,7 +140,7 @@ export function expandPopulations(opts: {
           doc,
         });
       }
-      return Schema.fromData(population.relation.target, doc, population.projection, population.extras);
+      return Schema.decode(population.relation.target, doc, population.projection, population.extras);
     });
     delete populatedDoc[population.fieldVariable];
   }
@@ -177,7 +177,6 @@ function addPopulationPipeline(
         [fieldVariable]: {
           $cond: {
             if: { $isArray: `$${fieldVariable}` },
-            // biome-ignore lint/suspicious/noThenProperty: this is MongoDB syntax
             then: `$${fieldVariable}`,
             else: [],
           },
@@ -237,7 +236,6 @@ function addPopulationPipeline(
         [fieldVariable]: {
           $cond: {
             if: { $gt: [{ $size: `$${fieldVariable}` }, 0] }, // Skip population if value is null
-            // biome-ignore lint/suspicious/noThenProperty: this is MongoDB syntax
             then: { $arrayElemAt: [`$${fieldVariable}`, 0] }, // Unwind the first populated result
             else: null,
           },

@@ -142,8 +142,8 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
     return new DeleteManyQuery(this.schema, this._collection, this._readyPromise, filter);
   }
 
-  public aggregate() {
-    return new AggregationPipeline<TSchema, any[]>(this.schema, this._collection, this._readyPromise);
+  public aggregate<TOutput extends any[]>() {
+    return new AggregationPipeline<TSchema, TOutput[]>(this.schema, this._collection, this._readyPromise);
   }
 
   public async countDocuments(filter: Filter<InferSchemaData<TSchema>> = {}, options?: CountDocumentsOptions) {

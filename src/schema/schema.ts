@@ -32,79 +32,6 @@ export class Schema<
     if (!_types._id) this._types._id = objectId().optional();
   }
 
-  public static types<T extends AnySchema>(schema: T): InferSchemaTypes<T> {
-    return schema._types;
-  }
-
-  public static toData<T extends AnySchema>(schema: T, data: InferSchemaInput<T>) {
-    return schema.toData(data);
-  }
-  private toData(input: InferSchemaInput<this>): InferSchemaData<this> {
-    const data = {} as InferSchemaData<this>;
-    // parse fields
-    const types = Schema.types(this);
-    for (const [key, type] of Object.entries(types)) {
-      const parser = MonarchType.parser(type);
-      const parsed = parser(input[key as keyof InferSchemaInput<this>]);
-      if (parsed === undefined) continue;
-      data[key as keyof typeof data] = parsed;
-    }
-    return data;
-  }
-
-  public static fromData<T extends AnySchema>(
-    schema: T,
-    data: InferSchemaData<T>,
-    projection: Projection<InferSchemaOutput<T>>,
-    forceOmit: string[] | null,
-  ) {
-    return schema.fromData(data, projection, forceOmit);
-  }
-  private fromData(
-    data: InferSchemaData<this>,
-    projection: Projection<InferSchemaOutput<this>>,
-    forceOmit: string[] | null,
-  ): InferSchemaOutput<this> {
-    const output = data as unknown as InferSchemaOutput<this>;
-    if (this.options.virtuals) {
-      const { isProjected } = detectProjection(projection);
-      for (const [key, virtual] of Object.entries(this.options.virtuals)) {
-        // skip omitted virtual field
-        if (isProjected(key)) {
-          // @ts-ignore
-          output[key] = virtual.output(data);
-        }
-      }
-    }
-    // delete other fields that might have been added as input to a virtual or returned during insert
-    if (forceOmit) {
-      for (const key of forceOmit) {
-        delete output[key as keyof InferSchemaOutput<this>];
-      }
-    }
-    return output;
-  }
-
-  /**
-   * Get field updates for all top-level schema fields that have onUpdate configured.
-   *
-   * NOTE: Only top-level schema fields are processed. Nested fields within objects or arrays are not included.
-   */
-  public static getFieldUpdates<T extends AnySchema>(schema: T) {
-    return schema.getFieldUpdates();
-  }
-  private getFieldUpdates(): Partial<InferSchemaOutput<this>> {
-    const updates = {} as Partial<InferSchemaOutput<this>>;
-    // omit fields
-    for (const [key, type] of Object.entries(Schema.types(this))) {
-      const updater = MonarchType.updater(type);
-      if (updater) {
-        updates[key as keyof InferSchemaOutput<this>] = updater();
-      }
-    }
-    return updates;
-  }
-
   omit<TOmit extends SchemaOmit<TTypes>>(omit: TOmit) {
     const schema = this as unknown as Schema<TName, TTypes, TOmit, TVirtuals>;
     schema.options.omit = omit;
@@ -140,6 +67,66 @@ export class Schema<
   indexes(indexes: SchemaIndexes<TTypes>) {
     this.options.indexes = indexes;
     return this;
+  }
+
+  public static types<T extends AnySchema>(schema: T): InferSchemaTypes<T> {
+    return schema._types;
+  }
+
+  public static encode<T extends AnySchema>(schema: T, input: InferSchemaInput<T>) {
+    const data = {} as InferSchemaData<T>;
+    // parse fields
+    const types = Schema.types(schema);
+    for (const [key, type] of Object.entries(types)) {
+      const parser = MonarchType.parser(type as AnyMonarchType);
+      const parsed = parser(input[key as keyof InferSchemaInput<T>]);
+      if (parsed === undefined) continue;
+      data[key as keyof typeof data] = parsed;
+    }
+    return data;
+  }
+
+  public static decode<T extends AnySchema>(
+    schema: T,
+    data: InferSchemaData<T>,
+    projection: Projection<InferSchemaOutput<T>>,
+    forceOmit: string[] | null,
+  ) {
+    const output = data as unknown as InferSchemaOutput<T>;
+    if (schema.options.virtuals) {
+      const { isProjected } = detectProjection(projection);
+      for (const [key, virtual] of Object.entries(schema.options.virtuals)) {
+        // skip omitted virtual field
+        if (isProjected(key)) {
+          // @ts-ignore
+          output[key] = virtual.output(data);
+        }
+      }
+    }
+    // delete other fields that might have been added as input to a virtual or returned during insert
+    if (forceOmit) {
+      for (const key of forceOmit) {
+        delete output[key as keyof InferSchemaOutput<T>];
+      }
+    }
+    return output;
+  }
+
+  /**
+   * Get field updates for all top-level schema fields that have onUpdate configured.
+   *
+   * NOTE: Only top-level schema fields are processed. Nested fields within objects or arrays are not included.
+   */
+  public static getFieldUpdates<T extends AnySchema>(schema: T) {
+    const updates = {} as Partial<InferSchemaOutput<T>>;
+    // omit fields
+    for (const [key, type] of Object.entries(Schema.types(schema))) {
+      const updater = MonarchType.updater(type as AnyMonarchType);
+      if (updater) {
+        updates[key as keyof InferSchemaOutput<T>] = updater();
+      }
+    }
+    return updates;
   }
 }
 

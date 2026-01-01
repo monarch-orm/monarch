@@ -6,7 +6,6 @@ tests
 coverage
 pnpm-lock.yaml
 tsconfig.json
-biome.json
 vitest.config.mts
 tsup.config.ts
 CHANGELOG.md
