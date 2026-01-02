@@ -24,7 +24,7 @@ export { createRelations, Relations, type Relation } from "./relations/relations
 export { createSchema, Schema } from "./schema/schema";
 export { type InferSchemaInput, type InferSchemaOutput } from "./schema/type-helpers";
 export { virtual, type Virtual } from "./schema/virtuals";
-export { generateObjectId, isValidObjectId, objectIdToString, toObjectId } from "./utils/objectId";
+export { toObjectId } from "./utils/objectId";
 
 export const m = {
   array,
