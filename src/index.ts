@@ -26,6 +26,22 @@ export { type InferSchemaInput, type InferSchemaOutput } from "./schema/type-hel
 export { virtual, type Virtual } from "./schema/virtuals";
 export { toObjectId } from "./utils/objectId";
 
+/**
+ * Bundled type constructors and modifiers for convenient access.
+ *
+ * Provides all type constructors (string, number, boolean, etc.) and
+ * modifiers (nullable, optional, defaulted) in a single object.
+ *
+ * @example
+ * ```ts
+ * import { m } from 'monarch-orm';
+ *
+ * const UserSchema = createSchema('users', {
+ *   name: m.string(),
+ *   age: m.number().optional(),
+ * });
+ * ```
+ */
 export const m = {
   array,
   boolean,

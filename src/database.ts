@@ -9,6 +9,13 @@ import type { AnySchema } from "./schema/schema";
 import type { InferSchemaInput, InferSchemaOmit, InferSchemaOutput } from "./schema/type-helpers";
 import type { ExtractObject, IdFirst, Merge, Pretty } from "./utils/type-helpers";
 
+/**
+ * Creates a MongoDB client configured with Monarch ORM driver information.
+ *
+ * @param uri - MongoDB connection URI
+ * @param options - MongoDB client options
+ * @returns Configured MongoClient instance
+ */
 export function createClient(uri: string, options: MongoClientOptions = {}) {
   if (!options.driverInfo) {
     options.driverInfo = { name: "Monarch ORM", version };
@@ -16,13 +23,29 @@ export function createClient(uri: string, options: MongoClientOptions = {}) {
   return new MongoClient(uri, options);
 }
 
+/**
+ * Manages database collections and relations for type-safe MongoDB operations.
+ *
+ * @typeParam TSchemas - Record of schema definitions for collections
+ * @typeParam TRelations - Record of relation definitions between schemas
+ */
 export class Database<
   TSchemas extends Record<string, AnySchema> = {},
   TRelations extends Record<string, Relations<any, any>> = {},
 > {
+  /** Relation definitions organized by schema name */
   public relations: DbRelations<TRelations>;
+  /** Type-safe collection instances for each schema */
   public collections: DbCollections<TSchemas, DbRelations<TRelations>>;
 
+  /**
+   * Creates a Database instance with collections and relations.
+   *
+   * @param db - MongoDB database instance
+   * @param schemas - Schema definitions for collections
+   * @param relations - Relation definitions between schemas
+   * @throws {MonarchError} If duplicate schema or relation names are found
+   */
   constructor(
     public db: Db,
     schemas: TSchemas,
@@ -61,15 +84,35 @@ export class Database<
     this.listCollections = this.listCollections.bind(this);
   }
 
+  /**
+   * Creates a collection instance from a schema.
+   *
+   * @typeParam S - Schema type
+   * @param schema - Schema definition
+   * @returns Collection instance for the schema
+   */
   public use<S extends AnySchema>(schema: S): Collection<S, DbRelations<TRelations>> {
     return new Collection(this.db, schema, this.relations[schema.name as keyof DbRelations<TRelations>]);
   }
 
+  /**
+   * Lists all collection keys defined in the database.
+   *
+   * @returns Array of collection keys
+   */
   public listCollections() {
     return Object.keys(this.collections) as (keyof this["collections"])[];
   }
 }
 
+/**
+ * Creates a database instance with type-safe collections and relations.
+ *
+ * @typeParam T - Record containing schemas and relations
+ * @param db - MongoDB database instance
+ * @param schemas - Object containing schema and relation definitions
+ * @returns Database instance with initialized collections and relations
+ */
 export function createDatabase<T extends Record<string, AnySchema | Relations<any, any>>>(
   db: Db,
   schemas: T,
@@ -95,11 +138,24 @@ type DbRelations<TRelations extends Record<string, Relations<any, any>>> = {
   [K in keyof TRelations as TRelations[K]["name"]]: TRelations[K]["relations"];
 } & {};
 
+/**
+ * Infers the input type for a collection in a database.
+ *
+ * @typeParam TDatabase - Database instance type
+ * @typeParam TCollection - Collection key in the database
+ */
 export type InferInput<
   TDatabase extends Database<any, any>,
   TCollection extends keyof TDatabase["collections"],
 > = InferSchemaInput<TDatabase["collections"][TCollection]["schema"]>;
 
+/**
+ * Infers the output type for a collection query with projection and population options.
+ *
+ * @typeParam TDatabase - Database instance type
+ * @typeParam TCollection - Collection key in the database
+ * @typeParam TOptions - Query options including select, omit, and populate
+ */
 export type InferOutput<
   TDatabase extends Database<any, any>,
   TCollection extends keyof TDatabase["collections"],

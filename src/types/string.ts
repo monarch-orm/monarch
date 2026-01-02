@@ -1,8 +1,16 @@
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
 
+/**
+ * Creates a string type definition.
+ *
+ * @returns MonarchString instance
+ */
 export const string = () => new MonarchString();
 
+/**
+ * String type with validation and transformation methods.
+ */
 export class MonarchString extends MonarchType<string, string> {
   constructor() {
     super((input) => {
@@ -11,24 +19,45 @@ export class MonarchString extends MonarchType<string, string> {
     });
   }
 
+  /**
+   * Trims whitespace from both ends of the string.
+   *
+   * @returns MonarchString with trim transformation
+   */
   public trim() {
     return string().extend(this, {
       parse: (input) => input.trim(),
     });
   }
 
+  /**
+   * Converts string to lowercase.
+   *
+   * @returns MonarchString with lowercase transformation
+   */
   public lowercase() {
     return string().extend(this, {
       parse: (input) => input.toLowerCase(),
     });
   }
 
+  /**
+   * Converts string to uppercase.
+   *
+   * @returns MonarchString with uppercase transformation
+   */
   public uppercase() {
     return string().extend(this, {
       parse: (input) => input.toUpperCase(),
     });
   }
 
+  /**
+   * Validates minimum string length.
+   *
+   * @param length - Minimum length
+   * @returns MonarchString with length validation
+   */
   public minLength(length: number) {
     return string().extend(this, {
       parse: (input) => {
@@ -40,6 +69,12 @@ export class MonarchString extends MonarchType<string, string> {
     });
   }
 
+  /**
+   * Validates maximum string length.
+   *
+   * @param length - Maximum length
+   * @returns MonarchString with length validation
+   */
   public maxLength(length: number) {
     return string().extend(this, {
       parse: (input) => {
@@ -51,6 +86,12 @@ export class MonarchString extends MonarchType<string, string> {
     });
   }
 
+  /**
+   * Validates exact string length.
+   *
+   * @param length - Required length
+   * @returns MonarchString with length validation
+   */
   public length(length: number) {
     return string().extend(this, {
       parse: (input) => {
@@ -62,6 +103,12 @@ export class MonarchString extends MonarchType<string, string> {
     });
   }
 
+  /**
+   * Validates string matches a regex pattern.
+   *
+   * @param regex - Regular expression pattern
+   * @returns MonarchString with pattern validation
+   */
   public pattern(regex: RegExp) {
     return string().extend(this, {
       parse: (input) => {
@@ -73,6 +120,11 @@ export class MonarchString extends MonarchType<string, string> {
     });
   }
 
+  /**
+   * Validates string is not empty.
+   *
+   * @returns MonarchString with non-empty validation
+   */
   public nonempty() {
     return string().extend(this, {
       preprocess: (input) => {
@@ -84,6 +136,12 @@ export class MonarchString extends MonarchType<string, string> {
     });
   }
 
+  /**
+   * Validates string includes a substring.
+   *
+   * @param searchString - Substring to search for
+   * @returns MonarchString with inclusion validation
+   */
   public includes(searchString: string) {
     return string().extend(this, {
       preprocess: (input) => {
