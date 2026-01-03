@@ -4,6 +4,6 @@
 export class MonarchError extends Error {}
 
 /**
- * Error thrown during schema parsing and validation.
+ * Schema parsing and validation error.
  */
 export class MonarchParseError extends MonarchError {}

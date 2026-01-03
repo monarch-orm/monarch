@@ -10,6 +10,9 @@ import { type AnySchema, Schema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";
 import { Query } from "./base";
 
+/**
+ * Collection.updateMany().
+ */
 export class UpdateManyQuery<TSchema extends AnySchema> extends Query<TSchema, UpdateResult<InferSchemaData<TSchema>>> {
   constructor(
     protected _schema: TSchema,
@@ -22,6 +25,12 @@ export class UpdateManyQuery<TSchema extends AnySchema> extends Query<TSchema, U
     super(_schema, _collection, _readyPromise);
   }
 
+  /**
+   * Adds update options. Options are merged into existing options.
+   *
+   * @param options - FindOptions
+   * @returns UpdateManyQuery instance
+   */
   public options(options: FindOptions): this {
     Object.assign(this._options, options);
     return this;

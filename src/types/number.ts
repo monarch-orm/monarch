@@ -2,14 +2,14 @@ import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
 
 /**
- * Creates a number type definition.
+ * Number type.
  *
  * @returns MonarchNumber instance
  */
 export const number = () => new MonarchNumber();
 
 /**
- * Number type with validation methods.
+ * Type for number fields.
  */
 export class MonarchNumber extends MonarchType<number, number> {
   constructor() {

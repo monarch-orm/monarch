@@ -3,6 +3,9 @@ import type { AnySchema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";
 import { Pipeline } from "./base";
 
+/**
+ * Collection.aggregate().
+ */
 export class AggregationPipeline<TSchema extends AnySchema, TOutput extends any[]> extends Pipeline<TSchema, TOutput> {
   constructor(
     protected _schema: TSchema,
@@ -13,6 +16,12 @@ export class AggregationPipeline<TSchema extends AnySchema, TOutput extends any[
     super(_schema, _collection, _readyPromise);
   }
 
+  /**
+   * Adds aggregation options. Options are merged into existing options.
+   *
+   * @param options - AggregateOptions
+   * @returns AggregationPipeline instance
+   */
   public options(options: AggregateOptions): this {
     Object.assign(this._options, options);
     return this;

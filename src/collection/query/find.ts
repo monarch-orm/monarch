@@ -10,6 +10,9 @@ import { addPipelineMetas, addPopulations, expandPopulations, getSortDirection }
 import { addExtraInputsToProjection, makeProjection } from "../utils/projection";
 import { Query, type QueryOutput } from "./base";
 
+/**
+ * Collection.find().
+ */
 export class FindQuery<
   TSchema extends AnySchema,
   TDbRelations extends Record<string, AnyRelations>,
@@ -32,36 +35,78 @@ export class FindQuery<
     this._projection = makeProjection("omit", _schema.options.omit ?? {});
   }
 
+  /**
+   * Adds find options. Options are merged into existing options.
+   *
+   * @param options - FindOptions
+   * @returns FindQuery instance
+   */
   public options(options: FindOptions): this {
     Object.assign(this._options, options);
     return this;
   }
 
+  /**
+   * Sets sort order for results.
+   *
+   * @param sort - Sort specification
+   * @returns FindQuery instance
+   */
   public sort(sort: Sort<InferSchemaOutput<TSchema>>): this {
     this._options.sort = sort as MongoSort;
     return this;
   }
 
+  /**
+   * Sets maximum number of documents to return.
+   *
+   * @param limit - Maximum documents
+   * @returns FindQuery instance
+   */
   public limit(limit: number): this {
     this._options.limit = limit;
     return this;
   }
 
+  /**
+   * Sets number of documents to skip.
+   *
+   * @param skip - Number to skip
+   * @returns FindQuery instance
+   */
   public skip(skip: number): this {
     this._options.skip = skip;
     return this;
   }
 
+  /**
+   * Sets fields to exclude from results.
+   *
+   * @param projection - Fields to exclude
+   * @returns FindQuery instance
+   */
   public omit<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
     this._projection = makeProjection("omit", projection);
     return this as FindQuery<TSchema, TDbRelations, TPopulate, TOutput, ["omit", TrueKeys<TProjection>]>;
   }
 
+  /**
+   * Sets fields to include in results.
+   *
+   * @param projection - Fields to include
+   * @returns FindQuery instance
+   */
   public select<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
     this._projection = makeProjection("select", projection);
     return this as FindQuery<TSchema, TDbRelations, TPopulate, TOutput, ["select", TrueKeys<TProjection>]>;
   }
 
+  /**
+   * Sets relations to populate in results.
+   *
+   * @param population - Relation population config
+   * @returns FindQuery instance
+   */
   public populate<TPopulation extends Population<TDbRelations, TSchema["name"]>>(population: TPopulation) {
     this._population = population;
     return this as FindQuery<
@@ -73,6 +118,11 @@ export class FindQuery<
     >;
   }
 
+  /**
+   * Returns MongoDB cursor for result iteration.
+   *
+   * @returns AbstractCursor
+   */
   public async cursor(): Promise<AbstractCursor<QueryOutput<TOutput, TOmit, TPopulate>>> {
     await this._readyPromise;
     if (Object.keys(this._population).length) {

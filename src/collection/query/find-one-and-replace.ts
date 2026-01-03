@@ -6,6 +6,9 @@ import type { BoolProjection, Projection } from "../types/query-options";
 import { addExtraInputsToProjection, makeProjection } from "../utils/projection";
 import { Query, type QueryOutput } from "./base";
 
+/**
+ * Collection.findOneAndReplace().
+ */
 export class FindOneAndReplaceQuery<
   TSchema extends AnySchema,
   TOutput = InferSchemaOutput<TSchema>,
@@ -25,16 +28,34 @@ export class FindOneAndReplaceQuery<
     this._projection = makeProjection("omit", _schema.options.omit ?? {});
   }
 
+  /**
+   * Adds replace options. Options are merged into existing options.
+   *
+   * @param options - FindOneAndReplaceOptions
+   * @returns FindOneAndReplaceQuery instance
+   */
   public options(options: FindOneAndReplaceOptions): this {
     Object.assign(this._options, options);
     return this;
   }
 
+  /**
+   * Excludes fields from results.
+   *
+   * @param projection - Fields to exclude
+   * @returns FindOneAndReplaceQuery instance
+   */
   public omit<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
     this._projection = makeProjection("omit", projection);
     return this as FindOneAndReplaceQuery<TSchema, TOutput, ["omit", TrueKeys<TProjection>]>;
   }
 
+  /**
+   * Includes only specified fields in results.
+   *
+   * @param projection - Fields to include
+   * @returns FindOneAndReplaceQuery instance
+   */
   public select<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
     this._projection = makeProjection("select", projection);
     return this as FindOneAndReplaceQuery<TSchema, TOutput, ["select", TrueKeys<TProjection>]>;

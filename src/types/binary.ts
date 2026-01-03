@@ -2,8 +2,16 @@ import { Binary } from "mongodb";
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
 
+/**
+ * Binary type.
+ *
+ * @returns MonarchBinary instance
+ */
 export const binary = () => new MonarchBinary();
 
+/**
+ * Type for Binary fields.
+ */
 export class MonarchBinary extends MonarchType<Buffer | Binary, Binary> {
   constructor() {
     super((input) => {

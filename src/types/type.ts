@@ -1,8 +1,18 @@
 import { MonarchParseError } from "../errors";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
 
+/**
+ * Parser function type.
+ */
 export type Parser<Input, Output> = (input: Input) => Output;
 
+/**
+ * Chains two parsers into a single parser.
+ *
+ * @param prevParser - First parser
+ * @param nextParser - Second parser
+ * @returns Chained parser
+ */
 export function pipeParser<Input, InterOutput, Output>(
   prevParser: Parser<Input, InterOutput>,
   nextParser: Parser<InterOutput, Output>,
@@ -10,25 +20,54 @@ export function pipeParser<Input, InterOutput, Output>(
   return (input) => nextParser(prevParser(input));
 }
 
+/**
+ * Creates a MonarchType with custom parser and optional updater.
+ *
+ * @param parser - Parser function
+ * @param updater - Optional updater function
+ * @returns MonarchType instance
+ */
 export const type = <TInput, TOutput = TInput>(parser: Parser<TInput, TOutput>, updater?: Parser<void, TOutput>) =>
   new MonarchType(parser, updater);
 
 export type AnyMonarchType<TInput = any, TOutput = TInput> = MonarchType<TInput, TOutput>;
 
+/**
+ * Base class for all Monarch types.
+ */
 export class MonarchType<TInput, TOutput = TInput> {
   constructor(
     protected parser: Parser<TInput, TOutput>,
     protected updater?: Parser<void, TOutput>,
   ) {}
 
+  /**
+   * Gets parser function from type.
+   *
+   * @param type - Monarch type
+   * @returns Parser function
+   */
   public static parser<T extends AnyMonarchType>(type: T): Parser<InferTypeInput<T>, InferTypeOutput<T>> {
     return type.parser;
   }
 
+  /**
+   * Gets updater function from type.
+   *
+   * @param type - Monarch type
+   * @returns Updater function or undefined
+   */
   public static updater<T extends AnyMonarchType>(type: T): Parser<void, InferTypeOutput<T>> | undefined {
     return type.updater;
   }
 
+  /**
+   * Checks if type is instance of target class.
+   *
+   * @param type - Monarch type
+   * @param target - Target class
+   * @returns True if type is instance of target
+   */
   public static isInstanceOf<T extends new (...args: any) => AnyMonarchType>(
     type: AnyMonarchType,
     target: T,
@@ -40,14 +79,30 @@ export class MonarchType<TInput, TOutput = TInput> {
     return this instanceof target;
   }
 
+  /**
+   * Nullable type modifier.
+   *
+   * @returns MonarchNullable instance
+   */
   public nullable() {
     return nullable(this);
   }
 
+  /**
+   * Optional type modifier.
+   *
+   * @returns MonarchOptional instance
+   */
   public optional() {
     return optional(this);
   }
 
+  /**
+   * Default value type modifier.
+   *
+   * @param defaultInput - Default value or function
+   * @returns MonarchDefaulted instance
+   */
   public default(defaultInput: TInput | (() => TInput)) {
     return defaulted(this, defaultInput as InferTypeInput<this> | (() => InferTypeInput<this>));
   }
@@ -116,8 +171,17 @@ export class MonarchType<TInput, TOutput = TInput> {
   }
 }
 
+/**
+ * Nullable type modifier.
+ *
+ * @param type - Monarch type
+ * @returns MonarchNullable instance
+ */
 export const nullable = <T extends AnyMonarchType>(type: T) => new MonarchNullable<T>(type);
 
+/**
+ * Type for nullable fields.
+ */
 export class MonarchNullable<T extends AnyMonarchType> extends MonarchType<
   InferTypeInput<T> | null,
   InferTypeOutput<T> | null
@@ -137,8 +201,17 @@ export class MonarchNullable<T extends AnyMonarchType> extends MonarchType<
   }
 }
 
+/**
+ * Optional type modifier.
+ *
+ * @param type - Monarch type
+ * @returns MonarchOptional instance
+ */
 export const optional = <T extends AnyMonarchType>(type: T) => new MonarchOptional<T>(type);
 
+/**
+ * Type for optional fields.
+ */
 export class MonarchOptional<T extends AnyMonarchType> extends MonarchType<
   InferTypeInput<T> | undefined,
   InferTypeOutput<T> | undefined
@@ -158,11 +231,21 @@ export class MonarchOptional<T extends AnyMonarchType> extends MonarchType<
   }
 }
 
+/**
+ * Default value type modifier.
+ *
+ * @param type - Monarch type
+ * @param defaultInput - Default value or function
+ * @returns MonarchDefaulted instance
+ */
 export const defaulted = <T extends AnyMonarchType>(
   type: T,
   defaultInput: InferTypeInput<T> | (() => InferTypeInput<T>),
 ) => new MonarchDefaulted<T>(type, defaultInput);
 
+/**
+ * Type for fields with default values.
+ */
 export class MonarchDefaulted<T extends AnyMonarchType> extends MonarchType<
   InferTypeInput<T> | undefined,
   InferTypeOutput<T>

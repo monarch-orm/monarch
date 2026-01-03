@@ -2,14 +2,14 @@ import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
 
 /**
- * Creates a boolean type definition.
+ * Boolean type.
  *
  * @returns MonarchBoolean instance
  */
 export const boolean = () => new MonarchBoolean();
 
 /**
- * Boolean type for true/false values.
+ * Type for boolean fields.
  */
 export class MonarchBoolean extends MonarchType<boolean, boolean> {
   constructor() {

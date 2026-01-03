@@ -2,8 +2,16 @@ import { Long } from "mongodb";
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
 
+/**
+ * Long type for 64-bit integers.
+ *
+ * @returns MonarchLong instance
+ */
 export const long = () => new MonarchLong();
 
+/**
+ * Type for Long fields.
+ */
 export class MonarchLong extends MonarchType<Long | number | bigint, Long | number> {
   constructor() {
     super((input) => {

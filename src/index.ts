@@ -27,10 +27,7 @@ export { virtual, type Virtual } from "./schema/virtuals";
 export { toObjectId } from "./utils/objectId";
 
 /**
- * Bundled type constructors and modifiers for convenient access.
- *
- * Provides all type constructors (string, number, boolean, etc.) and
- * modifiers (nullable, optional, defaulted) in a single object.
+ * Monarch types namespace for convenient access.
  *
  * @example
  * ```ts

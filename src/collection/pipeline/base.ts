@@ -3,6 +3,9 @@ import type { AnySchema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";
 import type { PipelineStage } from "../types/pipeline-stage";
 
+/**
+ * Base aggregation pipeline class implementing thenable interface.
+ */
 export abstract class Pipeline<TSchema extends AnySchema, TOutput> {
   constructor(
     protected _schema: TSchema,
@@ -11,6 +14,12 @@ export abstract class Pipeline<TSchema extends AnySchema, TOutput> {
     protected _pipeline: PipelineStage<InferSchemaData<TSchema>>[] = [],
   ) {}
 
+  /**
+   * Appends aggregation pipeline stage.
+   *
+   * @param stage - Pipeline stage
+   * @returns Pipeline instance
+   */
   public addStage(stage: PipelineStage<InferSchemaData<TSchema>>): this {
     this._pipeline.push(stage);
     return this;

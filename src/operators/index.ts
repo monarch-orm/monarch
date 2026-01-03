@@ -5,7 +5,6 @@ import type { InferSchemaData } from "../schema/type-helpers";
 /**
  * Logical AND operator - matches documents that satisfy all expressions.
  *
- * @typeParam T - Schema type
  * @param expressions - Array of filter expressions
  * @returns MongoDB $and operator
  */
@@ -16,7 +15,6 @@ export function and<T extends AnySchema>(...expressions: Filter<InferSchemaData<
 /**
  * Logical OR operator - matches documents that satisfy at least one expression.
  *
- * @typeParam T - Schema type
  * @param expressions - Array of filter expressions
  * @returns MongoDB $or operator
  */
@@ -27,7 +25,6 @@ export function or<T extends AnySchema>(...expressions: Filter<InferSchemaData<T
 /**
  * Logical NOR operator - matches documents that fail all expressions.
  *
- * @typeParam T - Schema type
  * @param expressions - Array of filter expressions
  * @returns MongoDB $nor operator
  */
@@ -38,7 +35,6 @@ export function nor<T extends AnySchema>(...expressions: Filter<InferSchemaData<
 /**
  * Logical NOT operator - inverts the effect of a filter expression.
  *
- * @typeParam T - Schema type
  * @param expression - Filter expression to negate
  * @returns MongoDB $not operator
  */
@@ -49,7 +45,6 @@ export function not<T extends AnySchema>(expression: Filter<InferSchemaData<T>>)
 /**
  * Equality operator - matches values equal to a specified value.
  *
- * @typeParam T - Value type
  * @param value - Value to match
  * @returns MongoDB $eq operator
  */
@@ -60,7 +55,6 @@ export function eq<T>(value: T) {
 /**
  * Inequality operator - matches values not equal to a specified value.
  *
- * @typeParam T - Value type
  * @param value - Value to exclude
  * @returns MongoDB $ne operator
  */
@@ -71,7 +65,6 @@ export function neq<T>(value: T) {
 /**
  * Greater than operator - matches values greater than a specified value.
  *
- * @typeParam T - Value type
  * @param value - Comparison value
  * @returns MongoDB $gt operator
  */
@@ -82,7 +75,6 @@ export function gt<T>(value: T) {
 /**
  * Less than operator - matches values less than a specified value.
  *
- * @typeParam T - Value type
  * @param value - Comparison value
  * @returns MongoDB $lt operator
  */
@@ -93,7 +85,6 @@ export function lt<T>(value: T) {
 /**
  * Greater than or equal operator - matches values greater than or equal to a specified value.
  *
- * @typeParam T - Value type
  * @param value - Comparison value
  * @returns MongoDB $gte operator
  */
@@ -104,7 +95,6 @@ export function gte<T>(value: T) {
 /**
  * Less than or equal operator - matches values less than or equal to a specified value.
  *
- * @typeParam T - Value type
  * @param value - Comparison value
  * @returns MongoDB $lte operator
  */
@@ -115,7 +105,6 @@ export function lte<T>(value: T) {
 /**
  * In array operator - matches values that exist in a specified array.
  *
- * @typeParam T - Value type
  * @param values - Array of values to match
  * @returns MongoDB $in operator
  */
@@ -126,7 +115,6 @@ export function inArray<T>(values: T[]) {
 /**
  * Not in array operator - matches values that do not exist in a specified array.
  *
- * @typeParam T - Value type
  * @param values - Array of values to exclude
  * @returns MongoDB $nin operator
  */

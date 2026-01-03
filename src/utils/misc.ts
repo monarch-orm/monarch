@@ -9,6 +9,12 @@ export function mapOneOrArray<T extends Record<string, any>, U>(input: T | T[], 
   return fn(input);
 }
 
+/**
+ * Generates a hash string from input string.
+ *
+ * @param input - String to hash
+ * @returns Base-36 hash string
+ */
 export function hashString(input: string) {
   let hash = 0;
   for (let i = 0; i < input.length; i++) {

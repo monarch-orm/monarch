@@ -24,18 +24,16 @@ export function createClient(uri: string, options: MongoClientOptions = {}) {
 }
 
 /**
- * Manages database collections and relations for type-safe MongoDB operations.
+ * Manages database collections and relations for MongoDB operations.
  *
- * @typeParam TSchemas - Record of schema definitions for collections
- * @typeParam TRelations - Record of relation definitions between schemas
  */
 export class Database<
   TSchemas extends Record<string, AnySchema> = {},
   TRelations extends Record<string, Relations<any, any>> = {},
 > {
-  /** Relation definitions organized by schema name */
+  /** Relation definitions for each schema */
   public relations: DbRelations<TRelations>;
-  /** Type-safe collection instances for each schema */
+  /** Collection instances for each schema */
   public collections: DbCollections<TSchemas, DbRelations<TRelations>>;
 
   /**
@@ -87,7 +85,6 @@ export class Database<
   /**
    * Creates a collection instance from a schema.
    *
-   * @typeParam S - Schema type
    * @param schema - Schema definition
    * @returns Collection instance for the schema
    */
@@ -106,9 +103,8 @@ export class Database<
 }
 
 /**
- * Creates a database instance with type-safe collections and relations.
+ * Creates a database instance with collections and relations.
  *
- * @typeParam T - Record containing schemas and relations
  * @param db - MongoDB database instance
  * @param schemas - Object containing schema and relation definitions
  * @returns Database instance with initialized collections and relations
@@ -141,8 +137,6 @@ type DbRelations<TRelations extends Record<string, Relations<any, any>>> = {
 /**
  * Infers the input type for a collection in a database.
  *
- * @typeParam TDatabase - Database instance type
- * @typeParam TCollection - Collection key in the database
  */
 export type InferInput<
   TDatabase extends Database<any, any>,
@@ -152,9 +146,6 @@ export type InferInput<
 /**
  * Infers the output type for a collection query with projection and population options.
  *
- * @typeParam TDatabase - Database instance type
- * @typeParam TCollection - Collection key in the database
- * @typeParam TOptions - Query options including select, omit, and populate
  */
 export type InferOutput<
   TDatabase extends Database<any, any>,

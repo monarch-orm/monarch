@@ -14,12 +14,8 @@ type SchemaOmit<TTypes extends Record<string, AnyMonarchType>> = {
 export type AnySchema = Schema<any, any, any, any>;
 
 /**
- * Defines the structure and behavior of a MongoDB collection with type safety.
+ * Defines the structure and behavior of a MongoDB collection.
  *
- * @typeParam TName - Collection name
- * @typeParam TTypes - Field type definitions
- * @typeParam TOmit - Fields to omit from output
- * @typeParam TVirtuals - Virtual field definitions
  */
 export class Schema<
   TName extends string,
@@ -50,7 +46,6 @@ export class Schema<
   /**
    * Specifies fields to omit from query output.
    *
-   * @typeParam TOmit - Fields to omit
    * @param omit - Object specifying which fields to omit
    * @returns Schema instance with omit configuration
    */
@@ -63,7 +58,6 @@ export class Schema<
   /**
    * Adds virtual computed fields to the schema.
    *
-   * @typeParam TVirtuals - Virtual field definitions
    * @param virtuals - Object defining virtual fields
    * @returns Schema instance with virtual fields configured
    */
@@ -101,7 +95,6 @@ export class Schema<
   /**
    * Retrieves the field type definitions from a schema.
    *
-   * @typeParam T - Schema type
    * @param schema - Schema instance
    * @returns Field type definitions
    */
@@ -112,7 +105,6 @@ export class Schema<
   /**
    * Parses and validates input data according to schema type definitions.
    *
-   * @typeParam T - Schema type
    * @param schema - Schema instance
    * @param input - Input data to encode
    * @returns Encoded data ready for database storage
@@ -133,7 +125,6 @@ export class Schema<
   /**
    * Transforms database data to output format with virtual fields and projections.
    *
-   * @typeParam T - Schema type
    * @param schema - Schema instance
    * @param data - Database data to decode
    * @param projection - Field projection configuration
@@ -185,10 +176,8 @@ export class Schema<
 }
 
 /**
- * Creates a type-safe schema definition for a MongoDB collection.
+ * Creates a schema definition for a MongoDB collection.
  *
- * @typeParam TName - Collection name
- * @typeParam TTypes - Field type definitions
  * @param name - Collection name
  * @param types - Object defining field types
  * @returns Schema instance for the collection

@@ -7,8 +7,17 @@ import type {
   InferTypeUnionOutput,
 } from "./type-helpers";
 
+/**
+ * Union type.
+ *
+ * @param variants - Type variants
+ * @returns MonarchUnion instance
+ */
 export const union = <T extends [AnyMonarchType, ...AnyMonarchType[]]>(...variants: T) => new MonarchUnion(variants);
 
+/**
+ * Type for union fields.
+ */
 export class MonarchUnion<T extends [AnyMonarchType, ...AnyMonarchType[]]> extends MonarchType<
   InferTypeUnionInput<T>,
   InferTypeUnionOutput<T>
@@ -34,8 +43,17 @@ export class MonarchUnion<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
   }
 }
 
+/**
+ * Tagged union type.
+ *
+ * @param variants - Tag to type mapping
+ * @returns MonarchTaggedUnion instance
+ */
 export const taggedUnion = <T extends Record<string, AnyMonarchType>>(variants: T) => new MonarchTaggedUnion(variants);
 
+/**
+ * Type for tagged union fields.
+ */
 export class MonarchTaggedUnion<T extends Record<string, AnyMonarchType>> extends MonarchType<
   InferTypeTaggedUnionInput<T>,
   InferTypeTaggedUnionOutput<T>

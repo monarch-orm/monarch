@@ -5,6 +5,9 @@ import type { Projection } from "../types/query-options";
 import { makeProjection } from "../utils/projection";
 import { Query, type QueryOutput } from "./base";
 
+/**
+ * Collection.insertOne().
+ */
 export class InsertOneQuery<
   TSchema extends AnySchema,
   TOutput = InferSchemaOutput<TSchema>,
@@ -23,6 +26,12 @@ export class InsertOneQuery<
     this._projection = makeProjection("omit", _schema.options.omit ?? {});
   }
 
+  /**
+   * Adds insert options. Options are merged into existing options.
+   *
+   * @param options - InsertOneOptions
+   * @returns InsertOneQuery instance
+   */
   public options(options: InsertOneOptions): this {
     Object.assign(this._options, options);
     return this;

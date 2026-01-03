@@ -6,11 +6,6 @@ export type AnyRelation = Relation<"one" | "many" | "ref", any, any, any, any>;
 /**
  * Defines a relationship between two schemas.
  *
- * @typeParam TRelation - Type of relation: "one", "many", or "ref"
- * @typeParam TSchema - Source schema
- * @typeParam TSchemaField - Field in source schema
- * @typeParam TTarget - Target schema
- * @typeParam TTargetField - Field in target schema
  */
 export type Relation<
   TRelation extends "one" | "many" | "ref",
@@ -31,8 +26,6 @@ export type AnyRelations = Record<string, AnyRelation>;
 /**
  * Container for schema relationships.
  *
- * @typeParam TName - Schema name
- * @typeParam TRelations - Relation definitions
  */
 export class Relations<TName extends string, TRelations extends AnyRelations> {
   /**
@@ -48,15 +41,13 @@ export class Relations<TName extends string, TRelations extends AnyRelations> {
 }
 
 /**
- * Creates type-safe relationship definitions for a schema.
+ * Creates relationship definitions for a schema.
  *
  * Provides three relation types:
  * - `one`: One-to-one relationship
  * - `many`: One-to-many relationship
  * - `ref`: Reference relationship
  *
- * @typeParam TSchema - Source schema
- * @typeParam TRelations - Relation definitions
  * @param schema - Source schema
  * @param relations - Function that defines relations using relation builders
  * @returns Relations instance for the schema
@@ -96,7 +87,6 @@ export function createRelations<TSchema extends AnySchema, TRelations extends Re
 /**
  * Relation builder interface with one, many, and ref methods.
  *
- * @typeParam TSchema - Source schema
  */
 type CreateRelation<TSchema extends AnySchema> = {
   /**

@@ -8,6 +8,9 @@ import { type AnySchema, Schema } from "../../schema/schema";
 import type { InferSchemaData, InferSchemaInput } from "../../schema/type-helpers";
 import { Query } from "./base";
 
+/**
+ * Collection.insertMany().
+ */
 export class InsertManyQuery<TSchema extends AnySchema> extends Query<
   TSchema,
   InsertManyResult<InferSchemaData<TSchema>>
@@ -22,6 +25,12 @@ export class InsertManyQuery<TSchema extends AnySchema> extends Query<
     super(_schema, _collection, _readyPromise);
   }
 
+  /**
+   * Adds insert options. Options are merged into existing options.
+   *
+   * @param options - BulkWriteOptions
+   * @returns InsertManyQuery instance
+   */
   public options(options: BulkWriteOptions): this {
     Object.assign(this._options, options);
     return this;

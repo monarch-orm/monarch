@@ -3,6 +3,9 @@ import type { AnySchema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";
 import { Query } from "./base";
 
+/**
+ * Collection.replaceOne().
+ */
 export class ReplaceOneQuery<TSchema extends AnySchema> extends Query<TSchema, UpdateResult<InferSchemaData<TSchema>>> {
   constructor(
     protected _schema: TSchema,
@@ -15,6 +18,12 @@ export class ReplaceOneQuery<TSchema extends AnySchema> extends Query<TSchema, U
     super(_schema, _collection, _readyPromise);
   }
 
+  /**
+   * Adds replace options. Options are merged into existing options.
+   *
+   * @param options - ReplaceOptions
+   * @returns ReplaceOneQuery instance
+   */
   public options(options: ReplaceOptions): this {
     Object.assign(this._options, options);
     return this;

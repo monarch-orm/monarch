@@ -2,14 +2,14 @@ import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
 
 /**
- * Creates a Date type definition.
+ * Date type.
  *
  * @returns MonarchDate instance
  */
 export const date = () => new MonarchDate();
 
 /**
- * Date type with validation methods.
+ * Type for Date fields.
  */
 export class MonarchDate extends MonarchType<Date, Date> {
   constructor() {
@@ -72,14 +72,14 @@ export const updatedAt = () => {
 };
 
 /**
- * Creates a date type that accepts ISO date strings.
+ * Date string type that accepts ISO date strings.
  *
  * @returns MonarchDateString instance
  */
 export const dateString = () => new MonarchDateString();
 
 /**
- * Date type that accepts ISO date strings as input.
+ * Type for ISO date string fields.
  */
 export class MonarchDateString extends MonarchType<string, Date> {
   constructor() {

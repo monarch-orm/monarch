@@ -2,8 +2,17 @@ import { MonarchParseError } from "../errors";
 import { type AnyMonarchType, MonarchType } from "./type";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
 
+/**
+ * Array type.
+ *
+ * @param type - Element type
+ * @returns MonarchArray instance
+ */
 export const array = <T extends AnyMonarchType>(type: T) => new MonarchArray(type);
 
+/**
+ * Type for array fields.
+ */
 export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTypeInput<T>[], InferTypeOutput<T>[]> {
   private elementType: T;
 
@@ -30,6 +39,12 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
     this.elementType = type;
   }
 
+  /**
+   * Validates minimum array length.
+   *
+   * @param length - Minimum length
+   * @returns MonarchArray with length validation
+   */
   public min(length: number) {
     return array(this.elementType).extend(this, {
       parse: (input) => {
@@ -41,6 +56,12 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
     });
   }
 
+  /**
+   * Validates maximum array length.
+   *
+   * @param length - Maximum length
+   * @returns MonarchArray with length validation
+   */
   public max(length: number) {
     return array(this.elementType).extend(this, {
       parse: (input) => {
@@ -52,6 +73,12 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
     });
   }
 
+  /**
+   * Validates exact array length.
+   *
+   * @param length - Exact length
+   * @returns MonarchArray with length validation
+   */
   public length(length: number) {
     return array(this.elementType).extend(this, {
       parse: (input) => {
@@ -63,6 +90,11 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
     });
   }
 
+  /**
+   * Validates array is not empty.
+   *
+   * @returns MonarchArray with non-empty validation
+   */
   public nonempty() {
     return this.min(1);
   }

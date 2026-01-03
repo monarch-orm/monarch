@@ -2,14 +2,14 @@ import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
 
 /**
- * Creates a string type definition.
+ * String type.
  *
  * @returns MonarchString instance
  */
 export const string = () => new MonarchString();
 
 /**
- * String type with validation and transformation methods.
+ * Type for string fields.
  */
 export class MonarchString extends MonarchType<string, string> {
   constructor() {

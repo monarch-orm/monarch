@@ -34,10 +34,8 @@ import { UpdateManyQuery } from "./query/update-many";
 import { UpdateOneQuery } from "./query/update-one";
 
 /**
- * Type-safe collection interface for MongoDB operations.
+ * Collection interface for MongoDB operations.
  *
- * @typeParam TSchema - Schema definition for the collection
- * @typeParam TDbRelations - Database relation definitions
  */
 export class Collection<TSchema extends AnySchema, TDbRelations extends Record<string, AnyRelations>> {
   private _collection: MongoCollection<InferSchemaData<TSchema>>;
@@ -89,7 +87,6 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
   /**
    * Finds distinct values for a specified field.
    *
-   * @typeParam K - Field key
    * @param key - Field name
    * @param filter - Query filter
    * @returns DistinctQuery instance
@@ -306,7 +303,6 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
   /**
    * Creates an aggregation pipeline for complex queries.
    *
-   * @typeParam TOutput - Output type of aggregation
    * @returns AggregationPipeline instance
    */
   public aggregate<TOutput extends any[]>() {
