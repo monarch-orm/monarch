@@ -133,7 +133,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
   }
 
   /**
-   * Finds a document by ID and updates it.
+   * Finds a document by its _id field and updates it.
    *
    * @param id - Document ID
    * @param update - Update operations
@@ -157,7 +157,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
   }
 
   /**
-   * Finds a document by ID and deletes it.
+   * Finds a document by its _id field and deletes it.
    *
    * @param id - Document ID
    * @returns FindOneAndDeleteQuery instance
