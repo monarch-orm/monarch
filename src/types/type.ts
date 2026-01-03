@@ -21,14 +21,12 @@ export function pipeParser<Input, InterOutput, Output>(
 }
 
 /**
- * Creates a MonarchType with custom parser and optional updater.
+ * Creates a MonarchType with custom parser.
  *
  * @param parser - Parser function
- * @param updater - Optional updater function
  * @returns MonarchType instance
  */
-export const type = <TInput, TOutput = TInput>(parser: Parser<TInput, TOutput>, updater?: Parser<void, TOutput>) =>
-  new MonarchType(parser, updater);
+export const type = <TInput, TOutput = TInput>(parser: Parser<TInput, TOutput>) => new MonarchType(parser);
 
 export type AnyMonarchType<TInput = any, TOutput = TInput> = MonarchType<TInput, TOutput>;
 
@@ -115,7 +113,7 @@ export class MonarchType<TInput, TOutput = TInput> {
    * @param updateFn function that returns the new value for this field on update operations.
    */
   public onUpdate(updateFn: () => TInput) {
-    return type(this.parser, pipeParser(updateFn, this.parser));
+    return new MonarchType(this.parser, pipeParser(updateFn, this.parser));
   }
 
   /**
@@ -125,7 +123,7 @@ export class MonarchType<TInput, TOutput = TInput> {
    * @param fn function that returns a transformed input.
    */
   public transform<TTransformOutput>(fn: (input: TOutput) => TTransformOutput) {
-    return type(pipeParser(this.parser, fn), this.updater && pipeParser(this.updater, fn));
+    return new MonarchType(pipeParser(this.parser, fn), this.updater && pipeParser(this.updater, fn));
   }
 
   /**
@@ -136,7 +134,7 @@ export class MonarchType<TInput, TOutput = TInput> {
    * @param message error message when validation fails.
    */
   public validate(fn: (input: TOutput) => boolean, message: string) {
-    return type(
+    return new MonarchType(
       pipeParser(this.parser, (input) => {
         const valid = fn(input);
         if (!valid) throw new MonarchParseError(message);
