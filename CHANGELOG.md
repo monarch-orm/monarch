@@ -1,5 +1,19 @@
 # monarch-orm
 
+## 0.9.0
+
+### Minor Changes
+
+- a9bcf1f: Replace aggregate cast method with generic param
+- 5223e60: Add `findByIdAndUpdate()` and `findByIdAndDelete()` collection methods
+- a9bcf1f: Add BSON types `binary()`, `long()` and `decimal128()`
+- a9bcf1f: Remove `.exec()` and fully support awaiting to execute query
+- 6177d01: Throw error when adding multiple relations/schema for a collection
+
+### Patch Changes
+
+- a9bcf1f: Use prettier for formatting
+
 ## 0.8.2
 
 ### Patch Changes
