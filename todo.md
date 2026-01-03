@@ -5,10 +5,6 @@
 ## Features
 Here are some features we need to implement.
 
-### Query Methods
-
-- [] Find by ID
-
 ### Schema methods
 
 - [] unique
@@ -23,12 +19,9 @@ Here are some features we need to implement.
 
 - [] events like on save, on create and more
 
-
 ### API Improvements
 
 - [] Add batch operations helper methods
-- [] Fully document public API
-- [] Remove need for `ref` by auto reversing `one` relation
 
 ### Missing Features
 
@@ -39,12 +32,9 @@ Here are some features we need to implement.
 - [] Complete proper schema types
 - [] Implement where and query for populations
 
-
 ### Documentation Improvements
 
-- [] Add JSDoc comments on public APIs in Collection class
 - [] Document population mechanism in detail
-- [] Document virtual fields behavior
 - [] Document error handling patterns
 - [] Add examples for complex type scenarios
 
@@ -53,8 +43,6 @@ Here are some features we need to implement.
 - [] Add tests for concurrent operations
 - [] Add tests for memory usage with large datasets
 - [] Add tests for index creation failures
-- [] Add tests for edge cases in union/tagged union types
-- [] Uncomment and fix null value handling tests (query.test.ts:78-93)
 
 ### Bugs list
 

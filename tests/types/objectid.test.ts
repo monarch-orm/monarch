@@ -32,7 +32,6 @@ describe("objectId()", () => {
       id: objectId(),
     });
 
-    // @ts-expect-error
     expect(() => Schema.encode(schema, { id: "invalid" })).toThrowError("expected valid ObjectId");
     // @ts-expect-error
     expect(() => Schema.encode(schema, { id: {} })).toThrowError("expected valid ObjectId");
