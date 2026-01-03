@@ -1,8 +1,16 @@
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
 
+/**
+ * Date type.
+ *
+ * @returns MonarchDate instance
+ */
 export const date = () => new MonarchDate();
 
+/**
+ * Type for Date fields.
+ */
 export class MonarchDate extends MonarchType<Date, Date> {
   constructor() {
     super((input) => {
@@ -11,19 +19,33 @@ export class MonarchDate extends MonarchType<Date, Date> {
     });
   }
 
-  public after(afterDate: Date) {
+  /**
+   * Validates date is after a target date.
+   *
+   * @param targetDate - Target date for comparison
+   * @returns MonarchDate with after validation
+   */
+  public after(targetDate: Date) {
     return date().extend(this, {
-      preParse: (input) => {
-        if (input > afterDate) return input;
-        throw new MonarchParseError(`date must be after ${afterDate}`);
+      parse: (input) => {
+        if (input <= targetDate) {
+          throw new MonarchParseError(`date must be after ${targetDate.toISOString()}`);
+        }
+        return input;
       },
     });
   }
 
+  /**
+   * Validates date is before a target date.
+   *
+   * @param targetDate - Target date for comparison
+   * @returns MonarchDate with before validation
+   */
   public before(targetDate: Date) {
     return date().extend(this, {
-      preParse: (input) => {
-        if (input > targetDate) {
+      parse: (input) => {
+        if (input >= targetDate) {
           throw new MonarchParseError(`date must be before ${targetDate.toISOString()}`);
         }
         return input;
@@ -32,15 +54,33 @@ export class MonarchDate extends MonarchType<Date, Date> {
   }
 }
 
+/**
+ * Date field that automatically sets to current date on creation.
+ *
+ * @returns MonarchDate with default value
+ */
 export const createdAt = () => date().default(() => new Date());
 
+/**
+ * Date field that automatically updates to current date on modification.
+ *
+ * @returns MonarchDate with update and default values
+ */
 export const updatedAt = () => {
   const base = date();
   return base.extend(base, { onUpdate: () => new Date() }).default(() => new Date());
 };
 
+/**
+ * Date string type that accepts ISO date strings.
+ *
+ * @returns MonarchDateString instance
+ */
 export const dateString = () => new MonarchDateString();
 
+/**
+ * Type for ISO date string fields.
+ */
 export class MonarchDateString extends MonarchType<string, Date> {
   constructor() {
     super((input) => {
@@ -51,21 +91,33 @@ export class MonarchDateString extends MonarchType<string, Date> {
     });
   }
 
-  public after(afterDate: Date) {
+  /**
+   * Validates date is after a target date.
+   *
+   * @param targetDate - Target date for comparison
+   * @returns MonarchDateString with after validation
+   */
+  public after(targetDate: Date) {
     return dateString().extend(this, {
-      preParse: (input) => {
-        const date = new Date(input);
-        if (date > afterDate) return input;
-        throw new MonarchParseError(`date must be after ${afterDate}`);
+      parse: (input) => {
+        if (input <= targetDate) {
+          throw new MonarchParseError(`date must be after ${targetDate.toISOString()}`);
+        }
+        return input;
       },
     });
   }
 
+  /**
+   * Validates date is before a target date.
+   *
+   * @param targetDate - Target date for comparison
+   * @returns MonarchDateString with before validation
+   */
   public before(targetDate: Date) {
     return dateString().extend(this, {
-      preParse: (input) => {
-        const date = new Date(input);
-        if (date > targetDate) {
+      parse: (input) => {
+        if (input >= targetDate) {
           throw new MonarchParseError(`date must be before ${targetDate.toISOString()}`);
         }
         return input;

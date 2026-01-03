@@ -19,7 +19,7 @@ export class BulkWriteQuery<TSchema extends AnySchema> extends Query<TSchema, Bu
     return this;
   }
 
-  public async exec(): Promise<BulkWriteResult> {
+  protected async exec(): Promise<BulkWriteResult> {
     await this._readyPromise;
     const res = await this._collection.bulkWrite(this._data, this._options);
     return res;

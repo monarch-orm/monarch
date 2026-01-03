@@ -26,7 +26,7 @@ export class DistinctQuery<
     return this;
   }
 
-  public async exec(): Promise<TOutput> {
+  protected async exec(): Promise<TOutput> {
     await this._readyPromise;
 
     const res = await this._collection.distinct(this._key as string, this._filter, {

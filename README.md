@@ -82,9 +82,9 @@ import { boolean, createClient, createDatabase, createSchema, number, string } f
         age: 0,
         isVerified: true,
       })
-      .exec();
+      ;
 
-    const users = await collections.users.find().where({}).exec();
+    const users = await collections.users.find().where({});
 ```
 
 ## Quick Start
@@ -126,7 +126,7 @@ const newUser = await collections.users
     age: 25,
     isVerified: true,
   })
-  .exec();
+  ;
 ```
 
 ### Querying Documents
@@ -135,11 +135,11 @@ Retrieve documents from your collection using the find or findOne methods.
 Example: Querying all users
 
 ```typescript
-const users = await collections.users.find().where({}).exec();
+const users = await collections.users.find().where({});
 console.log(users);
 
 // Or just...
-const users = await collections.users.find({}).exec();
+const users = await collections.users.find({});
 console.log(users);
 
 
@@ -147,13 +147,13 @@ console.log(users);
 
 const user = await collections.users.find().where({
   name: "Alice"
-}).exec();
+});
 console.log(users);
 
 // Or...
 const user = await collections.users.findOne({
   name: "Alice"
-}).exec();
+});
 console.log(users);
 
 ```
@@ -172,7 +172,7 @@ const updatedUser = await collections.users
   .where({
     name: "Alice",
   })
-  .exec();
+  ;
 console.log(updatedUser);
 ```
 
@@ -187,7 +187,7 @@ const updatedUsers = await collections.users
   .where({
     isVerified: false,
   })
-  .exec();
+  ;
 console.log(updatedUsers);
 ```
 
@@ -213,7 +213,7 @@ And use it like this
 ```typescript
 const user = await UserModel.findOne({
   name: "Alice"
-}).exec();
+});
 console.log(users);
 ```
 
@@ -359,10 +359,10 @@ const newUser = await collections.users
       history: 88,
     },
   })
-  .exec();
+  ;
 
 // Querying the user to retrieve grades
-const user = await collections.users.findOne().where({ email: "alice@example.com" }).exec();
+const user = await collections.users.findOne().where({ email: "alice@example.com" });
 console.log(user.grades); 
 // Output: { math: 90, science: 85, history: 88 }
 ```
@@ -441,7 +441,7 @@ await collections.notifications.insert().values({ notification: {
     subject: "Welcome!",
     body: "Thank you for joining us.",
   },
-} }).exec();
+} });
 ```
 
 

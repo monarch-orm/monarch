@@ -10,6 +10,9 @@ import { type AnySchema, Schema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";
 import { Query } from "./base";
 
+/**
+ * Collection.updateOne().
+ */
 export class UpdateOneQuery<TSchema extends AnySchema> extends Query<TSchema, UpdateResult<InferSchemaData<TSchema>>> {
   constructor(
     protected _schema: TSchema,
@@ -22,17 +25,29 @@ export class UpdateOneQuery<TSchema extends AnySchema> extends Query<TSchema, Up
     super(_schema, _collection, _readyPromise);
   }
 
+  /**
+   * Adds update options. Options are merged into existing options.
+   *
+   * @param options - FindOptions
+   * @returns UpdateOneQuery instance
+   */
   public options(options: FindOptions): this {
     Object.assign(this._options, options);
     return this;
   }
 
-  public async exec(): Promise<UpdateResult<InferSchemaData<TSchema>>> {
+  protected async exec(): Promise<UpdateResult<InferSchemaData<TSchema>>> {
     await this._readyPromise;
     const fieldUpdates = Schema.getFieldUpdates(this._schema) as MatchKeysAndValues<InferSchemaData<TSchema>>;
-    this._update.$set = { ...fieldUpdates, ...this._update.$set };
 
-    const res = await this._collection.updateOne(this._filter, this._update, this._options);
+    // Create a new update object to avoid mutating the user's input
+    // User-provided $set values take precedence over schema field updates
+    const update = {
+      ...this._update,
+      $set: { ...fieldUpdates, ...this._update.$set },
+    };
+
+    const res = await this._collection.updateOne(this._filter, update, this._options);
     return res;
   }
 }

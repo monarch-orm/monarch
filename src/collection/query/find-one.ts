@@ -10,6 +10,9 @@ import { addPipelineMetas, addPopulations, expandPopulations, getSortDirection }
 import { addExtraInputsToProjection, makeProjection } from "../utils/projection";
 import { Query, type QueryOutput } from "./base";
 
+/**
+ * Collection.findOne().
+ */
 export class FindOneQuery<
   TSchema extends AnySchema,
   TDbRelations extends Record<string, AnyRelations>,
@@ -32,21 +35,45 @@ export class FindOneQuery<
     this._projection = makeProjection("omit", _schema.options.omit ?? {});
   }
 
+  /**
+   * Adds find options. Options are merged into existing options.
+   *
+   * @param options - FindOptions
+   * @returns FindOneQuery instance
+   */
   public options(options: FindOptions): this {
     Object.assign(this._options, options);
     return this;
   }
 
+  /**
+   * Excludes fields from results.
+   *
+   * @param projection - Fields to exclude
+   * @returns FindOneQuery instance
+   */
   public omit<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
     this._projection = makeProjection("omit", projection);
     return this as FindOneQuery<TSchema, TDbRelations, TPopulate, TOutput, ["omit", TrueKeys<TProjection>]>;
   }
 
+  /**
+   * Includes only specified fields in results.
+   *
+   * @param projection - Fields to include
+   * @returns FindOneQuery instance
+   */
   public select<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
     this._projection = makeProjection("select", projection);
     return this as FindOneQuery<TSchema, TDbRelations, TPopulate, TOutput, ["select", TrueKeys<TProjection>]>;
   }
 
+  /**
+   * Populates relations.
+   *
+   * @param population - Relation population config
+   * @returns FindOneQuery instance
+   */
   public populate<TPopulation extends Population<TDbRelations, TSchema["name"]>>(population: TPopulation) {
     this._population = population;
     return this as FindOneQuery<
@@ -58,7 +85,7 @@ export class FindOneQuery<
     >;
   }
 
-  public async exec(): Promise<QueryOutput<TOutput, TOmit, TPopulate> | null> {
+  protected async exec(): Promise<QueryOutput<TOutput, TOmit, TPopulate> | null> {
     await this._readyPromise;
     if (Object.keys(this._population).length) {
       return this._execWithPopulate();
@@ -73,7 +100,7 @@ export class FindOneQuery<
       projection: this._projection,
     });
     return res
-      ? (Schema.fromData(this._schema, res as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
+      ? (Schema.decode(this._schema, res as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
           TOutput,
           TOmit,
           TPopulate

@@ -5,6 +5,9 @@ import type { Projection } from "../types/query-options";
 import { makeProjection } from "../utils/projection";
 import { Query, type QueryOutput } from "./base";
 
+/**
+ * Collection.insertOne().
+ */
 export class InsertOneQuery<
   TSchema extends AnySchema,
   TOutput = InferSchemaOutput<TSchema>,
@@ -23,19 +26,25 @@ export class InsertOneQuery<
     this._projection = makeProjection("omit", _schema.options.omit ?? {});
   }
 
+  /**
+   * Adds insert options. Options are merged into existing options.
+   *
+   * @param options - InsertOneOptions
+   * @returns InsertOneQuery instance
+   */
   public options(options: InsertOneOptions): this {
     Object.assign(this._options, options);
     return this;
   }
 
-  public async exec(): Promise<QueryOutput<TOutput, TOmit>> {
+  protected async exec(): Promise<QueryOutput<TOutput, TOmit>> {
     await this._readyPromise;
-    const data = Schema.toData(this._schema, this._data);
+    const data = Schema.encode(this._schema, this._data);
     const res = await this._collection.insertOne(
       data as OptionalUnlessRequiredId<InferSchemaData<TSchema>>,
       this._options,
     );
-    return Schema.fromData(
+    return Schema.decode(
       this._schema,
       {
         ...data,

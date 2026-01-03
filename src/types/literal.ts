@@ -1,8 +1,17 @@
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
 
+/**
+ * Literal type.
+ *
+ * @param values - Allowed values
+ * @returns MonarchLiteral instance
+ */
 export const literal = <T extends string | number | boolean>(...values: T[]) => new MonarchLiteral(values);
 
+/**
+ * Type for literal fields.
+ */
 export class MonarchLiteral<T extends string | number | boolean> extends MonarchType<T, T> {
   constructor(values: T[]) {
     super((input) => {

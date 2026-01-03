@@ -2,8 +2,17 @@ import { MonarchParseError } from "../errors";
 import { type AnyMonarchType, MonarchType } from "./type";
 import type { InferTypeInput, InferTypeObjectInput, InferTypeObjectOutput } from "./type-helpers";
 
+/**
+ * Object type.
+ *
+ * @param types - Field types
+ * @returns MonarchObject instance
+ */
 export const object = <T extends Record<string, AnyMonarchType>>(types: T) => new MonarchObject<T>(types);
 
+/**
+ * Type for object fields.
+ */
 export class MonarchObject<T extends Record<string, AnyMonarchType>> extends MonarchType<
   InferTypeObjectInput<T>,
   InferTypeObjectOutput<T>

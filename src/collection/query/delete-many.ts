@@ -3,6 +3,9 @@ import type { AnySchema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";
 import { Query } from "./base";
 
+/**
+ * Collection.deleteMany().
+ */
 export class DeleteManyQuery<TSchema extends AnySchema> extends Query<TSchema, DeleteResult> {
   constructor(
     protected _schema: TSchema,
@@ -14,12 +17,18 @@ export class DeleteManyQuery<TSchema extends AnySchema> extends Query<TSchema, D
     super(_schema, _collection, _readyPromise);
   }
 
+  /**
+   * Adds delete options. Options are merged into existing options.
+   *
+   * @param options - DeleteOptions
+   * @returns DeleteManyQuery instance
+   */
   public options(options: DeleteOptions): this {
     Object.assign(this._options, options);
     return this;
   }
 
-  public async exec(): Promise<DeleteResult> {
+  protected async exec(): Promise<DeleteResult> {
     await this._readyPromise;
     const res = await this._collection.deleteMany(this._filter, this._options);
     return res;
