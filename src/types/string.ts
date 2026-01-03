@@ -127,7 +127,7 @@ export class MonarchString extends MonarchType<string, string> {
    */
   public nonempty() {
     return string().extend(this, {
-      preprocess: (input) => {
+      parse: (input) => {
         if (input.length === 0) {
           throw new MonarchParseError("string must not be empty");
         }
@@ -144,7 +144,7 @@ export class MonarchString extends MonarchType<string, string> {
    */
   public includes(searchString: string) {
     return string().extend(this, {
-      preprocess: (input) => {
+      parse: (input) => {
         if (!input.includes(searchString)) {
           throw new MonarchParseError(`string must include "${searchString}"`);
         }
