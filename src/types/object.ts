@@ -17,7 +17,7 @@ export class MonarchObject<T extends Record<string, AnyMonarchType>> extends Mon
   InferTypeObjectInput<T>,
   InferTypeObjectOutput<T>
 > {
-  constructor(types: T) {
+  constructor(private types: T) {
     super((input) => {
       if (typeof input === "object" && input !== null) {
         for (const key of Object.keys(input)) {
@@ -41,5 +41,9 @@ export class MonarchObject<T extends Record<string, AnyMonarchType>> extends Mon
       }
       throw new MonarchParseError(`expected 'object' received '${typeof input}'`);
     });
+  }
+
+  protected copy() {
+    return new MonarchObject(this.types);
   }
 }

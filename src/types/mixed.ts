@@ -16,4 +16,8 @@ export class MonarchMixed extends MonarchType<unknown, unknown> {
       return input;
     });
   }
+
+  protected copy() {
+    return new MonarchMixed();
+  }
 }

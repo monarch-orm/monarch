@@ -3,10 +3,10 @@ import { Schema, createSchema } from "../../src";
 import { MonarchParseError } from "../../src/errors";
 import { pipe, type } from "../../src/types";
 
-const simpleString = () => type<string>((input) => input);
-const simpleNumber = () => type<number>((input) => input);
+const simpleString = () => type((input: string) => input);
+const simpleNumber = () => type((input: number) => input);
 
-describe("type()", () => {
+describe("type", () => {
   it("validates and transforms input", () => {
     const schema = createSchema("users", {
       age: simpleNumber()
@@ -190,7 +190,7 @@ describe("type()", () => {
     });
   });
 
-  describe("extend", () => {
+  describe("preprocess and parse", () => {
     test("preprocess runs before base parser", () => {
       const executionOrder: string[] = [];
 
@@ -200,12 +200,10 @@ describe("type()", () => {
         return input;
       });
 
-      // Extend with preprocess
-      const extendedType = type<string>((input) => input).extend(baseType, {
-        preprocess: (input) => {
-          executionOrder.push("preprocess");
-          return input;
-        },
+      // Add preprocess
+      const extendedType = baseType.preprocess((input) => {
+        executionOrder.push("preprocess");
+        return input;
       });
 
       const schema = createSchema("test", { value: extendedType });
@@ -223,12 +221,10 @@ describe("type()", () => {
         return input;
       });
 
-      // Extend with parse
-      const extendedType = type<string>((input) => input).extend(baseType, {
-        parse: (input) => {
-          executionOrder.push("parse");
-          return input;
-        },
+      // Add parse
+      const extendedType = baseType.parse((input) => {
+        executionOrder.push("parse");
+        return input;
       });
 
       const schema = createSchema("test", { value: extendedType });
@@ -246,17 +242,16 @@ describe("type()", () => {
         return input;
       });
 
-      // Extend with both preprocess and parse
-      const extendedType = type<string>((input) => input).extend(baseType, {
-        preprocess: (input) => {
+      // Add both preprocess and parse
+      const extendedType = baseType
+        .preprocess((input) => {
           executionOrder.push("preprocess");
           return input;
-        },
-        parse: (input) => {
+        })
+        .parse((input) => {
           executionOrder.push("parse");
           return input;
-        },
-      });
+        });
 
       const schema = createSchema("test", { value: extendedType });
       Schema.encode(schema, { value: "test" });
@@ -272,9 +267,7 @@ describe("type()", () => {
         return input;
       });
 
-      const extendedType = type<string>((input) => input).extend(baseType, {
-        preprocess: () => "PREPROCESSED",
-      });
+      const extendedType = baseType.preprocess(() => "PREPROCESSED");
 
       const schema = createSchema("test", { value: extendedType });
       const data = Schema.encode(schema, { value: "anything" });
@@ -285,9 +278,7 @@ describe("type()", () => {
     test("parse can transform output after base parser", () => {
       const baseType = type<string>((input) => input.toUpperCase());
 
-      const extendedType = type<string, string>((input) => input).extend(baseType, {
-        parse: (input) => input + "-PARSED",
-      });
+      const extendedType = baseType.parse((input) => input + "-PARSED");
 
       const schema = createSchema("test", { value: extendedType });
       const data = Schema.encode(schema, { value: "hello" });
@@ -299,16 +290,15 @@ describe("type()", () => {
       // Base type that converts string to uppercase
       const baseType = type<string>((input) => input.toUpperCase());
 
-      const extendedType = type<string, string>((input) => input).extend(baseType, {
-        preprocess: (input) => {
+      const extendedType = baseType
+        .preprocess((input) => {
           // Trim in preprocess
           return input.trim();
-        },
-        parse: (input) => {
+        })
+        .parse((input) => {
           // Add prefix and suffix in parse
           return `[${input}]`;
-        },
-      });
+        });
 
       const schema = createSchema("test", { value: extendedType });
       const data = Schema.encode(schema, { value: "  hello  " });
@@ -319,15 +309,14 @@ describe("type()", () => {
     test("real-world example: string validation with preprocess and parse", () => {
       const baseType = type<string>((input) => input);
 
-      const trimmedAndValidatedString = type<string>((input) => input).extend(baseType, {
-        preprocess: (input) => input.trim(),
-        parse: (input) => {
+      const trimmedAndValidatedString = baseType
+        .preprocess((input) => input.trim())
+        .parse((input) => {
           if (input.length === 0) {
             throw new MonarchParseError("string must not be empty after trimming");
           }
           return input;
-        },
-      });
+        });
 
       const schema = createSchema("test", { value: trimmedAndValidatedString });
 
@@ -342,13 +331,11 @@ describe("type()", () => {
     test("real-world example: number with range validation using parse", () => {
       const baseType = type<number>((input) => input);
 
-      const percentageNumber = type<number>((input) => input).extend(baseType, {
-        parse: (input) => {
-          if (input < 0 || input > 100) {
-            throw new MonarchParseError("number must be between 0 and 100");
-          }
-          return input;
-        },
+      const percentageNumber = baseType.parse((input) => {
+        if (input < 0 || input > 100) {
+          throw new MonarchParseError("number must be between 0 and 100");
+        }
+        return input;
       });
 
       const schema = createSchema("test", { value: percentageNumber });
@@ -360,7 +347,7 @@ describe("type()", () => {
       expect(() => Schema.encode(schema, { value: -10 })).toThrowError("number must be between 0 and 100");
     });
 
-    test("multiple extends chain correctly", () => {
+    test("multiple methods chain correctly", () => {
       const executionOrder: string[] = [];
 
       const baseType = type<string>((input) => {
@@ -368,27 +355,25 @@ describe("type()", () => {
         return input;
       });
 
-      const firstExtend = type<string>((input) => input).extend(baseType, {
-        preprocess: (input) => {
+      const firstExtend = baseType
+        .preprocess((input) => {
           executionOrder.push("first-preprocess");
           return input;
-        },
-        parse: (input) => {
+        })
+        .parse((input) => {
           executionOrder.push("first-parse");
           return input;
-        },
-      });
+        });
 
-      const secondExtend = type<string>((input) => input).extend(firstExtend, {
-        preprocess: (input) => {
+      const secondExtend = firstExtend
+        .preprocess((input) => {
           executionOrder.push("second-preprocess");
           return input;
-        },
-        parse: (input) => {
+        })
+        .parse((input) => {
           executionOrder.push("second-parse");
           return input;
-        },
-      });
+        });
 
       const schema = createSchema("test", { value: secondExtend });
       Schema.encode(schema, { value: "test" });

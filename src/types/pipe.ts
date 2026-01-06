@@ -20,7 +20,10 @@ export class MonarchPipe<
   TPipeIn extends AnyMonarchType,
   TPipeOut extends AnyMonarchType<InferTypeOutput<TPipeIn>, any>,
 > extends MonarchType<InferTypeInput<TPipeIn>, InferTypeOutput<TPipeOut>> {
-  constructor(pipeIn: TPipeIn, pipeOut: TPipeOut) {
+  constructor(
+    private pipeIn: TPipeIn,
+    private pipeOut: TPipeOut,
+  ) {
     super(
       pipeParser<
         InferTypeInput<TPipeIn>,
@@ -28,5 +31,9 @@ export class MonarchPipe<
         InferTypeOutput<TPipeOut>
       >(MonarchType.parser(pipeIn), MonarchType.parser(pipeOut)),
     );
+  }
+
+  protected copy() {
+    return new MonarchPipe(this.pipeIn, this.pipeOut);
   }
 }

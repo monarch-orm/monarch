@@ -21,7 +21,6 @@ export {
   defaulted,
   nullable,
   optional,
-  pipeParser,
   type,
   type AnyMonarchType,
   type Parser,

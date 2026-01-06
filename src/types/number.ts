@@ -19,6 +19,10 @@ export class MonarchNumber extends MonarchType<number, number> {
     });
   }
 
+  protected copy() {
+    return new MonarchNumber();
+  }
+
   /**
    * Validates minimum value.
    *
@@ -26,13 +30,11 @@ export class MonarchNumber extends MonarchType<number, number> {
    * @returns MonarchNumber with min validation
    */
   public min(value: number) {
-    return number().extend(this, {
-      parse: (input) => {
-        if (input < value) {
-          throw new MonarchParseError(`number must be greater than or equal to ${value}`);
-        }
-        return input;
-      },
+    return this.parse((input) => {
+      if (input < value) {
+        throw new MonarchParseError(`number must be greater than or equal to ${value}`);
+      }
+      return input;
     });
   }
 
@@ -43,13 +45,11 @@ export class MonarchNumber extends MonarchType<number, number> {
    * @returns MonarchNumber with max validation
    */
   public max(value: number) {
-    return number().extend(this, {
-      parse: (input) => {
-        if (input > value) {
-          throw new MonarchParseError(`number must be less than or equal to ${value}`);
-        }
-        return input;
-      },
+    return this.parse((input) => {
+      if (input > value) {
+        throw new MonarchParseError(`number must be less than or equal to ${value}`);
+      }
+      return input;
     });
   }
 
@@ -59,13 +59,11 @@ export class MonarchNumber extends MonarchType<number, number> {
    * @returns MonarchNumber with integer validation
    */
   public integer() {
-    return number().extend(this, {
-      parse: (input) => {
-        if (!Number.isInteger(input)) {
-          throw new MonarchParseError("number must be an integer");
-        }
-        return input;
-      },
+    return this.parse((input) => {
+      if (!Number.isInteger(input)) {
+        throw new MonarchParseError("number must be an integer");
+      }
+      return input;
     });
   }
 }

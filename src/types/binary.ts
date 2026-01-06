@@ -20,4 +20,8 @@ export class MonarchBinary extends MonarchType<Buffer | Binary, Binary> {
       throw new MonarchParseError(`expected 'Buffer' or 'Binary' received '${typeof input}'`);
     });
   }
+
+  protected copy() {
+    return new MonarchBinary();
+  }
 }

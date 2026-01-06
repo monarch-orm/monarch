@@ -19,15 +19,17 @@ export class MonarchString extends MonarchType<string, string> {
     });
   }
 
+  protected copy() {
+    return new MonarchString();
+  }
+
   /**
    * Trims whitespace from both ends of the string.
    *
    * @returns MonarchString with trim transformation
    */
   public trim() {
-    return string().extend(this, {
-      parse: (input) => input.trim(),
-    });
+    return this.parse((input) => input.trim());
   }
 
   /**
@@ -36,9 +38,7 @@ export class MonarchString extends MonarchType<string, string> {
    * @returns MonarchString with lowercase transformation
    */
   public lowercase() {
-    return string().extend(this, {
-      parse: (input) => input.toLowerCase(),
-    });
+    return this.parse((input) => input.toLowerCase());
   }
 
   /**
@@ -47,9 +47,7 @@ export class MonarchString extends MonarchType<string, string> {
    * @returns MonarchString with uppercase transformation
    */
   public uppercase() {
-    return string().extend(this, {
-      parse: (input) => input.toUpperCase(),
-    });
+    return this.parse((input) => input.toUpperCase());
   }
 
   /**
@@ -59,13 +57,11 @@ export class MonarchString extends MonarchType<string, string> {
    * @returns MonarchString with length validation
    */
   public minLength(length: number) {
-    return string().extend(this, {
-      parse: (input) => {
-        if (input.length < length) {
-          throw new MonarchParseError(`string must be at least ${length} characters long`);
-        }
-        return input;
-      },
+    return this.parse((input) => {
+      if (input.length < length) {
+        throw new MonarchParseError(`string must be at least ${length} characters long`);
+      }
+      return input;
     });
   }
 
@@ -76,13 +72,11 @@ export class MonarchString extends MonarchType<string, string> {
    * @returns MonarchString with length validation
    */
   public maxLength(length: number) {
-    return string().extend(this, {
-      parse: (input) => {
-        if (input.length > length) {
-          throw new MonarchParseError(`string must be at most ${length} characters long`);
-        }
-        return input;
-      },
+    return this.parse((input) => {
+      if (input.length > length) {
+        throw new MonarchParseError(`string must be at most ${length} characters long`);
+      }
+      return input;
     });
   }
 
@@ -93,13 +87,11 @@ export class MonarchString extends MonarchType<string, string> {
    * @returns MonarchString with length validation
    */
   public length(length: number) {
-    return string().extend(this, {
-      parse: (input) => {
-        if (input.length !== length) {
-          throw new MonarchParseError(`string must be exactly ${length} characters long`);
-        }
-        return input;
-      },
+    return this.parse((input) => {
+      if (input.length !== length) {
+        throw new MonarchParseError(`string must be exactly ${length} characters long`);
+      }
+      return input;
     });
   }
 
@@ -110,13 +102,11 @@ export class MonarchString extends MonarchType<string, string> {
    * @returns MonarchString with pattern validation
    */
   public pattern(regex: RegExp) {
-    return string().extend(this, {
-      parse: (input) => {
-        if (!regex.test(input)) {
-          throw new MonarchParseError(`string must match pattern ${regex}`);
-        }
-        return input;
-      },
+    return this.parse((input) => {
+      if (!regex.test(input)) {
+        throw new MonarchParseError(`string must match pattern ${regex}`);
+      }
+      return input;
     });
   }
 
@@ -126,13 +116,11 @@ export class MonarchString extends MonarchType<string, string> {
    * @returns MonarchString with non-empty validation
    */
   public nonempty() {
-    return string().extend(this, {
-      parse: (input) => {
-        if (input.length === 0) {
-          throw new MonarchParseError("string must not be empty");
-        }
-        return input;
-      },
+    return this.parse((input) => {
+      if (input.length === 0) {
+        throw new MonarchParseError("string must not be empty");
+      }
+      return input;
     });
   }
 
@@ -143,13 +131,11 @@ export class MonarchString extends MonarchType<string, string> {
    * @returns MonarchString with inclusion validation
    */
   public includes(searchString: string) {
-    return string().extend(this, {
-      parse: (input) => {
-        if (!input.includes(searchString)) {
-          throw new MonarchParseError(`string must include "${searchString}"`);
-        }
-        return input;
-      },
+    return this.parse((input) => {
+      if (!input.includes(searchString)) {
+        throw new MonarchParseError(`string must include "${searchString}"`);
+      }
+      return input;
     });
   }
 }
