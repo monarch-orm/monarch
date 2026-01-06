@@ -1,6 +1,6 @@
 {
   "name": "monarch-orm",
-  "version": "0.8.2",
+  "version": "0.9.0",
   "description": "Type safe Object Document Mapper (ODM) for MongoDB",
   "private": false,
   "main": "./dist/index.cjs",
