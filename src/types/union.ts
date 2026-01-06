@@ -22,7 +22,7 @@ export class MonarchUnion<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
   InferTypeUnionInput<T>,
   InferTypeUnionOutput<T>
 > {
-  constructor(variants: T) {
+  constructor(private variants: T) {
     super((input) => {
       for (const [index, type] of variants.entries()) {
         try {
@@ -41,6 +41,10 @@ export class MonarchUnion<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
       throw new MonarchParseError(`expected one of union variants but received '${typeof input}'`);
     });
   }
+
+  protected copy() {
+    return new MonarchUnion(this.variants);
+  }
 }
 
 /**
@@ -58,7 +62,7 @@ export class MonarchTaggedUnion<T extends Record<string, AnyMonarchType>> extend
   InferTypeTaggedUnionInput<T>,
   InferTypeTaggedUnionOutput<T>
 > {
-  constructor(variants: T) {
+  constructor(private variants: T) {
     super((input) => {
       if (typeof input === "object" && input !== null) {
         if (!("tag" in input)) {
@@ -92,5 +96,9 @@ export class MonarchTaggedUnion<T extends Record<string, AnyMonarchType>> extend
       }
       throw new MonarchParseError(`expected 'object' received '${typeof input}'`);
     });
+  }
+
+  protected copy() {
+    return new MonarchTaggedUnion(this.variants);
   }
 }

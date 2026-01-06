@@ -39,6 +39,10 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
     this.elementType = type;
   }
 
+  protected copy() {
+    return new MonarchArray(this.elementType);
+  }
+
   /**
    * Validates minimum array length.
    *
@@ -46,13 +50,11 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
    * @returns MonarchArray with length validation
    */
   public min(length: number) {
-    return array(this.elementType).extend(this, {
-      parse: (input) => {
-        if (input.length < length) {
-          throw new MonarchParseError(`array must have at least ${length} elements`);
-        }
-        return input;
-      },
+    return this.parse((input) => {
+      if (input.length < length) {
+        throw new MonarchParseError(`array must have at least ${length} elements`);
+      }
+      return input;
     });
   }
 
@@ -63,13 +65,11 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
    * @returns MonarchArray with length validation
    */
   public max(length: number) {
-    return array(this.elementType).extend(this, {
-      parse: (input) => {
-        if (input.length > length) {
-          throw new MonarchParseError(`array must have at most ${length} elements`);
-        }
-        return input;
-      },
+    return this.parse((input) => {
+      if (input.length > length) {
+        throw new MonarchParseError(`array must have at most ${length} elements`);
+      }
+      return input;
     });
   }
 
@@ -80,13 +80,11 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
    * @returns MonarchArray with length validation
    */
   public length(length: number) {
-    return array(this.elementType).extend(this, {
-      parse: (input) => {
-        if (input.length !== length) {
-          throw new MonarchParseError(`array must have exactly ${length} elements`);
-        }
-        return input;
-      },
+    return this.parse((input) => {
+      if (input.length !== length) {
+        throw new MonarchParseError(`array must have exactly ${length} elements`);
+      }
+      return input;
     });
   }
 
@@ -96,6 +94,11 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
    * @returns MonarchArray with non-empty validation
    */
   public nonempty() {
-    return this.min(1);
+    return this.parse((input) => {
+      if (input.length === 0) {
+        throw new MonarchParseError("array must not be empty");
+      }
+      return input;
+    });
   }
 }

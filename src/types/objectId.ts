@@ -19,4 +19,8 @@ export class MonarchObjectId extends MonarchType<ObjectId | string, ObjectId> {
       throw new MonarchParseError(`expected valid ObjectId received '${typeof input}' ${input}`);
     });
   }
+
+  protected copy() {
+    return new MonarchObjectId();
+  }
 }

@@ -27,4 +27,8 @@ export class MonarchLong extends MonarchType<Long | number | bigint, Long | numb
       throw new MonarchParseError(`expected 'Long', 'number', or 'bigint' received '${typeof input}'`);
     });
   }
+
+  protected copy() {
+    return new MonarchLong();
+  }
 }

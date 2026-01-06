@@ -4,7 +4,7 @@ import { createDatabase, createSchema, Schema } from "../../src";
 import { objectId } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
-describe("objectId()", () => {
+describe("objectId", () => {
   test("validates ObjectId type", () => {
     const schema = createSchema("test", {
       id: objectId(),

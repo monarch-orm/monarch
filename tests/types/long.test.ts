@@ -4,7 +4,7 @@ import { createDatabase, createSchema, Schema } from "../../src";
 import { long } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
-describe("long()", () => {
+describe("long", () => {
   test("validates Long type", () => {
     const schema = createSchema("test", {
       value: long(),

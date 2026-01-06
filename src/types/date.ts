@@ -19,6 +19,10 @@ export class MonarchDate extends MonarchType<Date, Date> {
     });
   }
 
+  protected copy() {
+    return new MonarchDate();
+  }
+
   /**
    * Validates date is after a target date.
    *
@@ -26,13 +30,11 @@ export class MonarchDate extends MonarchType<Date, Date> {
    * @returns MonarchDate with after validation
    */
   public after(targetDate: Date) {
-    return date().extend(this, {
-      parse: (input) => {
-        if (input <= targetDate) {
-          throw new MonarchParseError(`date must be after ${targetDate.toISOString()}`);
-        }
-        return input;
-      },
+    return this.parse((input) => {
+      if (input <= targetDate) {
+        throw new MonarchParseError(`date must be after ${targetDate.toISOString()}`);
+      }
+      return input;
     });
   }
 
@@ -43,13 +45,11 @@ export class MonarchDate extends MonarchType<Date, Date> {
    * @returns MonarchDate with before validation
    */
   public before(targetDate: Date) {
-    return date().extend(this, {
-      parse: (input) => {
-        if (input >= targetDate) {
-          throw new MonarchParseError(`date must be before ${targetDate.toISOString()}`);
-        }
-        return input;
-      },
+    return this.parse((input) => {
+      if (input >= targetDate) {
+        throw new MonarchParseError(`date must be before ${targetDate.toISOString()}`);
+      }
+      return input;
     });
   }
 }
@@ -66,10 +66,7 @@ export const createdAt = () => date().default(() => new Date());
  *
  * @returns MonarchDate with update and default values
  */
-export const updatedAt = () => {
-  const base = date();
-  return base.extend(base, { onUpdate: () => new Date() }).default(() => new Date());
-};
+export const updatedAt = () => createdAt().onUpdate(() => new Date());
 
 /**
  * Date string type that accepts ISO date strings.
@@ -91,6 +88,10 @@ export class MonarchDateString extends MonarchType<string, Date> {
     });
   }
 
+  protected copy() {
+    return new MonarchDateString();
+  }
+
   /**
    * Validates date is after a target date.
    *
@@ -98,13 +99,11 @@ export class MonarchDateString extends MonarchType<string, Date> {
    * @returns MonarchDateString with after validation
    */
   public after(targetDate: Date) {
-    return dateString().extend(this, {
-      parse: (input) => {
-        if (input <= targetDate) {
-          throw new MonarchParseError(`date must be after ${targetDate.toISOString()}`);
-        }
-        return input;
-      },
+    return this.parse((input: Date) => {
+      if (input <= targetDate) {
+        throw new MonarchParseError(`date must be after ${targetDate.toISOString()}`);
+      }
+      return input;
     });
   }
 
@@ -115,13 +114,11 @@ export class MonarchDateString extends MonarchType<string, Date> {
    * @returns MonarchDateString with before validation
    */
   public before(targetDate: Date) {
-    return dateString().extend(this, {
-      parse: (input) => {
-        if (input >= targetDate) {
-          throw new MonarchParseError(`date must be before ${targetDate.toISOString()}`);
-        }
-        return input;
-      },
+    return this.parse((input: Date) => {
+      if (input >= targetDate) {
+        throw new MonarchParseError(`date must be before ${targetDate.toISOString()}`);
+      }
+      return input;
     });
   }
 }

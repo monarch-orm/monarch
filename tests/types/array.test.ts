@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { Schema, createSchema } from "../../src";
 import { array, number, string } from "../../src/types";
 
-describe("array()", () => {
+describe("array", () => {
   test("validates array type", () => {
     const schema = createSchema("test", {
       items: array(number()),
@@ -73,7 +73,7 @@ describe("array()", () => {
     const data = Schema.encode(schema, { items: ["a"] });
     expect(data).toStrictEqual({ items: ["a"] });
 
-    expect(() => Schema.encode(schema, { items: [] })).toThrowError("array must have at least 1 elements");
+    expect(() => Schema.encode(schema, { items: [] })).toThrowError("array must not be empty");
   });
 
   test("array methods can be chained", () => {

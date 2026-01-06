@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { Schema, createSchema } from "../../src";
 import { boolean } from "../../src/types";
 
-describe("boolean()", () => {
+describe("boolean", () => {
   test("validates boolean type", () => {
     const schema = createSchema("test", {
       isActive: boolean(),

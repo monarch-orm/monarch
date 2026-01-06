@@ -4,7 +4,7 @@ import { createDatabase, createSchema, Schema } from "../../src";
 import { decimal128 } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
-describe("decimal128()", () => {
+describe("decimal128", () => {
   test("validates Decimal128 type", () => {
     const schema = createSchema("test", {
       value: decimal128(),

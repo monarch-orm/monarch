@@ -20,4 +20,8 @@ export class MonarchDecimal128 extends MonarchType<Decimal128 | string, Decimal1
       throw new MonarchParseError(`expected 'Decimal128' or 'string' received '${typeof input}'`);
     });
   }
+
+  protected copy() {
+    return new MonarchDecimal128();
+  }
 }

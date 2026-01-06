@@ -19,7 +19,7 @@ export class MonarchTuple<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
   InferTypeTupleInput<T>,
   InferTypeTupleOutput<T>
 > {
-  constructor(types: T) {
+  constructor(private types: T) {
     super((input) => {
       if (Array.isArray(input)) {
         if (input.length !== types.length) {
@@ -41,5 +41,9 @@ export class MonarchTuple<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
       }
       throw new MonarchParseError(`expected 'array' received '${typeof input}'`);
     });
+  }
+
+  protected copy() {
+    return new MonarchTuple(this.types);
   }
 }

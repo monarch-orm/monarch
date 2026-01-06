@@ -18,4 +18,8 @@ export class MonarchBoolean extends MonarchType<boolean, boolean> {
       throw new MonarchParseError(`expected 'boolean' received '${typeof input}'`);
     });
   }
+
+  protected copy() {
+    return new MonarchBoolean();
+  }
 }
