@@ -38,7 +38,7 @@ export class MonarchUnion<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
           throw error;
         }
       }
-      throw new MonarchParseError(`expected one of union variants but received '${typeof input}'`);
+      throw new MonarchParseError(`expected 'union' variant received '${typeof input}'`);
     });
   }
 }

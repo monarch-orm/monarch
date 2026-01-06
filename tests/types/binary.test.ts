@@ -4,7 +4,7 @@ import { createDatabase, createSchema, Schema } from "../../src";
 import { binary } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
-describe("binary()", () => {
+describe("binary", () => {
   test("validates Binary type", () => {
     const schema = createSchema("test", {
       data: binary(),

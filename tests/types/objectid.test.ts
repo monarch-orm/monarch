@@ -4,7 +4,7 @@ import { createDatabase, createSchema, Schema } from "../../src";
 import { objectId } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
-describe("objectId()", () => {
+describe("objectId", () => {
   test("validates ObjectId type", () => {
     const schema = createSchema("test", {
       id: objectId(),
@@ -32,9 +32,9 @@ describe("objectId()", () => {
       id: objectId(),
     });
 
-    expect(() => Schema.encode(schema, { id: "invalid" })).toThrowError("expected valid ObjectId");
+    expect(() => Schema.encode(schema, { id: "invalid" })).toThrowError("expected 'ObjectId'");
     // @ts-expect-error
-    expect(() => Schema.encode(schema, { id: {} })).toThrowError("expected valid ObjectId");
+    expect(() => Schema.encode(schema, { id: {} })).toThrowError("expected 'ObjectId'");
   });
 
   test("works with nullable and optional", () => {

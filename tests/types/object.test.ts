@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { Schema, createSchema } from "../../src";
-import { boolean, literal, object } from "../../src/types";
+import { array, boolean, literal, number, object, string } from "../../src/types";
 
 describe("object", () => {
   test("object", () => {
@@ -17,12 +17,12 @@ describe("object", () => {
     expect(() =>
       // @ts-expect-error
       Schema.encode(schema, { permissions: { canUpdate: "yes" } }),
-    ).toThrowError("field 'canUpdate' expected 'boolean' received 'string'");
+    ).toThrowError("permissions.canUpdate: expected 'boolean' received 'string'");
     // fields are validates in the order they are registered in type
     expect(() =>
       // @ts-expect-error
       Schema.encode(schema, { permissions: { role: false } }),
-    ).toThrowError("field 'canUpdate' expected 'boolean' received 'undefined'");
+    ).toThrowError("permissions.canUpdate: expected 'boolean' received 'undefined'");
     // unknwon fields are rejected
     expect(() =>
       Schema.encode(schema, {
@@ -35,6 +35,42 @@ describe("object", () => {
     });
     expect(data).toStrictEqual({
       permissions: { canUpdate: true, canDelete: false, role: "moderator" },
+    });
+  });
+
+  test("nested object", () => {
+    const schema = createSchema("test", {
+      user: object({
+        name: string(),
+        profile: object({
+          age: number(),
+          tags: array(string()),
+        }),
+      }),
+    });
+
+    // nested object field error
+    expect(() =>
+      Schema.encode(schema, {
+        // @ts-expect-error
+        user: { name: "John", profile: { age: "thirty", tags: [] } },
+      }),
+    ).toThrowError("user.profile.age: expected 'number' received 'string'");
+
+    // nested array element error
+    expect(() =>
+      Schema.encode(schema, {
+        // @ts-expect-error
+        user: { name: "John", profile: { age: 30, tags: ["valid", 123] } },
+      }),
+    ).toThrowError("user.profile.tags[1]: expected 'string' received 'number'");
+
+    // valid data
+    const data = Schema.encode(schema, {
+      user: { name: "John", profile: { age: 30, tags: ["developer", "typescript"] } },
+    });
+    expect(data).toStrictEqual({
+      user: { name: "John", profile: { age: 30, tags: ["developer", "typescript"] } },
     });
   });
 });

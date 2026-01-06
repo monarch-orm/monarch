@@ -6,7 +6,7 @@ import { pipe, type } from "../../src/types";
 const simpleString = () => type<string>((input) => input);
 const simpleNumber = () => type<number>((input) => input);
 
-describe("type()", () => {
+describe("type", () => {
   it("validates and transforms input", () => {
     const schema = createSchema("users", {
       age: simpleNumber()
