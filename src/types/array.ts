@@ -29,7 +29,7 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
           parsed[index] = parser(value);
         } catch (error) {
           if (error instanceof MonarchParseError) {
-            throw new MonarchParseError(`element at index '${index}' ${error.message}`);
+            throw new MonarchParseError({ path: index, error });
           }
           throw error;
         }

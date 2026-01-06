@@ -75,7 +75,7 @@ describe("Insert and Find Operations", async () => {
     it("rejects invalid ObjectId string", async () => {
       await expect(async () => {
         await collections.users.insertOne({ _id: "not_an_object_id", ...mockUsers[0] });
-      }).rejects.toThrowError("expected valid ObjectId received");
+      }).rejects.toThrowError("expected 'ObjectId'");
     });
 
     it("inserts empty document with default values", async () => {

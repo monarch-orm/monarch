@@ -32,7 +32,7 @@ export class MonarchObject<T extends Record<string, AnyMonarchType>> extends Mon
             parsed[key as keyof typeof parsed] = parser(input[key as keyof typeof input] as InferTypeInput<T[keyof T]>);
           } catch (error) {
             if (error instanceof MonarchParseError) {
-              throw new MonarchParseError(`field '${key}' ${error.message}'`);
+              throw new MonarchParseError({ path: key, error });
             }
             throw error;
           }

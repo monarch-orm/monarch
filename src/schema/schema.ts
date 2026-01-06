@@ -1,5 +1,6 @@
 import type { Projection } from "../collection/types/query-options";
 import { detectProjection } from "../collection/utils/projection";
+import { MonarchParseError } from "../errors";
 import { objectId } from "../types/objectId";
 import { type AnyMonarchType, MonarchType } from "../types/type";
 import type { Pretty, WithOptionalId } from "../utils/type-helpers";
@@ -114,10 +115,17 @@ export class Schema<
     // parse fields
     const types = Schema.types(schema);
     for (const [key, type] of Object.entries(types)) {
-      const parser = MonarchType.parser(type as AnyMonarchType);
-      const parsed = parser(input[key as keyof InferSchemaInput<T>]);
-      if (parsed === undefined) continue;
-      data[key as keyof typeof data] = parsed;
+      try {
+        const parser = MonarchType.parser(type as AnyMonarchType);
+        const parsed = parser(input[key as keyof InferSchemaInput<T>]);
+        if (parsed === undefined) continue;
+        data[key as keyof typeof data] = parsed;
+      } catch (error) {
+        if (error instanceof MonarchParseError) {
+          throw new MonarchParseError({ path: key, error });
+        }
+        throw error;
+      }
     }
     return data;
   }

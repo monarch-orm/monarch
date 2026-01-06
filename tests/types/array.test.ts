@@ -14,7 +14,7 @@ describe("array", () => {
     expect(() => Schema.encode(schema, { items: [] })).not.toThrowError();
     // @ts-expect-error
     expect(() => Schema.encode(schema, { items: [0, "1"] })).toThrowError(
-      "element at index '1' expected 'number' received 'string'",
+      "items[1]: expected 'number' received 'string'",
     );
     const data = Schema.encode(schema, { items: [0, 1] });
     expect(data).toStrictEqual({ items: [0, 1] });

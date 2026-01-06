@@ -15,7 +15,7 @@ describe("record", () => {
     expect(() =>
       // @ts-expect-error
       Schema.encode(schema, { grades: { math: "50" } }),
-    ).toThrowError("field 'math' expected 'number' received 'string'");
+    ).toThrowError("grades.math: expected 'number' received 'string'");
     const data = Schema.encode(schema, { grades: { math: 50 } });
     expect(data).toStrictEqual({ grades: { math: 50 } });
   });
