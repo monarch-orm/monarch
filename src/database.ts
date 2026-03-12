@@ -2,9 +2,9 @@ import { MongoClient, type Db, type MongoClientOptions } from "mongodb";
 import { version } from "../package.json";
 import { Collection } from "./collection/collection";
 import type { BoolProjection, WithProjection } from "./collection/types/query-options";
-import { Schemas, type AnyRelations } from "./relations/relations";
+import { type AnyRelations } from "./relations/relations";
 import type { InferRelationObjectPopulation, Population, PopulationBaseOptions } from "./relations/type-helpers";
-import type { AnySchema } from "./schema/schema";
+import type { AnySchema, Schemas } from "./schema/schema";
 import type { InferSchemaInput, InferSchemaOmit, InferSchemaOutput } from "./schema/type-helpers";
 import type { IdFirst, Merge, Pretty } from "./utils/type-helpers";
 

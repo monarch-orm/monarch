@@ -1,7 +1,6 @@
 import { ObjectId } from "mongodb";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { createDatabase, createSchema } from "../../src";
-import { defineSchemas } from "../../src/relations/relations";
+import { createDatabase, createSchema, defineSchemas } from "../../src";
 import { boolean, number, objectId, string } from "../../src/types";
 import { createMockDatabase, mockUsers } from "../mock";
 

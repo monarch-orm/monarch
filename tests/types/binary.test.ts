@@ -1,7 +1,6 @@
 import { Binary } from "mongodb";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { createDatabase, createSchema, Schema } from "../../src";
-import { defineSchemas } from "../../src/relations/relations";
+import { createDatabase, createSchema, defineSchemas, Schema } from "../../src";
 import { binary } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
