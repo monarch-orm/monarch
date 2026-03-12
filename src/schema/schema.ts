@@ -6,7 +6,7 @@ import { type AnyMonarchType, MonarchType } from "../types/type";
 import type { Pretty, WithOptionalId } from "../utils/type-helpers";
 import type { SchemaIndexes } from "./indexes";
 import type { InferSchemaData, InferSchemaInput, InferSchemaOutput, InferSchemaTypes } from "./type-helpers";
-import type { SchemaVirtuals, Virtual } from "./virtuals";
+import type { AnyVirtual, SchemaVirtuals, Virtual } from "./virtuals";
 
 type SchemaOmit<TTypes extends Record<string, AnyMonarchType>> = {
   [K in keyof WithOptionalId<TTypes>]?: true;
@@ -22,7 +22,7 @@ export class Schema<
   TName extends string,
   TTypes extends Record<string, AnyMonarchType>,
   TOmit extends SchemaOmit<TTypes> = {},
-  TVirtuals extends Record<string, Virtual<any, any, any>> = {},
+  TVirtuals extends Record<string, AnyVirtual> = {},
 > {
   /**
    * Creates a Schema instance.

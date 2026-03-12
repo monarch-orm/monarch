@@ -1,6 +1,7 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createDatabase, createSchema } from "../../src";
-import { boolean, number, string } from "../../src/types";
+import { defineSchemas } from "../../src/relations/relations";
+import { array, boolean, number, string } from "../../src/types";
 import { createMockDatabase, mockUsers } from "../mock";
 
 describe("Update Operations", async () => {
@@ -13,9 +14,12 @@ describe("Update Operations", async () => {
     isVerified: boolean().default(false),
   });
 
-  const { collections } = createDatabase(client.db(), {
-    users: UserSchema,
-  });
+  const { collections } = createDatabase(
+    client.db(),
+    defineSchemas({
+      users: UserSchema,
+    }),
+  );
 
   beforeAll(async () => {
     await client.connect();
@@ -103,7 +107,8 @@ describe("Update Operations", async () => {
       name: string(),
       age: number().onUpdate(() => 555),
     });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
 
     const user = await db.collections.users.insertOne({ name: "Alice", age: 20 });
 
@@ -115,13 +120,69 @@ describe("Update Operations", async () => {
     expect(updatedUser?.age).toBe(555);
   });
 
+  describe("validation", () => {
+    // TODO: fix update validation
+    it("should validate data in findOneAndUpdate", async () => {
+      await collections.users.insertOne(mockUsers[0]);
+
+      // This should throw an error because age should be a number, not a string
+      await expect(
+        collections.users
+          .findOneAndUpdate({ email: "anon@gmail.com" }, { $set: { age: "invalid" as any } })
+          .options({ returnDocument: "after" }),
+      ).rejects.toThrow();
+    });
+
+    // TODO: fix update validation
+    it("should validate data in updateOne", async () => {
+      await collections.users.insertOne(mockUsers[0]);
+
+      // This should throw an error because age should be a number, not a string
+      await expect(
+        collections.users.updateOne({ email: "anon@gmail.com" }, { $set: { age: "invalid" as any } }),
+      ).rejects.toThrow();
+    });
+  });
+
+  describe("array operators", () => {
+    it("should support $addToSet operator", async () => {
+      const schema = createSchema("posts", {
+        title: string(),
+        tags: array(string()).optional(),
+      });
+      const schemas = defineSchemas({ posts: schema });
+      const db = createDatabase(client.db(), schemas);
+
+      const post = await db.collections.posts.insertOne({
+        title: "My Post",
+        tags: ["javascript"],
+      });
+
+      const updated = await db.collections.posts
+        .findOneAndUpdate({ _id: post._id }, { $addToSet: { tags: "typescript" } })
+        .options({ returnDocument: "after" });
+
+      expect(updated?.tags).toContain("javascript");
+      expect(updated?.tags).toContain("typescript");
+      expect(updated?.tags).toHaveLength(2);
+
+      // Adding the same tag again should not duplicate
+      const updated2 = await db.collections.posts
+        .findOneAndUpdate({ _id: post._id }, { $addToSet: { tags: "typescript" } })
+        .options({ returnDocument: "after" });
+
+      expect(updated2?.tags).toHaveLength(2);
+    });
+  });
+
   describe("edge cases", () => {
     it("should not mutate reused update object in updateOne", async () => {
       const schema = createSchema("users", {
         name: string(),
         age: number().onUpdate(() => 999),
       });
-      const db = createDatabase(client.db(), { users: schema });
+      const schemas = defineSchemas({ users: schema });
+      const db = createDatabase(client.db(), schemas);
 
       const user1 = await db.collections.users.insertOne({ name: "Alice", age: 20 });
       const user2 = await db.collections.users.insertOne({ name: "Bob", age: 30 });
@@ -151,7 +212,8 @@ describe("Update Operations", async () => {
         name: string(),
         age: number().onUpdate(() => 888),
       });
-      const db = createDatabase(client.db(), { users: schema });
+      const schemas = defineSchemas({ users: schema });
+      const db = createDatabase(client.db(), schemas);
 
       await db.collections.users.insertOne({ name: "Alice", age: 20 });
       await db.collections.users.insertOne({ name: "Bob", age: 30 });
@@ -180,7 +242,8 @@ describe("Update Operations", async () => {
         name: string(),
         age: number().onUpdate(() => 777),
       });
-      const db = createDatabase(client.db(), { users: schema });
+      const schemas = defineSchemas({ users: schema });
+      const db = createDatabase(client.db(), schemas);
 
       const user1 = await db.collections.users.insertOne({ name: "Alice", age: 20 });
       const user2 = await db.collections.users.insertOne({ name: "Bob", age: 30 });

@@ -1,6 +1,7 @@
 import { Decimal128 } from "mongodb";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { createDatabase, createSchema, Schema } from "../../src";
+import { defineSchemas } from "../../src/relations/relations";
 import { decimal128 } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
@@ -77,13 +78,16 @@ describe("decimal128", () => {
       await server.stop();
     });
 
-    const BsonDataSchema = createSchema("bson_data_decimal", {
+    const BsonDataSchema = createSchema("bsonData", {
       decimalField: decimal128().optional(),
     });
 
-    const { collections } = createDatabase(client.db(), {
-      bsonData: BsonDataSchema,
-    });
+    const { collections } = createDatabase(
+      client.db(),
+      defineSchemas({
+        bsonData: BsonDataSchema,
+      }),
+    );
 
     afterAll(async () => {
       await collections.bsonData.deleteMany({});

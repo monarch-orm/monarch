@@ -1,6 +1,7 @@
 import { Binary } from "mongodb";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { createDatabase, createSchema, Schema } from "../../src";
+import { defineSchemas } from "../../src/relations/relations";
 import { binary } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
@@ -55,13 +56,16 @@ describe("binary", () => {
       await server.stop();
     });
 
-    const BsonDataSchema = createSchema("bson_data_binary", {
+    const BsonDataSchema = createSchema("bsonData", {
       binaryField: binary().optional(),
     });
 
-    const { collections } = createDatabase(client.db(), {
-      bsonData: BsonDataSchema,
-    });
+    const { collections } = createDatabase(
+      client.db(),
+      defineSchemas({
+        bsonData: BsonDataSchema,
+      }),
+    );
 
     afterAll(async () => {
       await collections.bsonData.deleteMany({});

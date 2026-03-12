@@ -6,13 +6,15 @@ export type SchemaVirtuals<
   TVirtuals extends Record<string, Virtual<TTypes, any, any>>,
 > = TVirtuals;
 
-export type InferVirtualOutput<T extends Record<string, Virtual<any, any, any>>> = {
+export type InferVirtualOutput<T extends Record<string, AnyVirtual>> = {
   [K in keyof T]: T[K] extends Virtual<any, any, infer R> ? R : never;
 };
 
 type Props<T extends Record<string, AnyMonarchType>, P extends keyof T> = {
   [K in keyof T as K extends P ? K : never]: InferTypeOutput<T[K]>;
 } & {};
+
+export type AnyVirtual = Virtual<any, any, any>;
 
 /**
  * Defines a virtual computed field.

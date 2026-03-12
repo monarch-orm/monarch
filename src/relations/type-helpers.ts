@@ -4,13 +4,18 @@ import type { BoolProjection, WithProjection } from "../collection/types/query-o
 import type { AnySchema } from "../schema/schema";
 import type { InferSchemaOmit, InferSchemaOutput, SchemaInputWithId } from "../schema/type-helpers";
 import type { ExtractIfArray, Index, Merge, Pretty } from "../utils/type-helpers";
-import type { AnyRelation, AnyRelations, Relation } from "./relations";
+import type { AnyRelation, AnyRelations, Relation, RelationField } from "./relations";
 
-type ValidRelationFieldType<TRelation extends "one" | "many" | "ref" | undefined> = TRelation extends "many"
+type ValidRelationFieldType<TRelation extends "one" | "many" | "refs" | undefined> = TRelation extends "refs"
   ? Array<string | number | ObjectId>
   : string | number | ObjectId;
-export type SchemaRelatableField<T extends AnySchema, TRelation extends "one" | "many" | "ref" | undefined> = keyof {
-  [K in keyof SchemaInputWithId<T> as NonNullable<SchemaInputWithId<T>[K]> extends ValidRelationFieldType<TRelation>
+export type SchemaRelatableField<
+  TRelation extends "one" | "many" | "refs" | undefined,
+  TSchema extends AnySchema,
+> = keyof {
+  [K in keyof SchemaInputWithId<TSchema> as NonNullable<
+    SchemaInputWithId<TSchema>[K]
+  > extends ValidRelationFieldType<TRelation>
     ? K
     : never]: unknown;
 };
@@ -40,19 +45,23 @@ export type PopulationOptions<
   sort?: Sort["$sort"];
 } & PopulationBaseOptions<T, TDbRelations, TName>;
 type _RelationPopulationOptions<TDbRelations extends Record<string, AnyRelations>, TRelation extends AnyRelation> =
-  TRelation extends Relation<"one", any, any, infer TTarget, any>
-    ? PopulationBaseOptions<InferRelationPopulation<TDbRelations, TRelation, true>, TDbRelations, TTarget["name"]>
-    : TRelation extends Relation<"many", any, any, infer TTarget, any>
+  TRelation extends Relation<"one", { from: any; to: infer TTarget extends RelationField<any, any> }>
+    ? PopulationBaseOptions<
+        InferRelationPopulation<TDbRelations, TRelation, true>,
+        TDbRelations,
+        TTarget["schema"]["name"]
+      >
+    : TRelation extends Relation<"many", { from: any; to: infer TTarget extends RelationField<any, any> }>
       ? PopulationOptions<
           ExtractIfArray<InferRelationPopulation<TDbRelations, TRelation, true>>,
           TDbRelations,
-          TTarget["name"]
+          TTarget["schema"]["name"]
         >
-      : TRelation extends Relation<"ref", any, any, infer TTarget, any>
+      : TRelation extends Relation<"refs", { from: any; to: infer TTarget extends RelationField<any, any> }>
         ? PopulationOptions<
             ExtractIfArray<InferRelationPopulation<TDbRelations, TRelation, true>>,
             TDbRelations,
-            TTarget["name"]
+            TTarget["schema"]["name"]
           >
         : never;
 export type Population<TDbRelations extends Record<string, AnyRelations>, TName extends keyof TDbRelations> = {
@@ -85,25 +94,37 @@ export type InferRelationPopulation<
   TRelation extends AnyRelation,
   TPopulationOptions extends PopulationOptions<any, any, any> | true | undefined,
 > =
-  TRelation extends Relation<"one", any, any, infer TTarget, any>
+  TRelation extends Relation<"one", { from: any; to: infer TTarget extends RelationField<any, any> }>
     ? WithNestedPopulate<
-        WithRelationPopulation<InferSchemaOutput<TTarget>, TPopulationOptions, InferSchemaOmit<TTarget>>,
+        WithRelationPopulation<
+          InferSchemaOutput<TTarget["schema"]>,
+          TPopulationOptions,
+          InferSchemaOmit<TTarget["schema"]>
+        >,
         TDbRelations,
-        TTarget["name"],
+        TTarget["schema"]["name"],
         TPopulationOptions
       > | null
-    : TRelation extends Relation<"many", any, any, infer TTarget, any>
+    : TRelation extends Relation<"many", { from: any; to: infer TTarget extends RelationField<any, any> }>
       ? WithNestedPopulate<
-          WithRelationPopulation<InferSchemaOutput<TTarget>, TPopulationOptions, InferSchemaOmit<TTarget>>,
+          WithRelationPopulation<
+            InferSchemaOutput<TTarget["schema"]>,
+            TPopulationOptions,
+            InferSchemaOmit<TTarget["schema"]>
+          >,
           TDbRelations,
-          TTarget["name"],
+          TTarget["schema"]["name"],
           TPopulationOptions
         >[]
-      : TRelation extends Relation<"ref", any, any, infer TTarget, any>
+      : TRelation extends Relation<"refs", { from: any; to: infer TTarget extends RelationField<any, any> }>
         ? WithNestedPopulate<
-            WithRelationPopulation<InferSchemaOutput<TTarget>, TPopulationOptions, InferSchemaOmit<TTarget>>,
+            WithRelationPopulation<
+              InferSchemaOutput<TTarget["schema"]>,
+              TPopulationOptions,
+              InferSchemaOmit<TTarget["schema"]>
+            >,
             TDbRelations,
-            TTarget["name"],
+            TTarget["schema"]["name"],
             TPopulationOptions
           >[]
         : never;

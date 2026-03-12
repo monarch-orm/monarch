@@ -1,5 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createDatabase, createSchema } from "../../src";
+import { defineSchemas } from "../../src/relations/relations";
 import { boolean, number, pipe, string, type } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
@@ -25,7 +26,8 @@ describe("Update Hooks", async () => {
       age: number().onUpdate(() => 100),
       isAdmin: boolean(),
     });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
     const res = await db.collections.users.insertOne({
       name: "tom",
       age: 0,
@@ -59,7 +61,8 @@ describe("Update Hooks", async () => {
       name: string(),
       nonce: number().onUpdate(onUpdateTrap).transform(transformTrap),
     });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
     const res = await db.collections.users.insertOne({
       name: "tom",
       nonce: 0,
@@ -91,7 +94,8 @@ describe("Update Hooks", async () => {
         .onUpdate(onUpdateTrap)
         .validate(() => true, ""),
     });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
     const res = await db.collections.users.insertOne({
       name: "tom",
       nonce: 0,
@@ -119,7 +123,8 @@ describe("Update Hooks", async () => {
       name: string(),
       nonce: number().onUpdate(onUpdateTrap).optional(),
     });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
     const res = await db.collections.users.insertOne({
       name: "tom",
     });
@@ -146,7 +151,8 @@ describe("Update Hooks", async () => {
       name: string(),
       nonce: number().onUpdate(onUpdateTrap).nullable(),
     });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
     const res = await db.collections.users.insertOne({
       name: "tom",
       nonce: null,
@@ -174,7 +180,8 @@ describe("Update Hooks", async () => {
       name: string(),
       nonce: number().onUpdate(onUpdateTrap).default(0),
     });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
     const res = await db.collections.users.insertOne({
       name: "tom",
     });
@@ -204,7 +211,8 @@ describe("Update Hooks", async () => {
         string(),
       ).onUpdate(onUpdateTrap),
     });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
     const res = await db.collections.users.insertOne({
       name: "tom",
       nonce: 0,
@@ -233,7 +241,8 @@ describe("Update Hooks", async () => {
       name: string(),
       nonce: number().onUpdate(onUpdateTrap).transform(transformTrap),
     });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
 
     // Insert initial document
     const res = await db.collections.users.insertOne({
@@ -270,7 +279,8 @@ describe("Update Hooks", async () => {
       name: string(),
       nonce: number().transform(transformTrap).onUpdate(onUpdateTrap),
     });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
 
     // Insert initial document
     const res = await db.collections.users.insertOne({
@@ -308,7 +318,8 @@ describe("Update Hooks", async () => {
       name: string(),
       nonce: number().onUpdate(onUpdateTrap).validate(validateTrap, "nonce must be between 0 and 50"),
     });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
 
     // Insert initial document with valid value
     const res = await db.collections.users.insertOne({
@@ -346,7 +357,8 @@ describe("Update Hooks", async () => {
       name: string(),
       nonce: number().validate(validateTrap, "nonce must be between 0 and 50").onUpdate(onUpdateTrap),
     });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
 
     // Insert initial document with valid value
     const res = await db.collections.users.insertOne({
@@ -390,7 +402,8 @@ describe("Update Hooks", async () => {
         .onUpdate(onUpdateTrap)
         .validate(validateTrap, "transformed value must have length <= 2"),
     });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
 
     // Insert initial document
     const res = await db.collections.users.insertOne({
@@ -436,7 +449,8 @@ describe("Update Hooks", async () => {
         .transform(transformTrap)
         .validate(validateTrap, "transformed value must have length <= 2"),
     });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
 
     // Insert initial document
     const res = await db.collections.users.insertOne({

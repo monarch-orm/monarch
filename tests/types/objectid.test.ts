@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { createDatabase, createSchema, Schema } from "../../src";
+import { defineSchemas } from "../../src/relations/relations";
 import { objectId } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
@@ -64,13 +65,16 @@ describe("objectId", () => {
       await server.stop();
     });
 
-    const TestSchema = createSchema("objectid_test", {
+    const TestSchema = createSchema("testData", {
       refId: objectId().optional(),
     });
 
-    const { collections } = createDatabase(client.db(), {
-      testData: TestSchema,
-    });
+    const { collections } = createDatabase(
+      client.db(),
+      defineSchemas({
+        testData: TestSchema,
+      }),
+    );
 
     afterAll(async () => {
       await collections.testData.deleteMany({});

@@ -6,8 +6,10 @@ tests
 coverage
 pnpm-lock.yaml
 tsconfig.json
+.prettierignore
+prettier.config.mts
 vitest.config.mts
-tsup.config.ts
+tsdown.config.mts
 CHANGELOG.md
 README.md
 CONTRIBUTING.md

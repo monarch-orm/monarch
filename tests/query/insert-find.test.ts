@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createDatabase, createSchema } from "../../src";
+import { defineSchemas } from "../../src/relations/relations";
 import { boolean, number, objectId, string } from "../../src/types";
 import { createMockDatabase, mockUsers } from "../mock";
 
@@ -20,10 +21,13 @@ describe("Insert and Find Operations", async () => {
     userId: objectId(),
   });
 
-  const { collections } = createDatabase(client.db(), {
-    users: UserSchema,
-    todos: TodoSchema,
-  });
+  const { collections } = createDatabase(
+    client.db(),
+    defineSchemas({
+      users: UserSchema,
+      todos: TodoSchema,
+    }),
+  );
 
   beforeAll(async () => {
     await client.connect();

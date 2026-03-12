@@ -1,9 +1,10 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { createDatabase, createRelations, createSchema } from "../../src";
+import { createDatabase, createSchema } from "../../src";
+import { defineSchemas } from "../../src/relations/relations";
 import { array, boolean, date, objectId, string } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
-describe("one() relation tests", async () => {
+describe("one relation tests", async () => {
   const { server, client } = await createMockDatabase();
 
   beforeAll(async () => {
@@ -35,28 +36,21 @@ describe("one() relation tests", async () => {
       contributors: array(objectId()).optional().default([]),
     });
 
-    const UserSchemaRelations = createRelations(UserSchema, ({ one }) => ({
-      tutor: one(UserSchema, { field: "tutor", references: "_id" }),
+    const schemas = defineSchemas({ UserSchema, PostSchema });
+    const relations = schemas.withRelations((s) => ({
+      users: {
+        tutor: s.users.$one.users({ from: "tutor", to: "_id" }),
+      },
+      posts: {
+        author: s.posts.$one.users({ from: "author", to: "_id" }),
+        editor: s.posts.$one.users({ from: "editor", to: "_id" }),
+        contributors: s.posts.$refs.users({ from: "contributors", to: "_id" }),
+      },
     }));
-
-    const PostSchemaRelations = createRelations(PostSchema, ({ one, many }) => ({
-      author: one(UserSchema, { field: "author", references: "_id" }),
-      editor: one(UserSchema, { field: "editor", references: "_id" }),
-      contributors: many(UserSchema, {
-        field: "contributors",
-        references: "_id",
-      }),
-    }));
-
-    return createDatabase(client.db(), {
-      users: UserSchema,
-      posts: PostSchema,
-      UserSchemaRelations,
-      PostSchemaRelations,
-    });
+    return createDatabase(client.db(), relations);
   };
 
-  it("should populate one() relation (tutor)", async () => {
+  it("should populate one relation (tutor)", async () => {
     const { collections } = setupSchemasAndCollections();
 
     const user = await collections.users.insertOne({
@@ -78,7 +72,7 @@ describe("one() relation tests", async () => {
     });
   });
 
-  it("should populate one() relation (author)", async () => {
+  it("should populate one relation (author)", async () => {
     const { collections } = setupSchemasAndCollections();
 
     const user = await collections.users.insertOne({
@@ -100,7 +94,7 @@ describe("one() relation tests", async () => {
     expect(populatedPost?.author).toStrictEqual(user);
   });
 
-  it("should support nested one() relation population", async () => {
+  it("should support nested one relation population", async () => {
     const UserSchemaWithRefs = createSchema("users", {
       name: string(),
       isAdmin: boolean(),
@@ -114,21 +108,17 @@ describe("one() relation tests", async () => {
       author: objectId().optional(),
     });
 
-    const UserRelations = createRelations(UserSchemaWithRefs, ({ one, ref }) => ({
-      tutor: one(UserSchemaWithRefs, { field: "tutor", references: "_id" }),
-      posts: ref(PostSchemaWithRefs, { field: "_id", references: "author" }),
+    const schemas = defineSchemas({ UserSchemaWithRefs, PostSchemaWithRefs });
+    const relations = schemas.withRelations((s) => ({
+      users: {
+        tutor: s.users.$one.users({ from: "tutor", to: "_id" }),
+        posts: s.users.$many.posts({ from: "_id", to: "author" }),
+      },
+      posts: {
+        author: s.posts.$one.users({ from: "author", to: "_id" }),
+      },
     }));
-
-    const PostRelations = createRelations(PostSchemaWithRefs, ({ one }) => ({
-      author: one(UserSchemaWithRefs, { field: "author", references: "_id" }),
-    }));
-
-    const db = createDatabase(client.db(), {
-      users: UserSchemaWithRefs,
-      posts: PostSchemaWithRefs,
-      UserRelations,
-      PostRelations,
-    });
+    const db = createDatabase(client.db(), relations);
 
     // Create users with tutor relationship
     const tutor = await db.collections.users.insertOne({

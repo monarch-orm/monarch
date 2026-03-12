@@ -1,5 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createDatabase, createSchema, virtual } from "../../src";
+import { defineSchemas } from "../../src/relations/relations";
 import { boolean, number, string } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
@@ -27,7 +28,8 @@ describe("Schema", async () => {
     }).omit({
       isAdmin: true,
     });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
     const res = await db.collections.users.insertOne({
       name: "tom",
       age: 0,
@@ -46,7 +48,8 @@ describe("Schema", async () => {
     }).virtuals({
       role: virtual("isAdmin", ({ isAdmin }) => (isAdmin ? "admin" : "user")),
     });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
     const res = await db.collections.users.insertOne({
       name: "tom cruise",
       age: 0,
@@ -75,7 +78,8 @@ describe("Schema", async () => {
       .virtuals({
         role: virtual("isAdmin", ({ isAdmin }) => (isAdmin ? "admin" : "user")),
       });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
     const res = await db.collections.users.insertOne({
       name: "tom",
       age: 0,
@@ -102,7 +106,8 @@ describe("Schema", async () => {
       .virtuals({
         role: virtual("isAdmin", ({ isAdmin }) => (isAdmin !== undefined ? "known" : "unknown")),
       });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
     const res = await db.collections.users.insertOne({
       name: "tom",
       age: 0,
@@ -143,7 +148,8 @@ describe("Schema", async () => {
     }).virtuals({
       role: virtual("isAdmin", ({ isAdmin }) => (isAdmin ? "admin" : "user")),
     });
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
     const res = await db.collections.users.insertOne({
       name: "tom",
       age: 0,
@@ -170,7 +176,8 @@ describe("Schema", async () => {
       username: unique("username"),
       fullname: createIndex({ firstname: 1, surname: 1 }, { unique: true }),
     }));
-    const db = createDatabase(client.db(), { users: schema });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
 
     // duplicate username
     await db.collections.users.insertOne({
@@ -211,7 +218,8 @@ describe("Schema", async () => {
       name: string(),
       price: number(),
     });
-    const db = createDatabase(client.db(), { products: schema });
+    const schemas = defineSchemas({ products: schema });
+    const db = createDatabase(client.db(), schemas);
 
     const product = await db.collections.products.insertOne({
       _id: "product-123",
@@ -238,7 +246,8 @@ describe("Schema", async () => {
       customerId: string(),
       total: number(),
     });
-    const db = createDatabase(client.db(), { orders: schema });
+    const schemas = defineSchemas({ orders: schema });
+    const db = createDatabase(client.db(), schemas);
 
     const order = await db.collections.orders.insertOne({
       _id: 12345,
@@ -271,10 +280,8 @@ describe("Schema", async () => {
     });
 
     expect(() => {
-      createDatabase(client.db(), {
-        users: UserSchema,
-        users2: AnotherUserSchema,
-      });
+      const schemas = defineSchemas({ users: UserSchema, users2: AnotherUserSchema });
+      createDatabase(client.db(), schemas);
     }).toThrowError("Schema with name 'users' already exists.");
   });
 });
