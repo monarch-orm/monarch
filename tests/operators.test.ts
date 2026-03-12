@@ -1,7 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { createDatabase, createSchema } from "../src";
+import { createDatabase, createSchema, defineSchemas } from "../src";
 import { and, eq, gt, gte, inArray, lt, lte, neq, nor, notInArray, or } from "../src/operators";
-import { defineSchemas } from "../src/relations/relations";
 import { boolean, number, string } from "../src/types";
 import { createMockDatabase, mockUsers } from "./mock";
 

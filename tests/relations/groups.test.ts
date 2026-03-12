@@ -1,6 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { createDatabase, createSchema } from "../../src";
-import { defineSchemas, mergeSchemas } from "../../src/relations/relations";
+import { createDatabase, createSchema, defineSchemas, mergeSchemas } from "../../src";
 import { objectId, string } from "../../src/types";
 import { createMockDatabase } from "../mock";
 

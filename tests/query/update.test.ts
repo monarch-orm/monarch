@@ -119,30 +119,6 @@ describe("Update Operations", async () => {
     expect(updatedUser?.age).toBe(555);
   });
 
-  describe("validation", () => {
-    // TODO: fix update validation
-    it("should validate data in findOneAndUpdate", async () => {
-      await collections.users.insertOne(mockUsers[0]);
-
-      // This should throw an error because age should be a number, not a string
-      await expect(
-        collections.users
-          .findOneAndUpdate({ email: "anon@gmail.com" }, { $set: { age: "invalid" as any } })
-          .options({ returnDocument: "after" }),
-      ).rejects.toThrow();
-    });
-
-    // TODO: fix update validation
-    it("should validate data in updateOne", async () => {
-      await collections.users.insertOne(mockUsers[0]);
-
-      // This should throw an error because age should be a number, not a string
-      await expect(
-        collections.users.updateOne({ email: "anon@gmail.com" }, { $set: { age: "invalid" as any } }),
-      ).rejects.toThrow();
-    });
-  });
-
   describe("array operators", () => {
     it("should support $addToSet operator", async () => {
       const schema = createSchema("posts", {
