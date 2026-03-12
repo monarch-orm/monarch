@@ -12,13 +12,13 @@ describe("date", () => {
       date: date(),
     });
 
-    const validData = Schema.encode(schema, { date: now });
+    const validData = Schema.input(schema, { date: now });
     expect(validData).toStrictEqual({ date: now });
 
     // @ts-expect-error
-    expect(() => Schema.encode(schema, { date: "not a date" })).toThrowError("expected 'Date' received 'string'");
+    expect(() => Schema.input(schema, { date: "not a date" })).toThrowError("expected 'Date' received 'string'");
     // @ts-expect-error
-    expect(() => Schema.encode(schema, { date: 123 })).toThrowError("expected 'Date' received 'number'");
+    expect(() => Schema.input(schema, { date: 123 })).toThrowError("expected 'Date' received 'number'");
   });
 
   test("MonarchDateString", () => {
@@ -27,14 +27,14 @@ describe("date", () => {
     });
 
     // Valid ISO date string should pass
-    const validData = Schema.encode(schema, { date: now.toISOString() });
+    const validData = Schema.input(schema, { date: now.toISOString() });
     expect(validData).toStrictEqual({ date: now });
 
-    expect(() => Schema.encode(schema, { date: "invalid date" })).toThrowError(
+    expect(() => Schema.input(schema, { date: "invalid date" })).toThrowError(
       "expected 'ISO Date string' received 'string'",
     );
     // @ts-expect-error
-    expect(() => Schema.encode(schema, { date: 123 })).toThrowError("expected 'ISO Date string' received 'number'");
+    expect(() => Schema.input(schema, { date: 123 })).toThrowError("expected 'ISO Date string' received 'number'");
   });
 
   test("MonarchDate after() and before()", () => {
@@ -43,22 +43,22 @@ describe("date", () => {
       beforeDate: date().before(now),
     });
 
-    expect(() => Schema.encode(schema, { afterDate: past, beforeDate: future })).toThrowError(
+    expect(() => Schema.input(schema, { afterDate: past, beforeDate: future })).toThrowError(
       `date must be after ${now.toISOString()}`,
     );
-    expect(() => Schema.encode(schema, { afterDate: future, beforeDate: future })).toThrowError(
+    expect(() => Schema.input(schema, { afterDate: future, beforeDate: future })).toThrowError(
       `date must be before ${now.toISOString()}`,
     );
 
     // Edge case: date equal to boundary should fail
-    expect(() => Schema.encode(schema, { afterDate: now, beforeDate: past })).toThrowError(
+    expect(() => Schema.input(schema, { afterDate: now, beforeDate: past })).toThrowError(
       `date must be after ${now.toISOString()}`,
     );
-    expect(() => Schema.encode(schema, { afterDate: future, beforeDate: now })).toThrowError(
+    expect(() => Schema.input(schema, { afterDate: future, beforeDate: now })).toThrowError(
       `date must be before ${now.toISOString()}`,
     );
 
-    const data = Schema.encode(schema, {
+    const data = Schema.input(schema, {
       afterDate: future,
       beforeDate: past,
     });
@@ -72,14 +72,14 @@ describe("date", () => {
     });
 
     expect(() =>
-      Schema.encode(schema, {
+      Schema.input(schema, {
         afterDate: past.toISOString(),
         beforeDate: future.toISOString(),
       }),
     ).toThrowError(`date must be after ${now.toISOString()}`);
 
     expect(() =>
-      Schema.encode(schema, {
+      Schema.input(schema, {
         afterDate: future.toISOString(),
         beforeDate: future.toISOString(),
       }),
@@ -87,19 +87,19 @@ describe("date", () => {
 
     // Edge case: date equal to boundary should fail
     expect(() =>
-      Schema.encode(schema, {
+      Schema.input(schema, {
         afterDate: now.toISOString(),
         beforeDate: past.toISOString(),
       }),
     ).toThrowError(`date must be after ${now.toISOString()}`);
     expect(() =>
-      Schema.encode(schema, {
+      Schema.input(schema, {
         afterDate: future.toISOString(),
         beforeDate: now.toISOString(),
       }),
     ).toThrowError(`date must be before ${now.toISOString()}`);
 
-    const data = Schema.encode(schema, {
+    const data = Schema.input(schema, {
       afterDate: future.toISOString(),
       beforeDate: past.toISOString(),
     });
@@ -120,7 +120,7 @@ describe("date", () => {
 
     // Invalid type for date().after() should throw type error first
     expect(() =>
-      Schema.encode(schema, {
+      Schema.input(schema, {
         dateWithAfter: "not a date" as any,
         dateWithBefore: past,
         dateStringWithAfter: future.toISOString(),
@@ -130,7 +130,7 @@ describe("date", () => {
 
     // Invalid type for date().before() should throw type error first
     expect(() =>
-      Schema.encode(schema, {
+      Schema.input(schema, {
         dateWithAfter: future,
         dateWithBefore: 123 as any,
         dateStringWithAfter: future.toISOString(),
@@ -140,7 +140,7 @@ describe("date", () => {
 
     // Invalid date string for dateString().after() should throw parsing error first
     expect(() =>
-      Schema.encode(schema, {
+      Schema.input(schema, {
         dateWithAfter: future,
         dateWithBefore: past,
         dateStringWithAfter: "invalid date string",
@@ -150,7 +150,7 @@ describe("date", () => {
 
     // Invalid type (non-string) for dateString().before() should throw type error first
     expect(() =>
-      Schema.encode(schema, {
+      Schema.input(schema, {
         dateWithAfter: future,
         dateWithBefore: past,
         dateStringWithAfter: future.toISOString(),

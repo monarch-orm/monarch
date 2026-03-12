@@ -1,5 +1,5 @@
 import { MonarchParseError } from "../errors";
-import { type AnyMonarchType, MonarchType } from "./type";
+import { type AnyMonarchType, type Parser, MonarchType } from "./type";
 import type { InferTypeInput, InferTypeObjectInput, InferTypeObjectOutput } from "./type-helpers";
 
 /**
@@ -29,7 +29,8 @@ export class MonarchObject<T extends Record<string, AnyMonarchType>> extends Mon
         for (const [key, type] of Object.entries(types) as [keyof T & string, T[keyof T]][]) {
           try {
             const parser = MonarchType.parser(type);
-            parsed[key as keyof typeof parsed] = parser(input[key as keyof typeof input] as InferTypeInput<T[keyof T]>);
+            const result = parser(input[key as keyof typeof input] as InferTypeInput<T[keyof T]>);
+            if (result !== undefined) parsed[key as keyof typeof parsed] = result;
           } catch (error) {
             if (error instanceof MonarchParseError) {
               throw new MonarchParseError({ path: key, error });
@@ -41,6 +42,22 @@ export class MonarchObject<T extends Record<string, AnyMonarchType>> extends Mon
       }
       throw new MonarchParseError(`expected 'object' received '${typeof input}'`);
     });
+  }
+
+  protected parserAt(path: string[], index: number): Parser<any, any> {
+    if (index === path.length - 1) return this.parser;
+    const key = path[index + 1];
+    if (key && key in this.types) {
+      try {
+        return MonarchType.parserAt(this.types[key]!, path, index + 1);
+      } catch (error) {
+        if (error instanceof MonarchParseError) {
+          throw new MonarchParseError({ path: key, error });
+        }
+        throw error;
+      }
+    }
+    throw new MonarchParseError(`unknown field '${key}'`);
   }
 
   protected copy() {

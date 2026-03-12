@@ -14,9 +14,9 @@ describe("type", () => {
         .transform((input) => `${input}`),
     });
 
-    expect(() => Schema.encode(schema, { age: -1 })).toThrowError("must be positive");
+    expect(() => Schema.input(schema, { age: -1 })).toThrowError("must be positive");
 
-    const data = Schema.encode(schema, {
+    const data = Schema.input(schema, {
       age: 0,
     });
     expect(data).toStrictEqual({ age: "0" });
@@ -28,7 +28,7 @@ describe("type", () => {
         .transform((input) => input.toUpperCase())
         .validate((input) => input.toUpperCase() === input, "String is not in all caps"),
     });
-    expect(() => Schema.encode(schema, { name: "somename" })).not.toThrowError();
+    expect(() => Schema.input(schema, { name: "somename" })).not.toThrowError();
   });
 
   test("nullable", () => {
@@ -38,7 +38,7 @@ describe("type", () => {
         .transform((input) => `${input}`)
         .nullable(),
     });
-    const data1 = Schema.encode(schema1, { age: null });
+    const data1 = Schema.input(schema1, { age: null });
     expect(data1).toStrictEqual({ age: null });
 
     // transform is applied when value is not null
@@ -47,7 +47,7 @@ describe("type", () => {
         .transform((input) => `${input}`)
         .nullable(),
     });
-    const data2 = Schema.encode(schema2, { age: 0 });
+    const data2 = Schema.input(schema2, { age: 0 });
     expect(data2).toStrictEqual({ age: "0" });
   });
 
@@ -58,7 +58,7 @@ describe("type", () => {
         .transform((input) => `${input}`)
         .optional(),
     });
-    const data1 = Schema.encode(schema1, {});
+    const data1 = Schema.input(schema1, {});
     expect(data1).toStrictEqual({});
 
     // transform is applied when value is not undefined
@@ -67,7 +67,7 @@ describe("type", () => {
         .transform((input) => `${input}`)
         .optional(),
     });
-    const data2 = Schema.encode(schema2, { age: 0 });
+    const data2 = Schema.input(schema2, { age: 0 });
     expect(data2).toStrictEqual({ age: "0" });
   });
 
@@ -82,7 +82,7 @@ describe("type", () => {
         .transform((input) => `${input}`)
         .default(defaultFnTrap1),
     });
-    const data1 = Schema.encode(schema1, {});
+    const data1 = Schema.input(schema1, {});
     expect(data1).toStrictEqual({ age: "10", ageLazy: "11" });
     expect(defaultFnTrap1).toHaveBeenCalledTimes(1);
 
@@ -96,7 +96,7 @@ describe("type", () => {
         .transform((input) => `${input}`)
         .default(defaultFnTrap2),
     });
-    const data2 = Schema.encode(schema2, { age: 1, ageLazy: 2 });
+    const data2 = Schema.input(schema2, { age: 1, ageLazy: 2 });
     expect(data2).toStrictEqual({ age: "1", ageLazy: "2" });
     expect(defaultFnTrap2).toHaveBeenCalledTimes(0);
   });
@@ -117,7 +117,7 @@ describe("type", () => {
         ),
       });
 
-      const data = Schema.encode(schema, { count: "1" });
+      const data = Schema.input(schema, { count: "1" });
       expect(data).toStrictEqual({ count: "count-1000" });
       expect(outerValidateFnTrap).toHaveBeenCalledTimes(1);
       expect(innerValidateFnTrap).toHaveBeenCalledTimes(1);
@@ -139,7 +139,7 @@ describe("type", () => {
         ),
       });
 
-      const data = Schema.encode(schema, {});
+      const data = Schema.input(schema, {});
       expect(data).toStrictEqual({ count: "count-2000" });
       expect(outerValidateFnTrap).toHaveBeenCalledTimes(1);
       expect(innerValidateFnTrap).toHaveBeenCalledTimes(1);
@@ -160,7 +160,7 @@ describe("type", () => {
         ).default("3"),
       });
 
-      const data = Schema.encode(schema, {});
+      const data = Schema.input(schema, {});
       expect(data).toStrictEqual({ count: "count-3000" });
       expect(outerValidateFnTrap).toHaveBeenCalledTimes(1);
       expect(innerValidateFnTrap).toHaveBeenCalledTimes(1);
@@ -183,7 +183,7 @@ describe("type", () => {
         ),
       });
 
-      const data = Schema.encode(schema, {});
+      const data = Schema.input(schema, {});
       expect(data).toStrictEqual({ count: "count-4000" });
       expect(outerValidateFnTrap).toHaveBeenCalledTimes(0);
       expect(innerValidateFnTrap).toHaveBeenCalledTimes(1);
@@ -207,7 +207,7 @@ describe("type", () => {
       });
 
       const schema = createSchema("test", { value: extendedType });
-      Schema.encode(schema, { value: "test" });
+      Schema.input(schema, { value: "test" });
 
       expect(executionOrder).toEqual(["preprocess", "base-parser"]);
     });
@@ -228,7 +228,7 @@ describe("type", () => {
       });
 
       const schema = createSchema("test", { value: extendedType });
-      Schema.encode(schema, { value: "test" });
+      Schema.input(schema, { value: "test" });
 
       expect(executionOrder).toEqual(["base-parser", "parse"]);
     });
@@ -254,7 +254,7 @@ describe("type", () => {
         });
 
       const schema = createSchema("test", { value: extendedType });
-      Schema.encode(schema, { value: "test" });
+      Schema.input(schema, { value: "test" });
 
       expect(executionOrder).toEqual(["preprocess", "base-parser", "parse"]);
     });
@@ -270,7 +270,7 @@ describe("type", () => {
       const extendedType = baseType.preprocess(() => "PREPROCESSED");
 
       const schema = createSchema("test", { value: extendedType });
-      const data = Schema.encode(schema, { value: "anything" });
+      const data = Schema.input(schema, { value: "anything" });
 
       expect(data).toStrictEqual({ value: "PREPROCESSED" });
     });
@@ -281,7 +281,7 @@ describe("type", () => {
       const extendedType = baseType.parse((input) => input + "-PARSED");
 
       const schema = createSchema("test", { value: extendedType });
-      const data = Schema.encode(schema, { value: "hello" });
+      const data = Schema.input(schema, { value: "hello" });
 
       expect(data).toStrictEqual({ value: "HELLO-PARSED" });
     });
@@ -301,7 +301,7 @@ describe("type", () => {
         });
 
       const schema = createSchema("test", { value: extendedType });
-      const data = Schema.encode(schema, { value: "  hello  " });
+      const data = Schema.input(schema, { value: "  hello  " });
 
       expect(data).toStrictEqual({ value: "[HELLO]" });
     });
@@ -321,11 +321,11 @@ describe("type", () => {
       const schema = createSchema("test", { value: trimmedAndValidatedString });
 
       // Should trim in preprocess, then validate in parse
-      const data = Schema.encode(schema, { value: "  hello  " });
+      const data = Schema.input(schema, { value: "  hello  " });
       expect(data).toStrictEqual({ value: "hello" });
 
       // Should fail validation after trimming
-      expect(() => Schema.encode(schema, { value: "   " })).toThrowError("string must not be empty after trimming");
+      expect(() => Schema.input(schema, { value: "   " })).toThrowError("string must not be empty after trimming");
     });
 
     test("real-world example: number with range validation using parse", () => {
@@ -340,11 +340,11 @@ describe("type", () => {
 
       const schema = createSchema("test", { value: percentageNumber });
 
-      const data = Schema.encode(schema, { value: 50 });
+      const data = Schema.input(schema, { value: 50 });
       expect(data).toStrictEqual({ value: 50 });
 
-      expect(() => Schema.encode(schema, { value: 150 })).toThrowError("number must be between 0 and 100");
-      expect(() => Schema.encode(schema, { value: -10 })).toThrowError("number must be between 0 and 100");
+      expect(() => Schema.input(schema, { value: 150 })).toThrowError("number must be between 0 and 100");
+      expect(() => Schema.input(schema, { value: -10 })).toThrowError("number must be between 0 and 100");
     });
 
     test("multiple methods chain correctly", () => {
@@ -376,7 +376,7 @@ describe("type", () => {
         });
 
       const schema = createSchema("test", { value: secondExtend });
-      Schema.encode(schema, { value: "test" });
+      Schema.input(schema, { value: "test" });
 
       // Second extend's preprocess -> first extend's full pipeline -> second extend's parse
       expect(executionOrder).toEqual([

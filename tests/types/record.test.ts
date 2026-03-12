@@ -9,14 +9,14 @@ describe("record", () => {
     });
 
     // @ts-expect-error
-    expect(() => Schema.encode(schema, {})).toThrowError("expected 'object' received 'undefined'");
+    expect(() => Schema.input(schema, {})).toThrowError("expected 'object' received 'undefined'");
     // empty object is ok
-    expect(() => Schema.encode(schema, { grades: {} })).not.toThrowError();
+    expect(() => Schema.input(schema, { grades: {} })).not.toThrowError();
     expect(() =>
       // @ts-expect-error
-      Schema.encode(schema, { grades: { math: "50" } }),
+      Schema.input(schema, { grades: { math: "50" } }),
     ).toThrowError("grades.math: expected 'number' received 'string'");
-    const data = Schema.encode(schema, { grades: { math: 50 } });
+    const data = Schema.input(schema, { grades: { math: 50 } });
     expect(data).toStrictEqual({ grades: { math: 50 } });
   });
 });

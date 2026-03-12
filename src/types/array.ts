@@ -1,5 +1,5 @@
 import { MonarchParseError } from "../errors";
-import { type AnyMonarchType, MonarchType } from "./type";
+import { type AnyMonarchType, type Parser, MonarchType } from "./type";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
 
 /**
@@ -37,6 +37,25 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
       return parsed;
     });
     this.elementType = type;
+  }
+
+  protected parserAt(path: string[], index: number): Parser<any, any> {
+    if (index === path.length - 1) return this.parser;
+    const arrayIndex = path[index + 1];
+    if (
+      arrayIndex?.startsWith("$") ||
+      (arrayIndex && Number.isInteger(Number(arrayIndex)) && Number(arrayIndex) >= 0)
+    ) {
+      try {
+        return MonarchType.parserAt(this.elementType, path, index + 1);
+      } catch (error) {
+        if (error instanceof MonarchParseError) {
+          throw new MonarchParseError({ path: arrayIndex, error });
+        }
+        throw error;
+      }
+    }
+    throw new MonarchParseError(`expected a numeric index or positional operator`);
   }
 
   protected copy() {

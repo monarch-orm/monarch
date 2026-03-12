@@ -8,10 +8,10 @@ describe("boolean", () => {
       isActive: boolean(),
     });
 
-    const trueData = Schema.encode(schema, { isActive: true });
+    const trueData = Schema.input(schema, { isActive: true });
     expect(trueData).toStrictEqual({ isActive: true });
 
-    const falseData = Schema.encode(schema, { isActive: false });
+    const falseData = Schema.input(schema, { isActive: false });
     expect(falseData).toStrictEqual({ isActive: false });
   });
 
@@ -21,11 +21,11 @@ describe("boolean", () => {
     });
 
     // @ts-expect-error
-    expect(() => Schema.encode(schema, { isActive: "true" })).toThrowError("expected 'boolean' received 'string'");
+    expect(() => Schema.input(schema, { isActive: "true" })).toThrowError("expected 'boolean' received 'string'");
     // @ts-expect-error
-    expect(() => Schema.encode(schema, { isActive: 1 })).toThrowError("expected 'boolean' received 'number'");
+    expect(() => Schema.input(schema, { isActive: 1 })).toThrowError("expected 'boolean' received 'number'");
     // @ts-expect-error
-    expect(() => Schema.encode(schema, { isActive: {} })).toThrowError("expected 'boolean' received 'object'");
+    expect(() => Schema.input(schema, { isActive: {} })).toThrowError("expected 'boolean' received 'object'");
   });
 
   test("works with nullable and optional", () => {
@@ -34,10 +34,10 @@ describe("boolean", () => {
       optionalBoolean: boolean().optional(),
     });
 
-    const nullData = Schema.encode(schema, { nullableBoolean: null });
+    const nullData = Schema.input(schema, { nullableBoolean: null });
     expect(nullData).toStrictEqual({ nullableBoolean: null });
 
-    const undefinedData = Schema.encode(schema, { nullableBoolean: true });
+    const undefinedData = Schema.input(schema, { nullableBoolean: true });
     expect(undefinedData).toStrictEqual({ nullableBoolean: true });
   });
 });

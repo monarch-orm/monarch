@@ -38,7 +38,7 @@ export class InsertManyQuery<TSchema extends AnySchema> extends Query<
 
   protected async exec(): Promise<InsertManyResult<InferSchemaData<TSchema>>> {
     await this._readyPromise;
-    const data = this._data.map((data) => Schema.encode(this._schema, data));
+    const data = this._data.map((data) => Schema.input(this._schema, data));
     const res = await this._collection.insertMany(
       data as OptionalUnlessRequiredId<InferSchemaData<TSchema>>[],
       this._options,

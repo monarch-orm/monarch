@@ -1,5 +1,5 @@
 import { MonarchParseError } from "../errors";
-import { type AnyMonarchType, MonarchType } from "./type";
+import { type AnyMonarchType, type Parser, MonarchType } from "./type";
 import type {
   InferTypeTaggedUnionInput,
   InferTypeTaggedUnionOutput,
@@ -40,6 +40,11 @@ export class MonarchUnion<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
       }
       throw new MonarchParseError(`expected 'union' variant received '${typeof input}'`);
     });
+  }
+
+  protected parserAt(path: string[], index: number): Parser<any, any> {
+    if (index === path.length - 1) return this.parser;
+    throw new MonarchParseError(`updates must replace the entire union value`);
   }
 
   protected copy() {
@@ -96,6 +101,11 @@ export class MonarchTaggedUnion<T extends Record<string, AnyMonarchType>> extend
       }
       throw new MonarchParseError(`expected 'object' received '${typeof input}'`);
     });
+  }
+
+  protected parserAt(path: string[], index: number): Parser<any, any> {
+    if (index === path.length - 1) return this.parser;
+    throw new MonarchParseError(`updates must replace the entire tagged union value`);
   }
 
   protected copy() {

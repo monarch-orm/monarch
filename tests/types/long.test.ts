@@ -11,7 +11,7 @@ describe("long", () => {
     });
 
     const testLong = Long.fromNumber(123456789);
-    const data = Schema.encode(schema, { value: testLong });
+    const data = Schema.input(schema, { value: testLong });
     expect(data).toStrictEqual({ value: testLong });
     expect(Long.isLong(data.value)).toBe(true);
   });
@@ -21,7 +21,7 @@ describe("long", () => {
       value: long(),
     });
 
-    const data = Schema.encode(schema, { value: 123456789 });
+    const data = Schema.input(schema, { value: 123456789 });
     expect(typeof data.value).toBe("number");
     expect(data.value).toBe(123456789);
   });
@@ -32,7 +32,7 @@ describe("long", () => {
     });
 
     const unsafeNumber = Number.MAX_SAFE_INTEGER + 1;
-    const data = Schema.encode(schema, { value: unsafeNumber });
+    const data = Schema.input(schema, { value: unsafeNumber });
     expect(Long.isLong(data.value)).toBe(true);
   });
 
@@ -42,11 +42,11 @@ describe("long", () => {
     });
 
     // @ts-expect-error
-    expect(() => Schema.encode(schema, { value: "not a long" })).toThrowError(
+    expect(() => Schema.input(schema, { value: "not a long" })).toThrowError(
       "expected 'Long', 'number', or 'bigint' received 'string'",
     );
     // @ts-expect-error
-    expect(() => Schema.encode(schema, { value: {} })).toThrowError(
+    expect(() => Schema.input(schema, { value: {} })).toThrowError(
       "expected 'Long', 'number', or 'bigint' received 'object'",
     );
   });
@@ -57,10 +57,10 @@ describe("long", () => {
       optionalLong: long().optional(),
     });
 
-    const nullData = Schema.encode(schema, { nullableLong: null });
+    const nullData = Schema.input(schema, { nullableLong: null });
     expect(nullData).toStrictEqual({ nullableLong: null });
 
-    const undefinedData = Schema.encode(schema, { nullableLong: Long.fromNumber(100) });
+    const undefinedData = Schema.input(schema, { nullableLong: Long.fromNumber(100) });
     expect((undefinedData.nullableLong as Long).toNumber()).toBe(100);
   });
 

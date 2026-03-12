@@ -1,4 +1,5 @@
-import { type AnyMonarchType, MonarchType, pipeParser } from "./type";
+import { MonarchParseError } from "../errors";
+import { type AnyMonarchType, type Parser, MonarchType, pipeParser } from "./type";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
 
 /**
@@ -31,6 +32,11 @@ export class MonarchPipe<
         InferTypeOutput<TPipeOut>
       >(MonarchType.parser(pipeIn), MonarchType.parser(pipeOut)),
     );
+  }
+
+  protected parserAt(path: string[], index: number): Parser<any, any> {
+    if (index === path.length - 1) return this.parser;
+    throw new MonarchParseError(`updates must replace the entire pipe value`);
   }
 
   protected copy() {

@@ -31,7 +31,7 @@ export class FindOneAndUpdateQuery<
     private _options: FindOneAndUpdateOptions = {},
   ) {
     super(_schema, _collection, _readyPromise);
-    this._projection = makeProjection("omit", _schema.options.omit ?? {});
+    this._projection = makeProjection("omit", Schema.options(_schema).omit ?? {});
   }
 
   /**
@@ -78,13 +78,13 @@ export class FindOneAndUpdateQuery<
       $set: { ...fieldUpdates, ...this._update.$set },
     };
 
-    const extras = addExtraInputsToProjection(this._projection, this._schema.options.virtuals);
+    const extras = addExtraInputsToProjection(this._projection, Schema.options(this._schema).virtuals);
     const res = await this._collection.findOneAndUpdate(this._filter, update, {
       ...this._options,
       projection: this._projection,
     });
     return res
-      ? (Schema.decode(this._schema, res as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
+      ? (Schema.output(this._schema, res as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
           TOutput,
           TOmit
         >)

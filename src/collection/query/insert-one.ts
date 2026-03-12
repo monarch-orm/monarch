@@ -23,7 +23,7 @@ export class InsertOneQuery<
     private _options: InsertOneOptions = {},
   ) {
     super(_schema, _collection, _readyPromise);
-    this._projection = makeProjection("omit", _schema.options.omit ?? {});
+    this._projection = makeProjection("omit", Schema.options(_schema).omit ?? {});
   }
 
   /**
@@ -39,12 +39,12 @@ export class InsertOneQuery<
 
   protected async exec(): Promise<QueryOutput<TOutput, TOmit>> {
     await this._readyPromise;
-    const data = Schema.encode(this._schema, this._data);
+    const data = Schema.input(this._schema, this._data);
     const res = await this._collection.insertOne(
       data as OptionalUnlessRequiredId<InferSchemaData<TSchema>>,
       this._options,
     );
-    return Schema.decode(
+    return Schema.output(
       this._schema,
       {
         ...data,

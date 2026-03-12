@@ -1,7 +1,7 @@
 import type { Projection } from "../collection/types/query-options";
 import { detectProjection } from "../collection/utils/projection";
-import { MonarchParseError } from "../errors";
 import { mergeRelations, type AnyRelation, type RelationsFn, type SchemasRelations } from "../relations/relations";
+import { MonarchObject, object } from "../types";
 import { objectId } from "../types/objectId";
 import { MonarchType, type AnyMonarchType } from "../types/type";
 import type { MergeAll, MergeN1All, Pretty, WithOptionalId } from "../utils/type-helpers";
@@ -25,24 +25,27 @@ export class Schema<
   TOmit extends SchemaOmit<TTypes> = {},
   TVirtuals extends Record<string, AnyVirtual> = {},
 > {
+  private type: MonarchObject<TTypes>;
+
   /**
    * Creates a Schema instance.
    *
    * @param name - Collection name
-   * @param _types - Field type definitions
+   * @param types - Field type definitions
    * @param options - Schema options including omit, virtuals, and indexes
    */
   constructor(
     public name: TName,
-    private _types: TTypes,
-    public options: {
+    private types: TTypes,
+    private options: {
       omit?: SchemaOmit<TTypes>;
       virtuals?: SchemaVirtuals<TTypes, TVirtuals>;
       indexes?: SchemaIndexes<TTypes>;
     },
   ) {
     // @ts-ignore
-    if (!_types._id) this._types._id = objectId().optional();
+    if (!types._id) types._id = objectId().optional();
+    this.type = object(types);
   }
 
   /**
@@ -101,46 +104,58 @@ export class Schema<
    * @returns Field type definitions
    */
   public static types<T extends AnySchema>(schema: T): InferSchemaTypes<T> {
-    return schema._types;
+    return schema.types;
+  }
+
+  /**
+   * Retrieves the schema options from a schema.
+   *
+   * @param schema - Schema instance
+   * @returns Schema options including omit, virtuals, and indexes
+   */
+  public static options<T extends AnySchema>(schema: T) {
+    return schema.options;
   }
 
   /**
    * Parses and validates input data according to schema type definitions.
    *
    * @param schema - Schema instance
-   * @param input - Input data to encode
-   * @returns Encoded data ready for database storage
+   * @param input - Input data to parse
+   * @returns Parsed data ready for database storage
    */
-  public static encode<T extends AnySchema>(schema: T, input: InferSchemaInput<T>) {
-    const data = {} as InferSchemaData<T>;
-    // parse fields
-    const types = Schema.types(schema);
-    for (const [key, type] of Object.entries(types)) {
-      try {
-        const parser = MonarchType.parser(type as AnyMonarchType);
-        const parsed = parser(input[key as keyof InferSchemaInput<T>]);
-        if (parsed === undefined) continue;
-        data[key as keyof typeof data] = parsed;
-      } catch (error) {
-        if (error instanceof MonarchParseError) {
-          throw new MonarchParseError({ path: key, error });
-        }
-        throw error;
-      }
+  public static input<T extends AnySchema>(schema: T, input: InferSchemaInput<T>) {
+    const parser = MonarchType.parser(schema.type);
+    return parser(input) as InferSchemaData<T>;
+  }
+
+  /**
+   * Parses and validates update data for dot-path update operations.
+   *
+   * @param schema - Schema instance
+   * @param update - Update data with dot-path keys and their new values
+   * @returns Parsed update data
+   */
+  public static updateInput<T extends AnySchema>(schema: T, update: Record<string, unknown>) {
+    const parsed = {} as Record<string, unknown>;
+    for (const [path, value] of Object.entries(update)) {
+      const segments = path.split(".");
+      const parser = MonarchType.parserAt(schema.type, segments, 0);
+      parsed[path] = parser(value);
     }
-    return data;
+    return parsed;
   }
 
   /**
    * Transforms database data to output format with virtual fields and projections.
    *
    * @param schema - Schema instance
-   * @param data - Database data to decode
+   * @param data - Database data
    * @param projection - Field projection configuration
    * @param forceOmit - Fields to force omit from output
-   * @returns Decoded output data
+   * @returns Output data
    */
-  public static decode<T extends AnySchema>(
+  public static output<T extends AnySchema>(
     schema: T,
     data: InferSchemaData<T>,
     projection: Projection<InferSchemaOutput<T>>,

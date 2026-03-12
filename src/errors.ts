@@ -30,12 +30,7 @@ export class MonarchParseError extends MonarchError {
       cause = error.error.cause ?? error.error;
       path = [error.path, ...error.error.path];
 
-      const pathString = path.reduce((acc, p, i) => {
-        if (typeof p === "number") {
-          return `${acc}[${p}]`;
-        }
-        return i === 0 ? p : `${acc}.${p}`;
-      }, "");
+      const pathString = path.reduce((acc, p, i) => (i === 0 ? p : `${acc}.${p}`), "");
       message = `${pathString}: ${cause.message}`;
     }
 

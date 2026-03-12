@@ -32,7 +32,7 @@ export class FindQuery<
     private _options: FindOptions = {},
   ) {
     super(_schema, _collection, _readyPromise);
-    this._projection = makeProjection("omit", _schema.options.omit ?? {});
+    this._projection = makeProjection("omit", Schema.options(_schema).omit ?? {});
   }
 
   /**
@@ -136,12 +136,12 @@ export class FindQuery<
   }
 
   private _execWithoutPopulate(): AbstractCursor<QueryOutput<TOutput, TOmit, TPopulate>> {
-    const extras = addExtraInputsToProjection(this._projection, this._schema.options.virtuals);
+    const extras = addExtraInputsToProjection(this._projection, Schema.options(this._schema).virtuals);
     const res = this._collection
       .find(this._filter, { ...this._options, projection: this._projection })
       .map(
         (doc) =>
-          Schema.decode(this._schema, doc as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
+          Schema.output(this._schema, doc as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
             TOutput,
             TOmit,
             TPopulate
@@ -155,7 +155,11 @@ export class FindQuery<
       // @ts-ignore
       { $match: this._filter },
     ];
-    const extras = addExtraInputsToProjection(this._projection, this._schema.options.virtuals, this._population);
+    const extras = addExtraInputsToProjection(
+      this._projection,
+      Schema.options(this._schema).virtuals,
+      this._population,
+    );
     if (Object.keys(this._projection).length) {
       // @ts-ignore
       pipeline.push({ $project: this._projection });

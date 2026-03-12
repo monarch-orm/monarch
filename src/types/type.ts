@@ -70,6 +70,26 @@ export abstract class MonarchType<TInput, TOutput = TInput> {
   ) {}
 
   /**
+   * Returns the parser for a field at the given path.
+   *
+   * `path` is a dot-separated field path split into segments (e.g. `"a.b.c"` becomes `["a","b","c"]`),
+   * and `index` is the current depth. Compound types override this to walk their
+   * shape and delegate into the appropriate inner type for deeper segments.
+   *
+   * The base implementation is the leaf behavior: returns its own parser only at
+   * the final segment and throws for any deeper path.
+   *
+   * @param path - Dot-separated field path split into segments
+   * @param index - Current depth index into `path`
+   * @returns Parser at the current path segment
+   * @throws If `index` is not the last segment
+   */
+  protected parserAt(path: string[], index: number): Parser<any, any> {
+    if (index === path.length - 1) return this.parser;
+    throw new MonarchParseError(`path '${path[index + 1]}' does not exist on type`);
+  }
+
+  /**
    * Creates a fresh instance of this type in its default state.
    *
    * Subclasses must implement this method to create a new instance with the same
@@ -116,6 +136,18 @@ export abstract class MonarchType<TInput, TOutput = TInput> {
    */
   public static parser<T extends AnyMonarchType>(type: T): Parser<InferTypeInput<T>, InferTypeOutput<T>> {
     return type.parser;
+  }
+
+  /**
+   * Calls `parserAt` on a type instance.
+   *
+   * @param type - Monarch type
+   * @param path - Dot-separated field path split into segments
+   * @param index - Current depth index into `path`
+   * @returns Parser for the current path segment
+   */
+  public static parserAt<T extends AnyMonarchType>(type: T, path: string[], index: number): Parser<any, any> {
+    return type.parserAt(path, index);
   }
 
   /**
@@ -298,6 +330,11 @@ export class MonarchNullable<T extends AnyMonarchType> extends MonarchType<
     }, updater);
   }
 
+  protected parserAt(path: string[], index: number): Parser<any, any> {
+    if (index === path.length - 1) return this.parser;
+    throw new MonarchParseError(`updates must replace the entire nullable value`);
+  }
+
   protected copy() {
     return new MonarchNullable(this.type);
   }
@@ -330,6 +367,11 @@ export class MonarchOptional<T extends AnyMonarchType> extends MonarchType<
       if (input === undefined) return undefined;
       return parser(input);
     }, updater);
+  }
+
+  protected parserAt(path: string[], index: number): Parser<any, any> {
+    if (index === path.length - 1) return this.parser;
+    throw new MonarchParseError(`updates must replace the entire optional value`);
   }
 
   protected copy() {
@@ -374,6 +416,11 @@ export class MonarchDefaulted<T extends AnyMonarchType> extends MonarchType<
       }
       return parser(input);
     }, updater);
+  }
+
+  protected parserAt(path: string[], index: number): Parser<any, any> {
+    if (index === path.length - 1) return this.parser;
+    return MonarchType.parserAt(this.type, path, index);
   }
 
   protected copy() {

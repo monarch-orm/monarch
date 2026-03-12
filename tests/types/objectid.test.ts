@@ -11,7 +11,7 @@ describe("objectId", () => {
     });
 
     const testId = new ObjectId();
-    const data = Schema.encode(schema, { id: testId });
+    const data = Schema.input(schema, { id: testId });
     expect(data.id).toBeInstanceOf(ObjectId);
     expect(data.id.toString()).toBe(testId.toString());
   });
@@ -22,7 +22,7 @@ describe("objectId", () => {
     });
 
     const validId = "507f1f77bcf86cd799439011";
-    const data = Schema.encode(schema, { id: validId });
+    const data = Schema.input(schema, { id: validId });
     expect(data.id).toBeInstanceOf(ObjectId);
     expect(data.id.toString()).toBe(validId);
   });
@@ -32,9 +32,9 @@ describe("objectId", () => {
       id: objectId(),
     });
 
-    expect(() => Schema.encode(schema, { id: "invalid" })).toThrowError("expected 'ObjectId'");
+    expect(() => Schema.input(schema, { id: "invalid" })).toThrowError("expected 'ObjectId'");
     // @ts-expect-error
-    expect(() => Schema.encode(schema, { id: {} })).toThrowError("expected 'ObjectId'");
+    expect(() => Schema.input(schema, { id: {} })).toThrowError("expected 'ObjectId'");
   });
 
   test("works with nullable and optional", () => {
@@ -43,11 +43,11 @@ describe("objectId", () => {
       optionalId: objectId().optional(),
     });
 
-    const nullData = Schema.encode(schema, { nullableId: null });
+    const nullData = Schema.input(schema, { nullableId: null });
     expect(nullData).toStrictEqual({ nullableId: null });
 
     const testId = new ObjectId();
-    const undefinedData = Schema.encode(schema, { nullableId: testId });
+    const undefinedData = Schema.input(schema, { nullableId: testId });
     expect(undefinedData.nullableId).toBeInstanceOf(ObjectId);
     expect(undefinedData.nullableId?.toString()).toBe(testId.toString());
   });

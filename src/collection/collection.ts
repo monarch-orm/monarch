@@ -54,8 +54,9 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
     public relations: TDbRelations,
   ) {
     // create indexes
-    if (schema.options.indexes) {
-      const indexes = makeIndexes(schema.options.indexes);
+    const options = Schema.options(schema);
+    if (options.indexes) {
+      const indexes = makeIndexes(options.indexes);
       const indexesPromises = Object.entries(indexes).map(async ([key, [fields, options]]) => {
         await db.createIndex(schema.name, fields, options).catch((error) => {
           throw new MonarchError(`failed to create index '${key}': ${error}`);
