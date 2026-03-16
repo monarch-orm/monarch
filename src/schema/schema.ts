@@ -1,12 +1,13 @@
 import type { Projection } from "../collection/types/query-options";
 import { detectProjection } from "../collection/utils/projection";
 import { MonarchParseError } from "../errors";
+import { mergeRelations, type AnyRelation, type RelationsFn, type SchemasRelations } from "../relations/relations";
 import { objectId } from "../types/objectId";
-import { type AnyMonarchType, MonarchType } from "../types/type";
-import type { Pretty, WithOptionalId } from "../utils/type-helpers";
+import { MonarchType, type AnyMonarchType } from "../types/type";
+import type { MergeAll, MergeN1All, Pretty, WithOptionalId } from "../utils/type-helpers";
 import type { SchemaIndexes } from "./indexes";
 import type { InferSchemaData, InferSchemaInput, InferSchemaOutput, InferSchemaTypes } from "./type-helpers";
-import type { SchemaVirtuals, Virtual } from "./virtuals";
+import type { AnyVirtual, SchemaVirtuals, Virtual } from "./virtuals";
 
 type SchemaOmit<TTypes extends Record<string, AnyMonarchType>> = {
   [K in keyof WithOptionalId<TTypes>]?: true;
@@ -22,7 +23,7 @@ export class Schema<
   TName extends string,
   TTypes extends Record<string, AnyMonarchType>,
   TOmit extends SchemaOmit<TTypes> = {},
-  TVirtuals extends Record<string, Virtual<any, any, any>> = {},
+  TVirtuals extends Record<string, AnyVirtual> = {},
 > {
   /**
    * Creates a Schema instance.
@@ -196,3 +197,63 @@ export function createSchema<TName extends string, TTypes extends Record<string,
 ): Schema<TName, TTypes, {}, {}> {
   return new Schema(name, types, {});
 }
+
+export class Schemas<
+  TSchemas extends Record<string, AnySchema>,
+  TRelations extends Record<string, Record<string, AnyRelation> | undefined> = {},
+> {
+  constructor(
+    public schemas: TSchemas,
+    public relations: TRelations,
+  ) {
+    this.withRelations = this.withRelations.bind(this);
+  }
+
+  public withRelations<T extends SchemasRelations<TSchemas>>(fn: RelationsFn<TSchemas, T>) {
+    const mergedRelations = mergeRelations(this.schemas, this.relations, fn);
+    return new Schemas(this.schemas, mergedRelations);
+  }
+}
+
+/**
+ * Define schemas.
+ */
+export function defineSchemas<TSchemas extends Record<string, AnySchema> = {}>(schemas: TSchemas) {
+  const mappedSchemas: Record<string, AnySchema> = {};
+
+  for (const schema of Object.values(schemas)) {
+    if (mappedSchemas[schema.name]) {
+      throw new Error(`Schema with name '${schema.name}' already exists.`);
+    }
+    mappedSchemas[schema.name] = schema;
+  }
+
+  return new Schemas<MappedSchemas<TSchemas>, {}>(mappedSchemas as MappedSchemas<TSchemas>, {});
+}
+
+/**
+ * Merge multiple schema definitions into a single instance,
+ * merging their schemas and relations.
+ */
+export function mergeSchemas<T extends Schemas<any, any>[]>(...schemas: T) {
+  let mergedSchemas: Record<string, AnySchema> = {};
+  const mergedRelations: Record<string, any> = {};
+  for (const s of schemas) {
+    mergedSchemas = { ...mergedSchemas, ...s.schemas };
+    for (const [key, relations] of Object.entries(s.relations as Record<string, Record<string, AnyRelation>>)) {
+      if (key in mergedRelations) {
+        mergedRelations[key] = { ...mergedRelations[key], ...relations };
+      } else {
+        mergedRelations[key] = relations;
+      }
+    }
+  }
+  return new Schemas(
+    mergedSchemas as MergeAll<{ [K in keyof T]: T[K]["schemas"] }>,
+    mergedRelations as MergeN1All<{ [K in keyof T]: T[K]["relations"] }>,
+  );
+}
+
+type MappedSchemas<TSchemas extends Record<string, AnySchema>> = {
+  [K in keyof TSchemas as TSchemas[K]["name"]]: TSchemas[K];
+} & {};

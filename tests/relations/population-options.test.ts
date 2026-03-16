@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { createDatabase, createRelations, createSchema, virtual } from "../../src";
+import { createDatabase, createSchema, defineSchemas, virtual } from "../../src";
 import { array, boolean, date, objectId, string } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
@@ -39,24 +39,17 @@ describe("Population Options", async () => {
         secretSize: virtual("secret", ({ secret }) => secret?.length),
       });
 
-    const UserSchemaRelations = createRelations(UserSchema, ({ ref }) => ({
-      posts: ref(PostSchema, { field: "_id", references: "author" }),
+    const schemas = defineSchemas({ UserSchema, PostSchema });
+    const relations = schemas.withRelations((s) => ({
+      users: {
+        posts: s.users.$many.posts({ from: "_id", to: "author" }),
+      },
+      posts: {
+        author: s.posts.$one.users({ from: "author", to: "_id" }),
+        contributors: s.posts.$refs.users({ from: "contributors", to: "_id" }),
+      },
     }));
-
-    const PostSchemaRelations = createRelations(PostSchema, ({ one, many }) => ({
-      author: one(UserSchema, { field: "author", references: "_id" }),
-      contributors: many(UserSchema, {
-        field: "contributors",
-        references: "_id",
-      }),
-    }));
-
-    return createDatabase(client.db(), {
-      users: UserSchema,
-      posts: PostSchema,
-      UserSchemaRelations,
-      PostSchemaRelations,
-    });
+    return createDatabase(client.db(), relations);
   };
 
   it("should populate with limit and skip options", async () => {

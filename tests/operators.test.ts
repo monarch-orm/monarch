@@ -1,5 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { createDatabase, createSchema } from "../src";
+import { createDatabase, createSchema, defineSchemas } from "../src";
 import { and, eq, gt, gte, inArray, lt, lte, neq, nor, notInArray, or } from "../src/operators";
 import { boolean, number, string } from "../src/types";
 import { createMockDatabase, mockUsers } from "./mock";
@@ -14,9 +14,12 @@ describe("Query operators", async () => {
     isVerified: boolean().default(false),
   });
 
-  const { collections } = createDatabase(client.db(), {
-    users: UserSchema,
-  });
+  const { collections } = createDatabase(
+    client.db(),
+    defineSchemas({
+      users: UserSchema,
+    }),
+  );
 
   beforeAll(async () => {
     await client.connect();

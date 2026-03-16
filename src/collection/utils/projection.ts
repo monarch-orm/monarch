@@ -1,5 +1,5 @@
 import type { Population, PopulationOptions } from "../../relations/type-helpers";
-import type { Virtual } from "../../schema/virtuals";
+import type { AnyVirtual } from "../../schema/virtuals";
 import type { BoolProjection, Projection } from "../types/query-options";
 
 export function makeProjection<T>(type: "omit" | "select", projection: BoolProjection<T>) {
@@ -34,7 +34,7 @@ export function detectProjection<T>(projection: Projection<T>) {
 
 export function addExtraInputsToProjection<T>(
   projection: Projection<T>,
-  virtuals: Record<string, Virtual<any, any, any>> | undefined,
+  virtuals: Record<string, AnyVirtual> | undefined,
   populations?: Population<any, any>,
 ): string[] | null {
   const { isProjected, type } = detectProjection(projection);
