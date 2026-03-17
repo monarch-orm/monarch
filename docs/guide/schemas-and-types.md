@@ -129,8 +129,7 @@ const { collections } = createDatabase(client.db(), {
 
 // Inserting a new user with grades for different subjects
 const newUser = await collections.users
-  .insert()
-  .values({
+  .insertOne({
     name: "Alice",
     email: "alice@example.com",
     grades: {
@@ -141,7 +140,7 @@ const newUser = await collections.users
   });
 
 // Querying the user to retrieve grades
-const user = await collections.users.findOne().where({ email: "alice@example.com" });
+const user = await collections.users.findOne({ email: "alice@example.com" });
 console.log(user.grades); 
 // Output: { math: 90, science: 85, history: 88 }
 ```
@@ -212,7 +211,7 @@ const NotificationSchema = createSchema("notifications", {
   }),
 });
 
-await collections.notifications.insert().values({ 
+await collections.notifications.insertOne({ 
   notification: {
     tag: "email",
     value: {

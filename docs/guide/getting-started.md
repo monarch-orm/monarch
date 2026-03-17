@@ -37,15 +37,14 @@ const { collections } = createDatabase(client.db(), {
 });
 
 const newUser = await collections.users
-  .insert()
-  .values({
+  .insertOne({
     name: "anon",
     email: "anon@gmail.com",
     age: 0,
     isVerified: true,
   });
 
-const users = await collections.users.find().where({});
+const users = await collections.users.find({});
 ```
 
 ## Quick Start
@@ -77,8 +76,7 @@ Example: Inserting a new user
 
 ```typescript
 const newUser = await collections.users
-  .insert()
-  .values({
+  .insertOne({
     name: "Alice",
     email: "alice@example.com",
     age: 25,
@@ -93,7 +91,7 @@ Retrieve documents from your collection using the `find` or `findOne` methods.
 Example: Querying all users
 
 ```typescript
-const users = await collections.users.find().where({});
+const users = await collections.users.find({});
 console.log(users);
 
 // Or just...
@@ -102,7 +100,7 @@ console.log(allUsers);
 
 
 // For finding one
-const user = await collections.users.findOne().where({
+const user = await collections.users.findOne({
   name: "Alice"
 });
 console.log(user);

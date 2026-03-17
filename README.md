@@ -11,24 +11,34 @@
 
 ## Table of Contents
 
-- [Features](#features)
-- [Installation](#installation)
-- [Basic Usage](#basic-usage)
-- [Quick Start](#quick-start)
-  - [Defining Schemas](#defining-schemas)
-  - [Connecting to the Database](#connecting-to-the-database)
-  - [Inserting Documents](#inserting-documents)
-  - [Querying Documents](#querying-documents)
-  - [Updating Documents](#updating-documents)
-  - [Deleting Documents](#deleting-documents)
-- [Types](#types)
-  - [Primitives](#primitives)
-  - [Literals](#literals)
-  - [Objects](#objects)
-  - [Records](#records)
-  - [Arrays](#arrays)
-  - [Tuples](#tuples)
-  - [Tagged Union](#tagged-union)
+- [Monarch ORM](#monarch-orm)
+  - [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Installation](#installation)
+  - [Basic Usage](#basic-usage)
+  - [Quick Start](#quick-start)
+    - [Defining Schemas and connecting to the database](#defining-schemas-and-connecting-to-the-database)
+    - [Inserting Documents](#inserting-documents)
+    - [Querying Documents](#querying-documents)
+    - [Updating Documents](#updating-documents)
+    - [Alternative setup](#alternative-setup)
+  - [Types](#types)
+    - [Primitives](#primitives)
+      - [String - string()](#string---string)
+      - [Number - number()](#number---number)
+      - [Boolean - boolean()](#boolean---boolean)
+      - [Date - date()](#date---date)
+      - [Date String - dateString()](#date-string---datestring)
+      - [General Modifiers](#general-modifiers)
+    - [Literals](#literals)
+    - [Objects](#objects)
+    - [Records](#records)
+    - [Arrays](#arrays)
+    - [Tuples](#tuples)
+    - [Tagged Union](#tagged-union)
+    - [Union](#union)
+    - [Mixed](#mixed)
+    - [Mixed](#mixed-1)
 <!-- - [Type Safety](#type-safety) -->
 <!-- - [Configuration](#configuration) -->
 - [Roadmap](#roadmap)
@@ -75,8 +85,7 @@ import { boolean, createClient, createDatabase, createSchema, number, string } f
     });
 
     const newUser = await collections.users
-      .insert()
-      .values({
+      .insertOne({
         name: "anon",
         email: "anon@gmail.com",
         age: 0,
@@ -84,7 +93,7 @@ import { boolean, createClient, createDatabase, createSchema, number, string } f
       })
       ;
 
-    const users = await collections.users.find().where({});
+    const users = await collections.users.find({});
 ```
 
 ## Quick Start
@@ -119,8 +128,7 @@ Example: Inserting a new user
 
 ```typescript
 const newUser = await collections.users
-  .insert()
-  .values({
+  .insertOne({
     name: "Alice",
     email: "alice@example.com",
     age: 25,
@@ -135,7 +143,7 @@ Retrieve documents from your collection using the find or findOne methods.
 Example: Querying all users
 
 ```typescript
-const users = await collections.users.find().where({});
+const users = await collections.users.find({});
 console.log(users);
 
 // Or just...
@@ -145,7 +153,7 @@ console.log(users);
 
 // For finding one
 
-const user = await collections.users.find().where({
+const user = await collections.users.find({
   name: "Alice"
 });
 console.log(users);
@@ -349,8 +357,7 @@ const { collections } = createDatabase(client.db(), {
 
 // Inserting a new user with grades for different subjects
 const newUser = await collections.users
-  .insert()
-  .values({
+  .insertOne({
     name: "Alice",
     email: "alice@example.com",
     grades: {
@@ -362,7 +369,7 @@ const newUser = await collections.users
   ;
 
 // Querying the user to retrieve grades
-const user = await collections.users.findOne().where({ email: "alice@example.com" });
+const user = await collections.users.findOne({ email: "alice@example.com" });
 console.log(user.grades); 
 // Output: { math: 90, science: 85, history: 88 }
 ```
@@ -435,7 +442,7 @@ const NotificationSchema = createSchema("notifications", {
 });
 
 const notification = ;
-await collections.notifications.insert().values({ notification: {
+await collections.notifications.insertOne({ notification: {
   tag: "email",
   value: {
     subject: "Welcome!",
