@@ -123,9 +123,11 @@ const UserSchema = createSchema("users", {
 });
 
 // Example of inserting a user with grades
-const { collections } = createDatabase(client.db(), defineSchemas({
+const schemas = defineSchemas({
   users: UserSchema,
-}));
+});
+
+const { collections } = createDatabase(client.db(), schemas);
 
 // Inserting a new user with grades for different subjects
 const newUser = await collections.users

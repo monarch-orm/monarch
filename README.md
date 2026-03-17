@@ -80,9 +80,11 @@ import { boolean, createClient, createDatabase, defineSchemas, createSchema, num
     });
 
     const client = createClient(/** db uri **//)
-    const { collections } = createDatabase(client.db(), defineSchemas({
+    const schemas = defineSchemas({
       users: UserSchema,
-    }));
+    });
+
+    const { collections } = createDatabase(client.db(), schemas);
 
     const newUser = await collections.users
       .insertOne({
@@ -113,12 +115,16 @@ Create a database instance using any client you deem fit and drop it into the cr
 
 Or you can use the built-in createClient function.
 
+It is good practice (though not compulsory) to assign the result of `defineSchemas` to a variable before passing it to `createDatabase`. This keeps your database initialization clean.
+
 Then you pass your schemas to the second arguement
 
 ```typescript
-const { collections } = createDatabase(client.db(), defineSchemas({
+const schemas = defineSchemas({
   users: UserSchema,
-}));
+});
+
+const { collections } = createDatabase(client.db(), schemas);
 ```
 
 ### Inserting Documents
@@ -351,9 +357,11 @@ const UserSchema = createSchema("users", {
 
 
 // Example of inserting a user with grades
-const { collections } = createDatabase(client.db(), defineSchemas({
+const schemas = defineSchemas({
   users: UserSchema,
-}));
+});
+
+const { collections } = createDatabase(client.db(), schemas);
 
 // Inserting a new user with grades for different subjects
 const newUser = await collections.users

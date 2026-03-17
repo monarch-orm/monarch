@@ -32,9 +32,11 @@ const UserSchema = createSchema("users", {
 });
 
 const client = createClient(/** db uri **/)
-const { collections } = createDatabase(client.db(), defineSchemas({
+const schemas = defineSchemas({
   users: UserSchema,
-}));
+});
+
+const { collections } = createDatabase(client.db(), schemas);
 
 const newUser = await collections.users
   .insertOne({
@@ -60,12 +62,16 @@ const UserSchema = createSchema("users", {
 });
 ```
 
-Create a database instance using any client you deem fit and drop it into the `createDatabase` function. Or you can use the built-in `createClient` function. Then you pass your schemas to the second argument.
+Create a database instance using any client you deem fit and drop it into the `createDatabase` function. Or you can use the built-in `createClient` function. 
+
+It is good practice to assign your `defineSchemas` result to a variable (e.g. `schemas`) before passing it to `createDatabase`. This keeps your configuration clean, especially as your project grows. Then you pass your schemas to the second argument.
 
 ```typescript
-const { collections } = createDatabase(client.db(), defineSchemas({
+const schemas = defineSchemas({
   users: UserSchema,
-}));
+});
+
+const { collections } = createDatabase(client.db(), schemas);
 ```
 
 ### Inserting Documents

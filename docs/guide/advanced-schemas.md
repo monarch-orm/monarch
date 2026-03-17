@@ -19,7 +19,8 @@ const UserSchema = createSchema("users", {
   role: virtual("isAdmin", ({ isAdmin }) => (isAdmin ? "admin" : "user")),
 });
 
-const db = createDatabase(client.db(), defineSchemas({ users: UserSchema }));
+const schemas = defineSchemas({ users: UserSchema });
+const db = createDatabase(client.db(), schemas);
 const user = await db.collections.users.insertOne({ name: "Tom", age: 30, isAdmin: true });
 
 console.log(user.role); // "admin"
