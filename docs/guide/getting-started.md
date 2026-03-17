@@ -32,9 +32,9 @@ const UserSchema = createSchema("users", {
 });
 
 const client = createClient(/** db uri **/)
-const { collections } = createDatabase(client.db(), {
+const { collections } = createDatabase(client.db(), defineSchemas({
   users: UserSchema,
-});
+}));
 
 const newUser = await collections.users
   .insertOne({
@@ -63,9 +63,9 @@ const UserSchema = createSchema("users", {
 Create a database instance using any client you deem fit and drop it into the `createDatabase` function. Or you can use the built-in `createClient` function. Then you pass your schemas to the second argument.
 
 ```typescript
-const { collections } = createDatabase(client.db(), {
+const { collections } = createDatabase(client.db(), defineSchemas({
   users: UserSchema,
-});
+}));
 ```
 
 ### Inserting Documents
