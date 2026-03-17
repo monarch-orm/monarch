@@ -39,6 +39,9 @@
     }
   },
   "scripts": {
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
     "build": "tsdown",
     "release": "pnpm run build && changeset publish",
     "check": "tsc && pnpm run format",
@@ -85,6 +88,7 @@
     "prettier-plugin-organize-imports": "^4.3.0",
     "tsdown": "^0.18.3",
     "typescript": "^5.9.3",
+    "vitepress": "^1.6.4",
     "vitest": "^4.0.16"
   }
 }
