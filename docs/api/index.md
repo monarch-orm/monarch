@@ -1,0 +1,238 @@
+# API Documentation
+
+This page provides a comprehensive list of all collection methods available in Monarch ORM.
+
+## Collection Operations
+
+### `insert()`
+Inserts a new document into the collection.
+- **Return Type:** `Promise<InsertOneWriteOpResult<InferSchemaData<T>>>`
+
+### `insertOne()`
+Inserts a single document into the collection.
+- **Return Type:** `Promise<InsertOneWriteOpResult<InferSchemaData<T>>>`
+
+### `insertMany()`
+Inserts multiple documents into the collection.
+- **Return Type:** `Promise<InsertWriteOpResult<InferSchemaData<T>>>`
+
+### `find()`
+Retrieves documents from the collection.
+- **Arguments:**
+  - `filter`: `Filter<InferSchemaData<T>>`
+- **Return Type:** `Promise<InferSchemaData<T>[]>`
+- **Callable Methods:**
+  - `where()`: Filters the documents based on a specified condition.
+  - `limit()`: Limits the number of documents returned.
+  - `skip()`: Skips a specified number of documents.
+  - `sort()`: Sorts the documents by a specified field.
+
+### `findOne()`
+Retrieves a single document from the collection.
+- **Arguments:**
+  - `filter`: `Filter<InferSchemaData<T>>`
+- **Return Type:** `Promise<InferSchemaData<T> | null>`
+- **Callable Methods:**
+  - `where()`: Filters the documents based on a specified condition.
+
+### `findOneAndDelete()`
+Retrieves a single document from the collection and deletes it.
+- **Arguments:**
+  - `filter`: `Filter<InferSchemaData<T>>`
+- **Return Type:** `Promise<FindAndModifyWriteOpResultObject<InferSchemaData<T>>>`
+
+### `findOneAndUpdate()`
+Retrieves a single document from the collection, updates it, and returns the updated document.
+- **Arguments:**
+  - `filter`: `Filter<InferSchemaData<T>>`
+  - `update`: `UpdateFilter<InferSchemaData<T>>`
+- **Return Type:** `Promise<FindAndModifyWriteOpResultObject<InferSchemaData<T>>>`
+
+### `findOneAndReplace()`
+Retrieves a single document from the collection, replaces it, and returns the new document.
+- **Arguments:**
+  - `filter`: `Filter<InferSchemaData<T>>`
+  - `replacement`: `InferSchemaData<T>`
+- **Return Type:** `Promise<FindAndModifyWriteOpResultObject<InferSchemaData<T>>>`
+
+### `count()`
+Counts the number of documents in the collection.
+- **Arguments:**
+  - `filter`: `Filter<InferSchemaData<T>>`
+- **Return Type:** `Promise<number>`
+
+### `updateOne()`
+Updates a single document in the collection.
+- **Arguments:**
+  - `filter`: `Filter<InferSchemaData<T>>`
+  - `update`: `UpdateFilter<InferSchemaData<T>>`
+- **Return Type:** `Promise<UpdateWriteOpResult>`
+
+### `updateMany()`
+Updates multiple documents in the collection.
+- **Arguments:**
+  - `filter`: `Filter<InferSchemaData<T>>`
+  - `update`: `UpdateFilter<InferSchemaData<T>>`
+- **Return Type:** `Promise<UpdateWriteOpResult>`
+
+### `deleteOne()`
+Deletes a single document from the collection.
+- **Arguments:**
+  - `filter`: `Filter<InferSchemaData<T>>`
+- **Return Type:** `Promise<DeleteWriteOpResultObject>`
+
+### `deleteMany()`
+Deletes multiple documents from the collection.
+- **Arguments:**
+  - `filter`: `Filter<InferSchemaData<T>>`
+- **Return Type:** `Promise<DeleteWriteOpResultObject>`
+
+### `replaceOne()`
+Replaces a single document in the collection.
+- **Arguments:**
+  - `filter`: `Filter<InferSchemaData<T>>`
+  - `replacement`: `InferSchemaData<T>`
+- **Return Type:** `Promise<ReplaceWriteOpResult>`
+
+### `aggregate()`
+Performs aggregation operations on the collection.
+- **Arguments:**
+  - `pipeline`: `PipelineStage<OptionalUnlessRequiredId<InferSchemaData<T>>>[]`
+- **Return Type:** `AggregationCursor<InferSchemaData<T>>`
+- **Callable Methods:**
+  - `allowDiskUse()`: Allows the aggregation operation to use disk storage.
+  - `cursor()`: Returns a cursor for the aggregation operation.
+
+### `watch()`
+Watches for changes in the collection.
+- **Arguments:**
+  - `pipeline`: `PipelineStage<any>[]`
+- **Return Type:** `ChangeStream<InferSchemaData<T>>`
+- **Callable Methods:**
+  - `on()`: Attaches a listener to the change stream.
+
+### `bulkWrite()`
+Performs bulk write operations on the collection.
+- **Return Type:** `Promise<BulkWriteOpResultObject>`
+
+### `distinct()`
+Finds the distinct values for a specified field in the collection.
+- **Arguments:**
+  - `field`: `keyof InferSchemaOutput<T>`
+  - `filter`: `Filter<InferSchemaData<T>>`
+- **Return Type:** `Promise<InferSchemaOutput<T>[]>`
+
+### `drop()`
+Drops the collection.
+- **Return Type:** `Promise<void>`
+
+### `estimatedDocumentCount()`
+Estimates the number of documents in the collection.
+- **Arguments:**
+  - `options`: `EstimatedDocumentCountOptions`
+- **Return Type:** `Promise<number>`
+
+### `isCapped()`
+Checks if the collection is capped.
+- **Return Type:** `Promise<boolean>`
+
+### `options()`
+Gets the options of the collection.
+- **Arguments:**
+  - `options`: `OperationOptions`
+- **Return Type:** `Promise<any>`
+
+### `rename()`
+Renames the collection.
+- **Arguments:**
+  - `newName`: `string`
+  - `options`: `RenameOptions`
+- **Return Type:** `Promise<MongoClient>`
+
+### `raw()`
+Returns the raw MongoDB collection.
+- **Return Type:** `MongoDBCollection<InferSchemaData<T>>`
+- **Callable Methods:**
+  - Various MongoDB collection methods.
+
+## Index Operations
+
+### `createIndex()`
+Creates an index on the collection.
+- **Arguments:**
+  - `key`: `IndexDefinitionKey<Partial<InferSchemaData<T>>>`
+  - `options`: `IndexDefinitionOptions<InferSchemaData<T>>`
+- **Return Type:** `Promise<string>`
+
+### `createIndexes()`
+Creates multiple indexes on the collection.
+- **Arguments:**
+  - `keys`: `IndexDefinitionKey<Partial<InferSchemaData<T>>>[]`
+  - `options`: `IndexDefinitionOptions<InferSchemaData<T>>`
+- **Return Type:** `Promise<string[]>`
+
+### `dropIndex()`
+Drops an index from the collection.
+- **Arguments:**
+  - `value`: `string`
+- **Return Type:** `Promise<string>`
+
+### `dropIndexes()`
+Drops all indexes from the collection.
+- **Arguments:**
+  - `options`: `DropIndexesOptions`
+- **Return Type:** `Promise<string[]>`
+
+### `listIndexes()`
+Lists all indexes on the collection.
+- **Return Type:** `CommandCursor<IndexInformation[]>`
+- **Callable Methods:**
+  - `forEach()`: Iterates over the index information.
+
+### `indexExists()`
+Checks if an index exists on the collection.
+- **Arguments:**
+  - `name`: `string`
+  - `options`: `AbstractCursorOptions`
+- **Return Type:** `Promise<boolean>`
+
+### `indexInformation()`
+Gets information about the indexes on the collection.
+- **Arguments:**
+  - `options`: `IndexInformationOptions & { full?: boolean; }`
+- **Return Type:** `Promise<IndexInformation[]>`
+- **Callable Methods:**
+  - `forEach()`: Iterates over the index information.
+
+## Search Index Operations
+
+### `createSearchIndex()`
+Creates a search index on the collection.
+- **Arguments:**
+  - `description`: `SearchIndexDescription`
+- **Return Type:** `Promise<string>`
+
+### `createSearchIndexes()`
+Creates multiple search indexes on the collection.
+- **Arguments:**
+  - `descriptions`: `SearchIndexDescription[]`
+- **Return Type:** `Promise<string[]>`
+
+### `dropSearchIndex()`
+Drops a search index from the collection.
+- **Arguments:**
+  - `name`: `string`
+- **Return Type:** `Promise<string>`
+
+### `listSearchIndexes()`
+Lists all search indexes on the collection.
+- **Return Type:** `CommandCursor<SearchIndexInformation[]>`
+- **Callable Methods:**
+  - `forEach()`: Iterates over the search index information.
+
+### `updateSearchIndex()`
+Updates a search index on the collection.
+- **Arguments:**
+  - `name`: `string`
+  - `description`: `SearchIndexDescription`
+- **Return Type:** `Promise<string>`
