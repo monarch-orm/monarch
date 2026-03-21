@@ -1,5 +1,5 @@
 import { MonarchParseError } from "../errors";
-import { type AnyMonarchType, type Parser, MonarchType } from "./type";
+import { type AnyMonarchType, MonarchType } from "./type";
 import type { InferTypeInput, InferTypeObjectInput, InferTypeObjectOutput } from "./type-helpers";
 
 /**
@@ -22,7 +22,7 @@ export class MonarchObject<T extends Record<string, AnyMonarchType>> extends Mon
       if (typeof input === "object" && input !== null) {
         for (const key of Object.keys(input)) {
           if (!(key in types)) {
-            throw new MonarchParseError(`unknown field '${key}', object may only specify known fields`);
+            throw MonarchParseError.create({ message: `unknown field '${key}', object may only specify known fields` });
           }
         }
         const parsed = {} as InferTypeObjectOutput<T>;
@@ -32,32 +32,26 @@ export class MonarchObject<T extends Record<string, AnyMonarchType>> extends Mon
             const result = parser(input[key as keyof typeof input] as InferTypeInput<T[keyof T]>);
             if (result !== undefined) parsed[key as keyof typeof parsed] = result;
           } catch (error) {
-            if (error instanceof MonarchParseError) {
-              throw new MonarchParseError({ path: key, error });
-            }
-            throw error;
+            throw MonarchParseError.fromCause({ path: key, cause: error });
           }
         }
         return parsed;
       }
-      throw new MonarchParseError(`expected 'object' received '${typeof input}'`);
+      throw MonarchParseError.create({ message: `expected 'object' received '${typeof input}'` });
     });
   }
 
-  protected parserAt(path: string[], index: number): Parser<any, any> {
-    if (index === path.length - 1) return this.parser;
-    const key = path[index + 1];
+  protected index(path: string[], depth: number): AnyMonarchType {
+    if (depth === path.length - 1) return this;
+    const key = path[depth + 1];
     if (key && key in this.types) {
       try {
-        return MonarchType.parserAt(this.types[key]!, path, index + 1);
+        return MonarchType.index(this.types[key]!, path, depth + 1);
       } catch (error) {
-        if (error instanceof MonarchParseError) {
-          throw new MonarchParseError({ path: key, error });
-        }
-        throw error;
+        throw MonarchParseError.fromCause({ path: key, cause: error });
       }
     }
-    throw new MonarchParseError(`unknown field '${key}'`);
+    throw MonarchParseError.create({ message: `unknown field '${key}'` });
   }
 
   protected copy() {

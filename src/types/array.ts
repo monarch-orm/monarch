@@ -1,5 +1,5 @@
 import { MonarchParseError } from "../errors";
-import { type AnyMonarchType, type Parser, MonarchType } from "./type";
+import { type AnyMonarchType, MonarchType } from "./type";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
 
 /**
@@ -14,12 +14,10 @@ export const array = <T extends AnyMonarchType>(type: T) => new MonarchArray(typ
  * Type for array fields.
  */
 export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTypeInput<T>[], InferTypeOutput<T>[]> {
-  private elementType: T;
-
-  constructor(type: T) {
+  constructor(private type: T) {
     super((input) => {
       if (!Array.isArray(input)) {
-        throw new MonarchParseError(`expected 'array' received '${typeof input}'`);
+        throw MonarchParseError.create({ message: `expected 'array' received '${typeof input}'` });
       }
 
       const parser = MonarchType.parser(type);
@@ -28,38 +26,32 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
         try {
           parsed[index] = parser(value);
         } catch (error) {
-          if (error instanceof MonarchParseError) {
-            throw new MonarchParseError({ path: index, error });
-          }
-          throw error;
+          throw MonarchParseError.fromCause({ path: index, cause: error });
         }
       }
       return parsed;
     });
-    this.elementType = type;
   }
 
-  protected parserAt(path: string[], index: number): Parser<any, any> {
-    if (index === path.length - 1) return this.parser;
-    const arrayIndex = path[index + 1];
-    if (
-      arrayIndex?.startsWith("$") ||
-      (arrayIndex && Number.isInteger(Number(arrayIndex)) && Number(arrayIndex) >= 0)
-    ) {
+  protected index(path: string[], depth: number): AnyMonarchType {
+    if (depth === path.length - 1) return this;
+    const index = path[depth + 1];
+    if (index?.startsWith("$") || (index && Number.isInteger(Number(index)) && Number(index) >= 0)) {
       try {
-        return MonarchType.parserAt(this.elementType, path, index + 1);
+        return MonarchType.index(this.type, path, depth + 1);
       } catch (error) {
-        if (error instanceof MonarchParseError) {
-          throw new MonarchParseError({ path: arrayIndex, error });
-        }
-        throw error;
+        throw MonarchParseError.fromCause({ path: index, cause: error });
       }
     }
-    throw new MonarchParseError(`expected a numeric index or positional operator`);
+    throw MonarchParseError.create({ message: `expected a numeric index or positional operator` });
   }
 
   protected copy() {
-    return new MonarchArray(this.elementType);
+    return new MonarchArray(this.type);
+  }
+
+  public static type<T extends AnyMonarchType>(array: MonarchArray<T>): T {
+    return array.type;
   }
 
   /**
@@ -71,7 +63,7 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
   public min(length: number) {
     return this.parse((input) => {
       if (input.length < length) {
-        throw new MonarchParseError(`array must have at least ${length} elements`);
+        throw MonarchParseError.create({ message: `array must have at least ${length} elements` });
       }
       return input;
     });
@@ -86,7 +78,7 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
   public max(length: number) {
     return this.parse((input) => {
       if (input.length > length) {
-        throw new MonarchParseError(`array must have at most ${length} elements`);
+        throw MonarchParseError.create({ message: `array must have at most ${length} elements` });
       }
       return input;
     });
@@ -101,7 +93,7 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
   public length(length: number) {
     return this.parse((input) => {
       if (input.length !== length) {
-        throw new MonarchParseError(`array must have exactly ${length} elements`);
+        throw MonarchParseError.create({ message: `array must have exactly ${length} elements` });
       }
       return input;
     });
@@ -115,7 +107,7 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
   public nonempty() {
     return this.parse((input) => {
       if (input.length === 0) {
-        throw new MonarchParseError("array must not be empty");
+        throw MonarchParseError.create({ message: "array must not be empty" });
       }
       return input;
     });

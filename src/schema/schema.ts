@@ -1,16 +1,24 @@
+import type { StrictUpdateFilter } from "mongodb";
 import type { Projection } from "../collection/types/query-options";
 import { detectProjection } from "../collection/utils/projection";
 import { mergeRelations, type AnyRelation, type RelationsFn, type SchemasRelations } from "../relations/relations";
-import { MonarchObject, object } from "../types";
+import { MonarchObject, object, type InferTypeObjectInput } from "../types";
 import { objectId } from "../types/objectId";
 import { MonarchType, type AnyMonarchType } from "../types/type";
-import type { MergeAll, MergeN1All, Pretty, WithOptionalId } from "../utils/type-helpers";
+import type { MergeAll, MergeN1All, Pretty } from "../utils/type-helpers";
 import type { SchemaIndexes } from "./indexes";
-import type { InferSchemaData, InferSchemaInput, InferSchemaOutput, InferSchemaTypes } from "./type-helpers";
+import type {
+  InferSchemaData,
+  InferSchemaInput,
+  InferSchemaOutput,
+  InferSchemaTypes,
+  WithObjectId,
+} from "./type-helpers";
+import { updateParser } from "./update";
 import type { AnyVirtual, SchemaVirtuals, Virtual } from "./virtuals";
 
 type SchemaOmit<TTypes extends Record<string, AnyMonarchType>> = {
-  [K in keyof WithOptionalId<TTypes>]?: true;
+  [K in keyof TTypes]?: true;
 };
 
 export type AnySchema = Schema<any, any, any, any>;
@@ -26,6 +34,7 @@ export class Schema<
   TVirtuals extends Record<string, AnyVirtual> = {},
 > {
   private type: MonarchObject<TTypes>;
+  private update?: () => StrictUpdateFilter<InferTypeObjectInput<TTypes>>;
 
   /**
    * Creates a Schema instance.
@@ -43,8 +52,6 @@ export class Schema<
       indexes?: SchemaIndexes<TTypes>;
     },
   ) {
-    // @ts-ignore
-    if (!types._id) types._id = objectId().optional();
     this.type = object(types);
   }
 
@@ -54,7 +61,7 @@ export class Schema<
    * @param omit - Object specifying which fields to omit
    * @returns Schema instance with omit configuration
    */
-  omit<TOmit extends SchemaOmit<TTypes>>(omit: TOmit) {
+  public omit<TOmit extends SchemaOmit<TTypes>>(omit: TOmit) {
     const schema = this as unknown as Schema<TName, TTypes, TOmit, TVirtuals>;
     schema.options.omit = omit;
     return schema;
@@ -66,7 +73,7 @@ export class Schema<
    * @param virtuals - Object defining virtual fields
    * @returns Schema instance with virtual fields configured
    */
-  virtuals<TVirtuals extends Record<string, Virtual<Pretty<TTypes>, any, any>>>(
+  public virtuals<TVirtuals extends Record<string, Virtual<Pretty<TTypes>, any, any>>>(
     virtuals: SchemaVirtuals<TTypes, TVirtuals>,
   ) {
     const schema = this as unknown as Schema<TName, TTypes, TOmit, TVirtuals>;
@@ -92,8 +99,15 @@ export class Schema<
    *   fullname: createIndex({ firstname: 1, surname: 1 }, { unique: true }),
    * }));
    */
-  indexes(indexes: SchemaIndexes<TTypes>) {
+  public indexes(indexes: SchemaIndexes<TTypes>) {
     this.options.indexes = indexes;
+    return this;
+  }
+
+  public onUpdate(
+    update: StrictUpdateFilter<InferTypeObjectInput<TTypes>> | (() => StrictUpdateFilter<InferTypeObjectInput<TTypes>>),
+  ) {
+    this.update = typeof update === "function" ? update : () => update;
     return this;
   }
 
@@ -136,14 +150,8 @@ export class Schema<
    * @param update - Update data with dot-path keys and their new values
    * @returns Parsed update data
    */
-  public static updateInput<T extends AnySchema>(schema: T, update: Record<string, unknown>) {
-    const parsed = {} as Record<string, unknown>;
-    for (const [path, value] of Object.entries(update)) {
-      const segments = path.split(".");
-      const parser = MonarchType.parserAt(schema.type, segments, 0);
-      parsed[path] = parser(value);
-    }
-    return parsed;
+  public static updateInput<T extends AnySchema>(schema: T, update: StrictUpdateFilter<InferSchemaInput<T>>) {
+    return updateParser(schema.type, schema.update, update as StrictUpdateFilter<any>);
   }
 
   /**
@@ -180,23 +188,6 @@ export class Schema<
     }
     return output;
   }
-
-  /**
-   * Get field updates for all top-level schema fields that have onUpdate configured.
-   *
-   * NOTE: Only top-level schema fields are processed. Nested fields within objects or arrays are not included.
-   */
-  public static getFieldUpdates<T extends AnySchema>(schema: T) {
-    const updates = {} as Partial<InferSchemaOutput<T>>;
-    // omit fields
-    for (const [key, type] of Object.entries(Schema.types(schema))) {
-      const updater = MonarchType.updater(type as AnyMonarchType);
-      if (updater) {
-        updates[key as keyof InferSchemaOutput<T>] = updater();
-      }
-    }
-    return updates;
-  }
 }
 
 /**
@@ -209,8 +200,10 @@ export class Schema<
 export function createSchema<TName extends string, TTypes extends Record<string, AnyMonarchType>>(
   name: TName,
   types: TTypes,
-): Schema<TName, TTypes, {}, {}> {
-  return new Schema(name, types, {});
+): Schema<TName, Pretty<WithObjectId<TTypes>>, {}, {}> {
+  let schemaTypes = types as Pretty<WithObjectId<TTypes>>;
+  if (!schemaTypes._id) schemaTypes._id = objectId().optional();
+  return new Schema(name, schemaTypes, {});
 }
 
 export class Schemas<

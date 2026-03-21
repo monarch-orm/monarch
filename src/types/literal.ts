@@ -17,7 +17,7 @@ export class MonarchLiteral<T extends string | number | boolean> extends Monarch
     super((input) => {
       const _values = new Set(values);
       if (_values.has(input)) return input;
-      throw new MonarchParseError(`unknown value '${input}', literal may only specify known values`);
+      throw MonarchParseError.create({ message: `unknown value '${input}', literal may only specify known values` });
     });
   }
 

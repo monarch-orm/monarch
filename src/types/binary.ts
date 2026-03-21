@@ -17,7 +17,7 @@ export class MonarchBinary extends MonarchType<Buffer | Binary, Binary> {
     super((input) => {
       if (input instanceof Binary) return input;
       if (Buffer.isBuffer(input)) return new Binary(input);
-      throw new MonarchParseError(`expected 'Buffer' or 'Binary' received '${typeof input}'`);
+      throw MonarchParseError.create({ message: `expected 'Buffer' or 'Binary' received '${typeof input}'` });
     });
   }
 

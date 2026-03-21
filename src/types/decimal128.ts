@@ -16,8 +16,14 @@ export class MonarchDecimal128 extends MonarchType<Decimal128 | string, Decimal1
   constructor() {
     super((input) => {
       if (input instanceof Decimal128) return input;
-      if (typeof input === "string") return Decimal128.fromString(input);
-      throw new MonarchParseError(`expected 'Decimal128' or 'string' received '${typeof input}'`);
+      if (typeof input === "string") {
+        try {
+          return Decimal128.fromString(input);
+        } catch (error) {
+          throw MonarchParseError.fromCause({ cause: error });
+        }
+      }
+      throw MonarchParseError.create({ message: `expected 'Decimal128' or 'string' received '${typeof input}'` });
     });
   }
 

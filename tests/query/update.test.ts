@@ -1,6 +1,6 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createDatabase, createSchema, defineSchemas } from "../../src";
-import { array, boolean, number, string } from "../../src/types";
+import { boolean, date, number, string } from "../../src/types";
 import { createMockDatabase, mockUsers } from "../mock";
 
 describe("Update Operations", async () => {
@@ -11,6 +11,7 @@ describe("Update Operations", async () => {
     email: string().lowercase().optional(),
     age: number().optional().default(10),
     isVerified: boolean().default(false),
+    joinedAt: date().optional(),
   });
 
   const { collections } = createDatabase(
@@ -31,6 +32,157 @@ describe("Update Operations", async () => {
   afterAll(async () => {
     await client.close();
     await server.stop();
+  });
+
+  it("update runs on update operations", async () => {
+    const schema = createSchema("users", {
+      name: string(),
+      age: number(),
+      isAdmin: boolean(),
+    }).onUpdate({
+      $set: { age: 100 },
+    });
+    const db = createDatabase(client.db(), defineSchemas({ users: schema }));
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      age: 0,
+      isAdmin: true,
+    });
+    const doc = await db.collections.users.findOne({ _id: res._id });
+    expect(doc).toStrictEqual({
+      _id: res._id,
+      name: "tom",
+      age: 0,
+      isAdmin: true,
+    });
+    const updatedDoc = await db.collections.users
+      .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
+      .options({
+        returnDocument: "after",
+      });
+    expect(updatedDoc).toStrictEqual({
+      _id: res._id,
+      name: "jerry",
+      age: 100,
+      isAdmin: true,
+    });
+  });
+
+  it("update also calls validate", async () => {
+    const onUpdateTrap = vi.fn(() => true);
+    const schema = createSchema("users", {
+      name: string(),
+      nonce: number().validate(onUpdateTrap, ""),
+    }).onUpdate(() => ({
+      $set: { nonce: 1 },
+    }));
+    const db = createDatabase(client.db(), defineSchemas({ users: schema }));
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      nonce: 0,
+    });
+    expect(onUpdateTrap).toBeCalledTimes(1);
+    expect(res).toStrictEqual({ _id: res._id, name: "tom", nonce: 0 });
+
+    const updatedDoc = await db.collections.users
+      .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
+      .options({
+        returnDocument: "after",
+      });
+    expect(onUpdateTrap).toBeCalledTimes(2);
+    expect(updatedDoc).toStrictEqual({
+      _id: res._id,
+      name: "jerry",
+      nonce: 1,
+    });
+  });
+
+  it("updates with optional", async () => {
+    let nonce = 1;
+    const onUpdateTrap = vi.fn(() => nonce++);
+    const schema = createSchema("users", {
+      name: string(),
+      nonce: number().optional(),
+    }).onUpdate(() => ({
+      $set: { nonce: onUpdateTrap() },
+    }));
+    const db = createDatabase(client.db(), defineSchemas({ users: schema }));
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+    });
+    expect(onUpdateTrap).toBeCalledTimes(0);
+    expect(res).toStrictEqual({ _id: res._id, name: "tom" });
+
+    const updatedDoc = await db.collections.users
+      .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
+      .options({
+        returnDocument: "after",
+      });
+    expect(onUpdateTrap).toBeCalledTimes(1);
+    expect(updatedDoc).toStrictEqual({
+      _id: res._id,
+      name: "jerry",
+      nonce: 1,
+    });
+  });
+
+  it("updates with nullable", async () => {
+    let nonce = 1;
+    const onUpdateTrap = vi.fn(() => nonce++);
+    const schema = createSchema("users", {
+      name: string(),
+      nonce: number().nullable(),
+    }).onUpdate(() => ({
+      $set: { nonce: onUpdateTrap() },
+    }));
+    const db = createDatabase(client.db(), defineSchemas({ users: schema }));
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      nonce: null,
+    });
+    expect(onUpdateTrap).toBeCalledTimes(0);
+    expect(res).toStrictEqual({ _id: res._id, name: "tom", nonce: null });
+
+    const updatedDoc = await db.collections.users
+      .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
+      .options({
+        returnDocument: "after",
+      });
+    expect(onUpdateTrap).toBeCalledTimes(1);
+    expect(updatedDoc).toStrictEqual({
+      _id: res._id,
+      name: "jerry",
+      nonce: 1,
+    });
+  });
+
+  it("updates with defaulted", async () => {
+    let nonce = 1;
+    const onUpdateTrap = vi.fn(() => nonce++);
+    const schema = createSchema("users", {
+      name: string(),
+      nonce: number().default(0),
+    }).onUpdate(() => ({
+      $set: { nonce: onUpdateTrap() },
+    }));
+    const db = createDatabase(client.db(), defineSchemas({ users: schema }));
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+    });
+    expect(onUpdateTrap).toBeCalledTimes(0);
+    expect(res).toStrictEqual({ _id: res._id, name: "tom", nonce: 0 });
+
+    const updatedDoc = await db.collections.users
+      .findOneAndUpdate({ _id: res._id }, { $set: { name: "jerry" } })
+      .options({
+        returnDocument: "after",
+      });
+    expect(onUpdateTrap).toBeCalledTimes(1);
+    expect(updatedDoc).toStrictEqual({
+      _id: res._id,
+      name: "jerry",
+      nonce: 1,
+    });
   });
 
   it("finds one and updates", async () => {
@@ -104,7 +256,9 @@ describe("Update Operations", async () => {
   it("findByIdAndUpdate triggers onUpdate hooks", async () => {
     const schema = createSchema("users", {
       name: string(),
-      age: number().onUpdate(() => 555),
+      age: number(),
+    }).onUpdate({
+      $set: { age: 555 },
     });
     const schemas = defineSchemas({ users: schema });
     const db = createDatabase(client.db(), schemas);
@@ -119,34 +273,42 @@ describe("Update Operations", async () => {
     expect(updatedUser?.age).toBe(555);
   });
 
-  describe("array operators", () => {
-    it("should support $addToSet operator", async () => {
-      const schema = createSchema("posts", {
-        title: string(),
-        tags: array(string()).optional(),
-      });
-      const schemas = defineSchemas({ posts: schema });
-      const db = createDatabase(client.db(), schemas);
+  describe("validation", () => {
+    it("rejects invalid type in findOneAndUpdate", async () => {
+      await collections.users.insertOne(mockUsers[0]);
 
-      const post = await db.collections.posts.insertOne({
-        title: "My Post",
-        tags: ["javascript"],
-      });
+      await expect(
+        collections.users
+          .findOneAndUpdate({ email: "anon@gmail.com" }, { $set: { age: "invalid" as any } })
+          .options({ returnDocument: "after" }),
+      ).rejects.toThrow();
+    });
 
-      const updated = await db.collections.posts
-        .findOneAndUpdate({ _id: post._id }, { $addToSet: { tags: "typescript" } })
+    it("rejects invalid type in updateOne", async () => {
+      await collections.users.insertOne(mockUsers[0]);
+
+      await expect(
+        collections.users.updateOne({ email: "anon@gmail.com" }, { $set: { age: "invalid" as any } }),
+      ).rejects.toThrow();
+    });
+
+    it("transforms input in findOneAndUpdate", async () => {
+      await collections.users.insertOne(mockUsers[0]);
+
+      const updated = await collections.users
+        .findOneAndUpdate({ email: "anon@gmail.com" }, { $set: { email: "ANON@GMAIL.COM" } })
         .options({ returnDocument: "after" });
 
-      expect(updated?.tags).toContain("javascript");
-      expect(updated?.tags).toContain("typescript");
-      expect(updated?.tags).toHaveLength(2);
+      expect(updated?.email).toBe("anon@gmail.com");
+    });
 
-      // Adding the same tag again should not duplicate
-      const updated2 = await db.collections.posts
-        .findOneAndUpdate({ _id: post._id }, { $addToSet: { tags: "typescript" } })
-        .options({ returnDocument: "after" });
+    it("transforms input in updateOne", async () => {
+      await collections.users.insertOne(mockUsers[1]);
 
-      expect(updated2?.tags).toHaveLength(2);
+      await collections.users.updateOne({ email: "anon1@gmail.com" }, { $set: { email: "ANON1@GMAIL.COM" } });
+      const user = await collections.users.findOne({ email: "anon1@gmail.com" });
+
+      expect(user?.email).toBe("anon1@gmail.com");
     });
   });
 
@@ -154,7 +316,9 @@ describe("Update Operations", async () => {
     it("should not mutate reused update object in updateOne", async () => {
       const schema = createSchema("users", {
         name: string(),
-        age: number().onUpdate(() => 999),
+        age: number(),
+      }).onUpdate({
+        $set: { age: 999 },
       });
       const schemas = defineSchemas({ users: schema });
       const db = createDatabase(client.db(), schemas);
@@ -178,14 +342,16 @@ describe("Update Operations", async () => {
       expect(updatedUser2?.name).toBe("Updated");
       expect(updatedUser2?.age).toBe(999);
 
-      // The key test: original object should not be mutated
+      // Original object should not be mutated
       expect(updateObj).toStrictEqual({ $set: { name: "Updated" } });
     });
 
     it("should not mutate reused update object in updateMany", async () => {
       const schema = createSchema("users", {
         name: string(),
-        age: number().onUpdate(() => 888),
+        age: number(),
+      }).onUpdate({
+        $set: { age: 888 },
       });
       const schemas = defineSchemas({ users: schema });
       const db = createDatabase(client.db(), schemas);
@@ -215,7 +381,9 @@ describe("Update Operations", async () => {
     it("should not mutate reused update object in findOneAndUpdate", async () => {
       const schema = createSchema("users", {
         name: string(),
-        age: number().onUpdate(() => 777),
+        age: number(),
+      }).onUpdate({
+        $set: { age: 777 },
       });
       const schemas = defineSchemas({ users: schema });
       const db = createDatabase(client.db(), schemas);

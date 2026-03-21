@@ -1,15 +1,13 @@
 import { ObjectId } from "mongodb";
 
 /**
- * Safely converts a string to a MongoDB ObjectId.
- * If the string is not a valid ObjectId, returns null.
+ * Safely converts a value to a MongoDB ObjectId.
+ * If the value is not a valid ObjectId, returns null.
  *
- * @param id - The string to convert to ObjectId.
+ * @param id - The value to convert to ObjectId.
  * @returns A valid ObjectId or null if the input is invalid.
  */
-export const toObjectId = (id: string | ObjectId): ObjectId | undefined => {
-  if (ObjectId.isValid(id)) {
-    return new ObjectId(id);
-  }
-  return undefined;
+export const toObjectId = (input: string | ObjectId): ObjectId | null => {
+  if (!ObjectId.isValid(input)) return null;
+  return new ObjectId(input);
 };

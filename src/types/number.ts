@@ -15,7 +15,7 @@ export class MonarchNumber extends MonarchType<number, number> {
   constructor() {
     super((input) => {
       if (typeof input === "number") return input;
-      throw new MonarchParseError(`expected 'number' received '${typeof input}'`);
+      throw MonarchParseError.create({ message: `expected 'number' received '${typeof input}'` });
     });
   }
 
@@ -32,7 +32,7 @@ export class MonarchNumber extends MonarchType<number, number> {
   public min(value: number) {
     return this.parse((input) => {
       if (input < value) {
-        throw new MonarchParseError(`number must be greater than or equal to ${value}`);
+        throw MonarchParseError.create({ message: `number must be greater than or equal to ${value}` });
       }
       return input;
     });
@@ -47,7 +47,7 @@ export class MonarchNumber extends MonarchType<number, number> {
   public max(value: number) {
     return this.parse((input) => {
       if (input > value) {
-        throw new MonarchParseError(`number must be less than or equal to ${value}`);
+        throw MonarchParseError.create({ message: `number must be less than or equal to ${value}` });
       }
       return input;
     });
@@ -61,7 +61,7 @@ export class MonarchNumber extends MonarchType<number, number> {
   public integer() {
     return this.parse((input) => {
       if (!Number.isInteger(input)) {
-        throw new MonarchParseError("number must be an integer");
+        throw MonarchParseError.create({ message: "number must be an integer" });
       }
       return input;
     });

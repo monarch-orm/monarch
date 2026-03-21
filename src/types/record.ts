@@ -1,5 +1,5 @@
 import { MonarchParseError } from "../errors";
-import { type AnyMonarchType, type Parser, MonarchType } from "./type";
+import { type AnyMonarchType, MonarchType } from "./type";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
 
 /**
@@ -27,35 +27,33 @@ export class MonarchRecord<T extends AnyMonarchType> extends MonarchType<
             const result = parser(value);
             if (result !== undefined) parsed[key] = result;
           } catch (error) {
-            if (error instanceof MonarchParseError) {
-              throw new MonarchParseError({ path: key, error });
-            }
-            throw error;
+            throw MonarchParseError.fromCause({ path: key, cause: error });
           }
         }
         return parsed;
       }
-      throw new MonarchParseError(`expected 'object' received '${typeof input}'`);
+      throw MonarchParseError.create({ message: `expected 'object' received '${typeof input}'` });
     });
   }
 
-  protected parserAt(path: string[], index: number): Parser<any, any> {
-    if (index === path.length - 1) return this.parser;
-    const key = path[index + 1];
+  protected index(path: string[], depth: number): AnyMonarchType {
+    if (depth === path.length - 1) return this;
+    const key = path[depth + 1];
     if (key && !key.startsWith("$") && !Number.isInteger(Number(key))) {
       try {
-        return MonarchType.parserAt(this.type, path, index + 1);
+        return MonarchType.index(this.type, path, depth + 1);
       } catch (error) {
-        if (error instanceof MonarchParseError) {
-          throw new MonarchParseError({ path: key, error });
-        }
-        throw error;
+        throw MonarchParseError.fromCause({ path: key, cause: error });
       }
     }
-    throw new MonarchParseError(`expected a string key`);
+    throw MonarchParseError.create({ message: `expected a string key` });
   }
 
   protected copy() {
     return new MonarchRecord(this.type);
+  }
+
+  public static type<T extends AnyMonarchType>(array: MonarchRecord<T>): T {
+    return array.type;
   }
 }

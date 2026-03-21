@@ -15,7 +15,7 @@ export class MonarchString extends MonarchType<string, string> {
   constructor() {
     super((input) => {
       if (typeof input === "string") return input;
-      throw new MonarchParseError(`expected 'string' received '${typeof input}'`);
+      throw MonarchParseError.create({ message: `expected 'string' received '${typeof input}'` });
     });
   }
 
@@ -59,7 +59,7 @@ export class MonarchString extends MonarchType<string, string> {
   public minLength(length: number) {
     return this.parse((input) => {
       if (input.length < length) {
-        throw new MonarchParseError(`string must be at least ${length} characters long`);
+        throw MonarchParseError.create({ message: `string must be at least ${length} characters long` });
       }
       return input;
     });
@@ -74,7 +74,7 @@ export class MonarchString extends MonarchType<string, string> {
   public maxLength(length: number) {
     return this.parse((input) => {
       if (input.length > length) {
-        throw new MonarchParseError(`string must be at most ${length} characters long`);
+        throw MonarchParseError.create({ message: `string must be at most ${length} characters long` });
       }
       return input;
     });
@@ -89,7 +89,7 @@ export class MonarchString extends MonarchType<string, string> {
   public length(length: number) {
     return this.parse((input) => {
       if (input.length !== length) {
-        throw new MonarchParseError(`string must be exactly ${length} characters long`);
+        throw MonarchParseError.create({ message: `string must be exactly ${length} characters long` });
       }
       return input;
     });
@@ -104,7 +104,7 @@ export class MonarchString extends MonarchType<string, string> {
   public pattern(regex: RegExp) {
     return this.parse((input) => {
       if (!regex.test(input)) {
-        throw new MonarchParseError(`string must match pattern ${regex}`);
+        throw MonarchParseError.create({ message: `string must match pattern ${regex}` });
       }
       return input;
     });
@@ -118,7 +118,7 @@ export class MonarchString extends MonarchType<string, string> {
   public nonempty() {
     return this.parse((input) => {
       if (input.length === 0) {
-        throw new MonarchParseError("string must not be empty");
+        throw MonarchParseError.create({ message: "string must not be empty" });
       }
       return input;
     });
@@ -133,7 +133,7 @@ export class MonarchString extends MonarchType<string, string> {
   public includes(searchString: string) {
     return this.parse((input) => {
       if (!input.includes(searchString)) {
-        throw new MonarchParseError(`string must include "${searchString}"`);
+        throw MonarchParseError.create({ message: `string must include "${searchString}"` });
       }
       return input;
     });

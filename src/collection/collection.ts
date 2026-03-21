@@ -2,18 +2,19 @@ import {
   type AnyBulkWriteOperation,
   type CountDocumentsOptions,
   type Db,
+  type Document,
   type EstimatedDocumentCountOptions,
   type Filter,
   type Collection as MongoCollection,
   ObjectId,
-  type UpdateFilter,
+  type StrictUpdateFilter,
   type WithoutId,
 } from "mongodb";
 import { MonarchError } from "../errors";
 import type { AnyRelations } from "../relations/relations";
 import { makeIndexes } from "../schema/indexes";
 import { type AnySchema, Schema } from "../schema/schema";
-import type { InferSchemaData, InferSchemaInput, SchemaInputWithId } from "../schema/type-helpers";
+import type { InferSchemaData, InferSchemaInput } from "../schema/type-helpers";
 import { MonarchObjectId } from "../types/objectId";
 import { MonarchType } from "../types/type";
 import type { Index } from "../utils/type-helpers";
@@ -119,7 +120,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @param id - Document ID
    * @returns FindOneQuery instance
    */
-  public findById(id: Index<SchemaInputWithId<TSchema>, "_id">) {
+  public findById(id: Index<InferSchemaInput<TSchema>, "_id">) {
     const _idType = Schema.types(this.schema)._id;
     const isObjectIdType = MonarchType.isInstanceOf(_idType, MonarchObjectId);
 
@@ -141,8 +142,8 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns FindOneAndUpdateQuery instance
    */
   public findByIdAndUpdate(
-    id: Index<SchemaInputWithId<TSchema>, "_id">,
-    update: UpdateFilter<InferSchemaData<TSchema>>,
+    id: Index<InferSchemaInput<TSchema>, "_id">,
+    update: StrictUpdateFilter<InferSchemaInput<TSchema>> | Document[],
   ) {
     const _idType = Schema.types(this.schema)._id;
     const isObjectIdType = MonarchType.isInstanceOf(_idType, MonarchObjectId);
@@ -163,7 +164,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @param id - Document ID
    * @returns FindOneAndDeleteQuery instance
    */
-  public findByIdAndDelete(id: Index<SchemaInputWithId<TSchema>, "_id">) {
+  public findByIdAndDelete(id: Index<InferSchemaInput<TSchema>, "_id">) {
     const _idType = Schema.types(this.schema)._id;
     const isObjectIdType = MonarchType.isInstanceOf(_idType, MonarchObjectId);
 
@@ -204,7 +205,10 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @param update - Update operations
    * @returns FindOneAndUpdateQuery instance
    */
-  public findOneAndUpdate(filter: Filter<InferSchemaData<TSchema>>, update: UpdateFilter<InferSchemaData<TSchema>>) {
+  public findOneAndUpdate(
+    filter: Filter<InferSchemaData<TSchema>>,
+    update: StrictUpdateFilter<InferSchemaInput<TSchema>> | Document[],
+  ) {
     return new FindOneAndUpdateQuery(this.schema, this._collection, this._readyPromise, filter, update);
   }
 
@@ -266,7 +270,10 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @param update - Update operations
    * @returns UpdateOneQuery instance
    */
-  public updateOne(filter: Filter<InferSchemaData<TSchema>>, update: UpdateFilter<InferSchemaData<TSchema>>) {
+  public updateOne(
+    filter: Filter<InferSchemaData<TSchema>>,
+    update: StrictUpdateFilter<InferSchemaInput<TSchema>> | Document[],
+  ) {
     return new UpdateOneQuery(this.schema, this._collection, this._readyPromise, filter, update);
   }
 
@@ -277,7 +284,10 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @param update - Update operations
    * @returns UpdateManyQuery instance
    */
-  public updateMany(filter: Filter<InferSchemaData<TSchema>>, update: UpdateFilter<InferSchemaData<TSchema>>) {
+  public updateMany(
+    filter: Filter<InferSchemaData<TSchema>>,
+    update: StrictUpdateFilter<InferSchemaInput<TSchema>> | Document[],
+  ) {
     return new UpdateManyQuery(this.schema, this._collection, this._readyPromise, filter, update);
   }
 

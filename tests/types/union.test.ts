@@ -32,7 +32,7 @@ describe("Union Types", () => {
         color: taggedUnion({
           rgba: object({ r: number(), g: number(), b: number(), a: string() }),
           hex: string(),
-          hsl: tuple([string(), string(), string()]).transform(([f, s, t]) => f + s + t),
+          hsl: tuple([string(), string(), string()]),
         }),
       });
 
@@ -78,7 +78,7 @@ describe("Union Types", () => {
         color: { tag: "hsl", value: ["0", "0", "0"] },
       });
       expect(data3).toStrictEqual({
-        color: { tag: "hsl", value: "000" },
+        color: { tag: "hsl", value: ["0", "0", "0"] },
       });
     });
   });

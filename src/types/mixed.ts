@@ -1,5 +1,5 @@
 import { MonarchParseError } from "../errors";
-import { type Parser, MonarchType } from "./type";
+import { type AnyMonarchType, MonarchType } from "./type";
 
 /**
  * Mixed type.
@@ -13,14 +13,12 @@ export const mixed = () => new MonarchMixed();
  */
 export class MonarchMixed extends MonarchType<unknown, unknown> {
   constructor() {
-    super((input) => {
-      return input;
-    });
+    super((input) => input);
   }
 
-  protected parserAt(path: string[], index: number): Parser<any, any> {
-    if (index === path.length - 1) return this.parser;
-    throw new MonarchParseError(`updates must replace the entire mixed value`);
+  protected index(path: string[], depth: number): AnyMonarchType {
+    if (depth === path.length - 1) return this;
+    throw MonarchParseError.create({ message: `updates must replace the entire mixed value` });
   }
 
   protected copy() {
