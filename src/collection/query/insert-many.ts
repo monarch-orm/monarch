@@ -16,13 +16,13 @@ export class InsertManyQuery<TSchema extends AnySchema> extends Query<
   InsertManyResult<InferSchemaData<TSchema>>
 > {
   constructor(
-    protected _schema: TSchema,
-    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
-    protected _readyPromise: Promise<void>,
+    schema: TSchema,
+    collection: MongoCollection<InferSchemaData<TSchema>>,
+    readyPromise: Promise<void>,
     private _data: InferSchemaInput<TSchema>[],
     private _options: BulkWriteOptions = {},
   ) {
-    super(_schema, _collection, _readyPromise);
+    super(schema, collection, readyPromise);
   }
 
   /**
@@ -37,9 +37,8 @@ export class InsertManyQuery<TSchema extends AnySchema> extends Query<
   }
 
   protected async exec(): Promise<InsertManyResult<InferSchemaData<TSchema>>> {
-    await this._readyPromise;
-    const data = this._data.map((data) => Schema.input(this._schema, data));
-    const res = await this._collection.insertMany(
+    const data = this._data.map((data) => Schema.input(this.schema, data));
+    const res = await this.collection.insertMany(
       data as OptionalUnlessRequiredId<InferSchemaData<TSchema>>[],
       this._options,
     );

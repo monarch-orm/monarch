@@ -6,6 +6,7 @@ import { MonarchObject, object, type InferTypeObjectInput } from "../types";
 import { objectId } from "../types/objectId";
 import { MonarchType, type AnyMonarchType } from "../types/type";
 import type { MergeAll, MergeN1All, Pretty } from "../utils/type-helpers";
+import type { UpdateFilter } from "./filter-types";
 import type { SchemaIndexes } from "./indexes";
 import type {
   InferSchemaData,
@@ -150,8 +151,8 @@ export class Schema<
    * @param update - Update data with dot-path keys and their new values
    * @returns Parsed update data
    */
-  public static updateInput<T extends AnySchema>(schema: T, update: StrictUpdateFilter<InferSchemaInput<T>>) {
-    return updateParser(schema.type, schema.update, update as StrictUpdateFilter<any>);
+  public static updateInput<T extends AnySchema>(schema: T, update: UpdateFilter<T>) {
+    return updateParser(schema.type, schema.update, update);
   }
 
   /**
@@ -204,6 +205,16 @@ export function createSchema<TName extends string, TTypes extends Record<string,
   let schemaTypes = types as Pretty<WithObjectId<TTypes>>;
   if (!schemaTypes._id) schemaTypes._id = objectId().optional();
   return new Schema(name, schemaTypes, {});
+}
+
+/**
+ * Creates an object shape for a MongoDB schema or object type.
+ *
+ * @param types - Object defining field types
+ * @returns Types object
+ */
+export function createShape<TTypes extends Record<string, AnyMonarchType>>(types: TTypes): TTypes {
+  return types;
 }
 
 export class Schemas<

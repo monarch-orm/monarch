@@ -52,4 +52,8 @@ export class MonarchDate extends MonarchType<Date, Date> {
       return input;
     });
   }
+
+  public auto() {
+    return this.default(() => new Date());
+  }
 }

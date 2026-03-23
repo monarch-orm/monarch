@@ -1,14 +1,14 @@
 import type {
   Document,
-  Filter,
   Collection as MongoCollection,
-  StrictUpdateFilter,
-  UpdateFilter,
+  Filter as MongoFilter,
+  UpdateFilter as MongoUpdateFilter,
   UpdateOptions,
   UpdateResult,
 } from "mongodb";
+import type { Filter, UpdateFilter } from "../../schema/filter-types";
 import { type AnySchema, Schema } from "../../schema/schema";
-import type { InferSchemaData, InferSchemaInput } from "../../schema/type-helpers";
+import type { InferSchemaData } from "../../schema/type-helpers";
 import { Query } from "./base";
 
 /**
@@ -16,14 +16,14 @@ import { Query } from "./base";
  */
 export class UpdateOneQuery<TSchema extends AnySchema> extends Query<TSchema, UpdateResult<InferSchemaData<TSchema>>> {
   constructor(
-    protected _schema: TSchema,
-    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
-    protected _readyPromise: Promise<void>,
-    private _filter: Filter<InferSchemaData<TSchema>>,
-    private _update: StrictUpdateFilter<InferSchemaInput<TSchema>> | Document[],
+    schema: TSchema,
+    collection: MongoCollection<InferSchemaData<TSchema>>,
+    readyPromise: Promise<void>,
+    private _filter: Filter<TSchema>,
+    private _update: UpdateFilter<TSchema> | Document[],
     private _options: UpdateOptions = {},
   ) {
-    super(_schema, _collection, _readyPromise);
+    super(schema, collection, readyPromise);
   }
 
   /**
@@ -38,12 +38,13 @@ export class UpdateOneQuery<TSchema extends AnySchema> extends Query<TSchema, Up
   }
 
   protected async exec(): Promise<UpdateResult<InferSchemaData<TSchema>>> {
-    await this._readyPromise;
-    const update = Array.isArray(this._update)
-      ? this._update
-      : (Schema.updateInput(this._schema, this._update) as UpdateFilter<InferSchemaData<TSchema>>);
+    const update = Array.isArray(this._update) ? this._update : Schema.updateInput(this.schema, this._update);
 
-    const res = await this._collection.updateOne(this._filter, update, this._options);
+    const res = await this.collection.updateOne(
+      this._filter as MongoFilter<InferSchemaData<TSchema>>,
+      update as MongoUpdateFilter<InferSchemaData<TSchema>>,
+      this._options,
+    );
     return res;
   }
 }

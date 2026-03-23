@@ -59,7 +59,8 @@ describe("date", () => {
     // Invalid type for date().after() should throw type error first
     expect(() =>
       Schema.input(schema, {
-        dateWithAfter: "not a date" as any,
+        // @ts-expect-error
+        dateWithAfter: "not a date",
         dateWithBefore: past,
       }),
     ).toThrowError("expected 'Date' received 'string'");
@@ -68,7 +69,8 @@ describe("date", () => {
     expect(() =>
       Schema.input(schema, {
         dateWithAfter: future,
-        dateWithBefore: 123 as any,
+        // @ts-expect-error
+        dateWithBefore: 123,
       }),
     ).toThrowError("expected 'Date' received 'number'");
   });

@@ -12,11 +12,12 @@ import {
   MonarchType,
   type AnyMonarchType,
 } from "../types";
+import type { UpdateFilter } from "./filter-types";
 
 export function updateParser<T extends AnyMonarchType>(
   schemaType: T,
-  schemaUpdate: (() => StrictUpdateFilter<any>) | undefined,
-  update: StrictUpdateFilter<any>,
+  schemaUpdate: (() => UpdateFilter<any>) | undefined,
+  update: UpdateFilter<any>,
 ) {
   let updates: Map<string, { op: string; value: any }> | undefined;
   const schemaUpdateObj = schemaUpdate?.();
@@ -107,7 +108,7 @@ function parseArrayOperator(
     const elementType = MonarchArray.type(pathType);
     const parser = MonarchType.parser(elementType);
     if (typeof value === "object" && value !== null && "$each" in value) {
-      const ops = value as { $each: unknown[] } & Record<string, unknown>;
+      const ops = value as { $each: unknown[]; [k: string]: unknown };
       parsed[path] = { ...ops, $each: ops.$each.map(parser) };
     } else {
       parsed[path] = parser(value);
@@ -157,7 +158,7 @@ function parseArrayPassThroughOperator(
 function parseNumericPassThroughOperator(
   op: "$inc" | "$mul",
   schemaType: AnyMonarchType,
-  fields: Record<string, unknown>,
+  fields: Record<string, any>,
   schemaUpdates?: Map<string, { op: string; value: any }>,
 ) {
   const parsed: Record<string, any> = {};
@@ -172,7 +173,8 @@ function parseNumericPassThroughOperator(
     ) {
       throw MonarchParseError.create({ path, message: `operator '${op}' requires a numeric field` });
     }
-    parsed[path] = value;
+    const parser = MonarchType.parser(pathType);
+    parsed[path] = parser(value);
     if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
   }
   return parsed;
@@ -242,7 +244,7 @@ function parseRenameOperator(
   schemaUpdates?: Map<string, { op: string; value: any }>,
 ) {
   const parsed: Record<string, any> = {};
-  for (const [path, dest] of Object.entries(fields)) {
+  for (const [path, value] of Object.entries(fields)) {
     const sourceType = MonarchType.index(schemaType, path.split("."), -1);
     if (!MonarchType.isInstanceOf(sourceType, MonarchOptional)) {
       throw MonarchParseError.create({
@@ -251,14 +253,14 @@ function parseRenameOperator(
       });
     }
     const sourceInner = MonarchOptional.type(sourceType);
-    const destType = MonarchType.index(schemaType, dest.split("."), -1);
+    const destType = MonarchType.index(schemaType, value.split("."), -1);
     if (!MonarchType.isInstanceOf(destType, sourceInner.constructor as new (...args: any[]) => AnyMonarchType)) {
       throw MonarchParseError.create({
         path,
-        message: `operator '$rename' destination field '${dest}' is not compatible with source field '${path}'`,
+        message: `operator '$rename' destination field '${value}' is not compatible with source field '${path}'`,
       });
     }
-    parsed[path] = dest;
+    parsed[path] = value;
     if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
   }
   return parsed;

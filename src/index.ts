@@ -23,7 +23,16 @@ export { ObjectId } from "mongodb";
 export { Collection } from "./collection/collection";
 export { createClient, createDatabase, Database, type InferInput, type InferOutput } from "./database";
 export { MonarchError } from "./errors";
-export { createSchema, defineSchemas, mergeSchemas, Schema, Schemas } from "./schema/schema";
+export type {
+  Condition,
+  DistinctFilter,
+  Filter,
+  FilterOperations,
+  FilterOperators,
+  RootFilterOperators,
+  UpdateFilter,
+} from "./schema/filter-types";
+export { createSchema, createShape, defineSchemas, mergeSchemas, Schema, Schemas } from "./schema/schema";
 export { type InferSchemaInput, type InferSchemaOutput } from "./schema/type-helpers";
 export { virtual, type Virtual } from "./schema/virtuals";
 export { toObjectId } from "./utils/objectId";

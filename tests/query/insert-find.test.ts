@@ -101,8 +101,9 @@ describe("Insert and Find Operations", async () => {
           email: "extra@example.com",
           age: 40,
           isVerified: true,
+          // @ts-expect-error
           extraField: "This should error",
-        } as any);
+        });
       }).rejects.toThrowError();
     });
 

@@ -23,4 +23,8 @@ export class MonarchObjectId extends MonarchType<ObjectId | string, ObjectId> {
   protected copy() {
     return new MonarchObjectId();
   }
+
+  public auto() {
+    return this.default(() => new ObjectId());
+  }
 }

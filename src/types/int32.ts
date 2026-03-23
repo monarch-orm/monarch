@@ -12,7 +12,7 @@ export const int32 = () => new MonarchInt32();
 /**
  * Type for Int32 fields.
  */
-export class MonarchInt32 extends MonarchType<Int32 | number, Int32> {
+export class MonarchInt32 extends MonarchType<Int32 | number> {
   constructor() {
     super((input) => {
       if (input instanceof Int32) return input;

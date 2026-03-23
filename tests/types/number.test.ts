@@ -47,7 +47,8 @@ describe("number", () => {
     // Invalid type for number().min() should throw type error first
     expect(() =>
       Schema.input(schema, {
-        minValue: "not a number" as any,
+        // @ts-expect-error
+        minValue: "not a number",
         maxValue: 8,
         integerValue: 6,
       }),
@@ -57,7 +58,8 @@ describe("number", () => {
     expect(() =>
       Schema.input(schema, {
         minValue: 7,
-        maxValue: true as any,
+        // @ts-expect-error
+        maxValue: true,
         integerValue: 6,
       }),
     ).toThrowError("expected 'number' received 'boolean'");
@@ -67,7 +69,8 @@ describe("number", () => {
       Schema.input(schema, {
         minValue: 7,
         maxValue: 8,
-        integerValue: { value: 6 } as any,
+        // @ts-expect-error
+        integerValue: { value: 6 },
       }),
     ).toThrowError("expected 'number' received 'object'");
   });

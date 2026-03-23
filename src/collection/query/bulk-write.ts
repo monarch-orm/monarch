@@ -5,13 +5,13 @@ import { Query } from "./base";
 
 export class BulkWriteQuery<TSchema extends AnySchema> extends Query<TSchema, BulkWriteResult> {
   constructor(
-    protected _schema: TSchema,
-    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
-    protected _readyPromise: Promise<void>,
+    schema: TSchema,
+    collection: MongoCollection<InferSchemaData<TSchema>>,
+    readyPromise: Promise<void>,
     private _data: AnyBulkWriteOperation<InferSchemaData<TSchema>>[],
     private _options: BulkWriteOptions = {},
   ) {
-    super(_schema, _collection, _readyPromise);
+    super(schema, collection, readyPromise);
   }
 
   public options(options: BulkWriteOptions): this {
@@ -20,8 +20,7 @@ export class BulkWriteQuery<TSchema extends AnySchema> extends Query<TSchema, Bu
   }
 
   protected async exec(): Promise<BulkWriteResult> {
-    await this._readyPromise;
-    const res = await this._collection.bulkWrite(this._data, this._options);
+    const res = await this.collection.bulkWrite(this._data, this._options);
     return res;
   }
 }

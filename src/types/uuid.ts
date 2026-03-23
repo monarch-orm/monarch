@@ -1,4 +1,5 @@
 import { UUID } from "mongodb";
+import { randomUUID } from "node:crypto";
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
 
@@ -29,5 +30,9 @@ export class MonarchUUID extends MonarchType<UUID | string, UUID> {
 
   protected copy() {
     return new MonarchUUID();
+  }
+
+  public auto() {
+    return this.default(() => randomUUID());
   }
 }

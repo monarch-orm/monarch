@@ -12,11 +12,11 @@ export const double = () => new MonarchDouble();
 /**
  * Type for Double fields.
  */
-export class MonarchDouble extends MonarchType<Double | number, Double> {
+export class MonarchDouble extends MonarchType<Double | number, number> {
   constructor() {
     super((input) => {
-      if (input instanceof Double) return input;
-      if (typeof input === "number") return new Double(input);
+      if (input instanceof Double) return input.value;
+      if (typeof input === "number") return input;
       throw MonarchParseError.create({ message: `expected 'Double' or 'number' received '${typeof input}'` });
     });
   }

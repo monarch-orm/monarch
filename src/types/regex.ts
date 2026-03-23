@@ -10,13 +10,16 @@ import { MonarchType } from "./type";
 export const regex = () => new MonarchRegex();
 
 /**
- * Type for BSONRegExp fields.
+ * Type for regex fields.
  */
-export class MonarchRegex extends MonarchType<BSONRegExp | RegExp, BSONRegExp> {
+export class MonarchRegex extends MonarchType<BSONRegExp | RegExp, RegExp> {
   constructor() {
     super((input) => {
-      if (input instanceof BSONRegExp) return input;
-      if (input instanceof RegExp) return new BSONRegExp(input.source, input.flags);
+      if (input instanceof BSONRegExp) return new RegExp(input.pattern, input.options);
+      if (input instanceof RegExp) {
+        new BSONRegExp(input.source, input.flags); // validate BSON-compatible flags
+        return input;
+      }
       throw MonarchParseError.create({ message: `expected 'BSONRegExp' or 'RegExp' received '${typeof input}'` });
     });
   }

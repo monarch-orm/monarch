@@ -1,13 +1,13 @@
 import type {
   Document,
-  Filter,
   FindOneAndUpdateOptions,
   Collection as MongoCollection,
-  StrictUpdateFilter,
-  UpdateFilter,
+  Filter as MongoFilter,
+  UpdateFilter as MongoUpdateFilter,
 } from "mongodb";
+import type { Filter, UpdateFilter } from "../../schema/filter-types";
 import { type AnySchema, Schema } from "../../schema/schema";
-import type { InferSchemaData, InferSchemaInput, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
+import type { InferSchemaData, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
 import type { TrueKeys } from "../../utils/type-helpers";
 import type { BoolProjection, Projection } from "../types/query-options";
 import { addExtraInputsToProjection, makeProjection } from "../utils/projection";
@@ -24,15 +24,15 @@ export class FindOneAndUpdateQuery<
   private _projection: Projection<InferSchemaOutput<TSchema>>;
 
   constructor(
-    protected _schema: TSchema,
-    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
-    protected _readyPromise: Promise<void>,
-    private _filter: Filter<InferSchemaData<TSchema>>,
-    private _update: StrictUpdateFilter<InferSchemaInput<TSchema>> | Document[],
+    schema: TSchema,
+    collection: MongoCollection<InferSchemaData<TSchema>>,
+    readyPromise: Promise<void>,
+    private _filter: Filter<TSchema>,
+    private _update: UpdateFilter<TSchema> | Document[],
     private _options: FindOneAndUpdateOptions = {},
   ) {
-    super(_schema, _collection, _readyPromise);
-    this._projection = makeProjection("omit", Schema.options(_schema).omit ?? {});
+    super(schema, collection, readyPromise);
+    this._projection = makeProjection("omit", Schema.options(schema).omit ?? {});
   }
 
   /**
@@ -69,18 +69,19 @@ export class FindOneAndUpdateQuery<
   }
 
   protected async exec(): Promise<QueryOutput<TOutput, TOmit> | null> {
-    await this._readyPromise;
-    const update = Array.isArray(this._update)
-      ? this._update
-      : (Schema.updateInput(this._schema, this._update) as UpdateFilter<InferSchemaData<TSchema>>);
+    const update = Array.isArray(this._update) ? this._update : Schema.updateInput(this.schema, this._update);
 
-    const extras = addExtraInputsToProjection(this._projection, Schema.options(this._schema).virtuals);
-    const res = await this._collection.findOneAndUpdate(this._filter, update, {
-      ...this._options,
-      projection: this._projection,
-    });
+    const extras = addExtraInputsToProjection(this._projection, Schema.options(this.schema).virtuals);
+    const res = await this.collection.findOneAndUpdate(
+      this._filter as MongoFilter<InferSchemaData<TSchema>>,
+      update as MongoUpdateFilter<InferSchemaData<TSchema>>,
+      {
+        ...this._options,
+        projection: this._projection,
+      },
+    );
     return res
-      ? (Schema.output(this._schema, res as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
+      ? (Schema.output(this.schema, res as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
           TOutput,
           TOmit
         >)
