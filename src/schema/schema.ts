@@ -1,8 +1,7 @@
-import type { StrictUpdateFilter } from "mongodb";
 import type { Projection } from "../collection/types/query-options";
 import { detectProjection } from "../collection/utils/projection";
 import { mergeRelations, type AnyRelation, type RelationsFn, type SchemasRelations } from "../relations/relations";
-import { MonarchObject, object, type InferTypeObjectInput } from "../types";
+import { MonarchObject, object } from "../types";
 import { objectId } from "../types/objectId";
 import { MonarchType, type AnyMonarchType } from "../types/type";
 import type { MergeAll, MergeN1All, Pretty } from "../utils/type-helpers";
@@ -35,7 +34,7 @@ export class Schema<
   TVirtuals extends Record<string, AnyVirtual> = {},
 > {
   private type: MonarchObject<TTypes>;
-  private update?: () => StrictUpdateFilter<InferTypeObjectInput<TTypes>>;
+  private update?: () => UpdateFilter<this>;
 
   /**
    * Creates a Schema instance.
@@ -105,9 +104,7 @@ export class Schema<
     return this;
   }
 
-  public onUpdate(
-    update: StrictUpdateFilter<InferTypeObjectInput<TTypes>> | (() => StrictUpdateFilter<InferTypeObjectInput<TTypes>>),
-  ) {
+  public onUpdate(update: UpdateFilter<this> | (() => UpdateFilter<this>)) {
     this.update = typeof update === "function" ? update : () => update;
     return this;
   }

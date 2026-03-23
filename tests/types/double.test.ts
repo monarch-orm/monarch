@@ -1,6 +1,6 @@
 import { Double } from "mongodb";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { createDatabase, createSchema, Schema } from "../../src";
+import { createDatabase, createSchema, defineSchemas, Schema } from "../../src";
 import { double } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
@@ -54,11 +54,11 @@ describe("double", () => {
       await server.stop();
     });
 
-    const DoubleSchema = createSchema("bson_double", {
+    const DoubleSchema = createSchema("data", {
       value: double().optional(),
     });
 
-    const { collections } = createDatabase(client.db(), { data: DoubleSchema });
+    const { collections } = createDatabase(client.db(), defineSchemas({ DoubleSchema }));
 
     afterAll(async () => {
       await collections.data.deleteMany({});

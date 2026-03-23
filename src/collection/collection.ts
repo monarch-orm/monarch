@@ -4,8 +4,8 @@ import {
   type Db,
   type Document,
   type EstimatedDocumentCountOptions,
-  type Filter as MongoFilter,
   type Collection as MongoCollection,
+  type Filter as MongoFilter,
   ObjectId,
   type WithoutId,
 } from "mongodb";
@@ -134,10 +134,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @param update - Update operations
    * @returns FindOneAndUpdateQuery instance
    */
-  public findByIdAndUpdate(
-    id: Index<InferSchemaInput<TSchema>, "_id">,
-    update: UpdateFilter<TSchema> | Document[],
-  ) {
+  public findByIdAndUpdate(id: Index<InferSchemaInput<TSchema>, "_id">, update: UpdateFilter<TSchema> | Document[]) {
     const _idType = Schema.types(this.schema)._id;
     const isObjectIdType = MonarchType.isInstanceOf(_idType, MonarchObjectId);
 
@@ -187,10 +184,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @param replacement - Replacement document
    * @returns FindOneAndReplaceQuery instance
    */
-  public findOneAndReplace(
-    filter: Filter<TSchema>,
-    replacement: WithoutId<InferSchemaInput<TSchema>>,
-  ) {
+  public findOneAndReplace(filter: Filter<TSchema>, replacement: WithoutId<InferSchemaInput<TSchema>>) {
     return new FindOneAndReplaceQuery(this.schema, this._collection, this._readyPromise, filter, replacement);
   }
 
@@ -201,10 +195,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @param update - Update operations
    * @returns FindOneAndUpdateQuery instance
    */
-  public findOneAndUpdate(
-    filter: Filter<TSchema>,
-    update: UpdateFilter<TSchema> | Document[],
-  ) {
+  public findOneAndUpdate(filter: Filter<TSchema>, update: UpdateFilter<TSchema> | Document[]) {
     return new FindOneAndUpdateQuery(this.schema, this._collection, this._readyPromise, filter, update);
   }
 
@@ -266,10 +257,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @param update - Update operations
    * @returns UpdateOneQuery instance
    */
-  public updateOne(
-    filter: Filter<TSchema>,
-    update: UpdateFilter<TSchema> | Document[],
-  ) {
+  public updateOne(filter: Filter<TSchema>, update: UpdateFilter<TSchema> | Document[]) {
     return new UpdateOneQuery(this.schema, this._collection, this._readyPromise, filter, update);
   }
 
@@ -280,10 +268,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @param update - Update operations
    * @returns UpdateManyQuery instance
    */
-  public updateMany(
-    filter: Filter<TSchema>,
-    update: UpdateFilter<TSchema> | Document[],
-  ) {
+  public updateMany(filter: Filter<TSchema>, update: UpdateFilter<TSchema> | Document[]) {
     return new UpdateManyQuery(this.schema, this._collection, this._readyPromise, filter, update);
   }
 

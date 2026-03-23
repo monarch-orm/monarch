@@ -68,12 +68,7 @@ describe("objectId", () => {
       refId: objectId().optional(),
     });
 
-    const { collections } = createDatabase(
-      client.db(),
-      defineSchemas({
-        testData: TestSchema,
-      }),
-    );
+    const { collections } = createDatabase(client.db(), defineSchemas({ TestSchema }));
 
     afterAll(async () => {
       await collections.testData.deleteMany({});

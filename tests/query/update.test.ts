@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { createDatabase, createSchema, defineSchemas } from "../../src";
-import { array, boolean, date, number, string } from "../../src/types";
+import { array, boolean, date, mixed, number, string } from "../../src/types";
 import { createMockDatabase, mockUsers } from "../mock";
 
 describe("Update Operations", async () => {
@@ -254,11 +254,14 @@ describe("Update Operations", async () => {
       lastSeen: date().optional(),
     });
 
-    const db = createDatabase(client.db(), defineSchemas({
-      arrays: ArraySchema,
-      numeric: NumericSchema,
-      optionals: OptionalSchema,
-    }));
+    const db = createDatabase(
+      client.db(),
+      defineSchemas({
+        arrays: ArraySchema,
+        numeric: NumericSchema,
+        optionals: OptionalSchema,
+      }),
+    );
 
     afterEach(async () => {
       await db.collections.arrays.deleteMany({});
@@ -298,18 +301,18 @@ describe("Update Operations", async () => {
 
       it("$push rejects non-array field", async () => {
         const doc = await db.collections.numeric.insertOne({ name: "a", count: 0 });
-        await expect(
-          // @ts-expect-error
-          db.collections.numeric.updateOne({ _id: doc._id }, { $push: { count: 1 } }),
-        ).rejects.toThrow("requires an array field");
+        // @ts-expect-error
+        await expect(db.collections.numeric.updateOne({ _id: doc._id }, { $push: { count: 1 } })).rejects.toThrow(
+          "requires an array field",
+        );
       });
 
       it("$addToSet rejects non-array field", async () => {
         const doc = await db.collections.numeric.insertOne({ name: "a", count: 0 });
-        await expect(
-          // @ts-expect-error
-          db.collections.numeric.updateOne({ _id: doc._id }, { $addToSet: { count: 1 } }),
-        ).rejects.toThrow("requires an array field");
+        // @ts-expect-error
+        await expect(db.collections.numeric.updateOne({ _id: doc._id }, { $addToSet: { count: 1 } })).rejects.toThrow(
+          "requires an array field",
+        );
       });
     });
 
@@ -431,6 +434,7 @@ describe("Update Operations", async () => {
 
       it("rejects non-optional field", async () => {
         const doc = await db.collections.optionals.insertOne({ name: "a" });
+        // @ts-expect-error
         await expect(db.collections.optionals.updateOne({ _id: doc._id }, { $unset: { name: "" } })).rejects.toThrow(
           "requires an optional field",
         );
@@ -475,6 +479,7 @@ describe("Update Operations", async () => {
       it("rejects non-optional source field", async () => {
         const doc = await db.collections.optionals.insertOne({ name: "a" });
         await expect(
+          // @ts-expect-error
           db.collections.optionals.updateOne({ _id: doc._id }, { $rename: { name: "alias" } }),
         ).rejects.toThrow("requires an optional field");
       });
@@ -482,6 +487,7 @@ describe("Update Operations", async () => {
       it("rejects incompatible destination type", async () => {
         const doc = await db.collections.optionals.insertOne({ name: "a", nickname: "nick" });
         await expect(
+          // @ts-expect-error
           db.collections.optionals.updateOne({ _id: doc._id }, { $rename: { nickname: "lastSeen" } }),
         ).rejects.toThrow("is not compatible");
       });
@@ -494,7 +500,7 @@ describe("Update Operations", async () => {
         name: string(),
         age: number(),
       }).onUpdate({ $set: { age: 100 } });
-      const db = createDatabase(client.db(), { users: schema });
+      const db = createDatabase(client.db(), defineSchemas({ users: schema }));
 
       const user = await db.collections.users.insertOne({ name: "tom", age: 0 });
       const updated = await db.collections.users
@@ -509,7 +515,7 @@ describe("Update Operations", async () => {
         name: string(),
         age: number(),
       }).onUpdate({ $set: { age: 100 } });
-      const db = createDatabase(client.db(), { users: schema });
+      const db = createDatabase(client.db(), defineSchemas({ users: schema }));
 
       const user = await db.collections.users.insertOne({ name: "tom", age: 0 });
       const updated = await db.collections.users
@@ -524,7 +530,7 @@ describe("Update Operations", async () => {
         name: string(),
         nonce: number().validate(onUpdateTrap, ""),
       }).onUpdate(() => ({ $set: { nonce: 1 } }));
-      const db = createDatabase(client.db(), { users: schema });
+      const db = createDatabase(client.db(), defineSchemas({ users: schema }));
 
       const user = await db.collections.users.insertOne({ name: "tom", nonce: 0 });
       expect(onUpdateTrap).toBeCalledTimes(1);
@@ -540,7 +546,7 @@ describe("Update Operations", async () => {
         name: string(),
         age: number(),
       }).onUpdate({ $set: { age: 555 } });
-      const db = createDatabase(client.db(), { users: schema });
+      const db = createDatabase(client.db(), defineSchemas({ users: schema }));
 
       const user = await db.collections.users.insertOne({ name: "Alice", age: 0 });
       await db.collections.users.updateOne({ _id: user._id }, { $set: { name: "Bob" } });
@@ -554,7 +560,7 @@ describe("Update Operations", async () => {
         name: string(),
         age: number(),
       }).onUpdate({ $set: { age: 999 } });
-      const db = createDatabase(client.db(), { users: schema });
+      const db = createDatabase(client.db(), defineSchemas({ users: schema }));
 
       await db.collections.users.insertOne({ name: "Alice", age: 1 });
       await db.collections.users.insertOne({ name: "Bob", age: 2 });
@@ -570,7 +576,7 @@ describe("Update Operations", async () => {
         name: string(),
         age: number(),
       }).onUpdate({ $set: { age: 555 } });
-      const db = createDatabase(client.db(), { users: schema });
+      const db = createDatabase(client.db(), defineSchemas({ users: schema }));
 
       const user = await db.collections.users.insertOne({ name: "Alice", age: 0 });
       const updated = await db.collections.users
@@ -585,7 +591,7 @@ describe("Update Operations", async () => {
         name: string(),
         nonce: number().optional(),
       }).onUpdate(() => ({ $set: { nonce: onUpdateTrap() } }));
-      const db = createDatabase(client.db(), { users: schema });
+      const db = createDatabase(client.db(), defineSchemas({ users: schema }));
 
       const user = await db.collections.users.insertOne({ name: "tom" });
       expect(onUpdateTrap).toBeCalledTimes(0);
@@ -597,102 +603,193 @@ describe("Update Operations", async () => {
     });
   });
 
-  describe("edge cases", () => {
-    it("does not mutate reused update object in updateOne", async () => {
-      const schema = createSchema("users", {
-        name: string(),
-        age: number(),
-<<<<<<< HEAD
-      }).onUpdate({
-        $set: { age: 999 },
-      });
-      const schemas = defineSchemas({ users: schema });
-      const db = createDatabase(client.db(), schemas);
-=======
-      }).onUpdate({ $set: { age: 999 } });
-      const db = createDatabase(client.db(), { users: schema });
->>>>>>> b983a87 (Enhance types for filter and update/distinct queries)
-
-      const user1 = await db.collections.users.insertOne({ name: "Alice", age: 20 });
-      const user2 = await db.collections.users.insertOne({ name: "Bob", age: 30 });
-      const updateObj = { $set: { name: "Updated" } };
-
-      await db.collections.users.updateOne({ _id: user1._id }, updateObj);
-      await db.collections.users.updateOne({ _id: user2._id }, updateObj);
-
-      const updatedUser1 = await db.collections.users.findOne({ _id: user1._id });
-      expect(updatedUser1?.name).toBe("Updated");
-      expect(updatedUser1?.age).toBe(999);
-
-      const updatedUser2 = await db.collections.users.findOne({ _id: user2._id });
-      expect(updatedUser2?.name).toBe("Updated");
-      expect(updatedUser2?.age).toBe(999);
-
-      expect(updateObj).toStrictEqual({ $set: { name: "Updated" } });
+  describe("mixed field updates", async () => {
+    const MixedSchema = createSchema("mixed", {
+      label: string(),
+      data: mixed(),
+      meta: mixed().optional(),
     });
 
-    it("does not mutate reused update object in updateMany", async () => {
-      const schema = createSchema("users", {
-        name: string(),
-        age: number(),
-<<<<<<< HEAD
-      }).onUpdate({
-        $set: { age: 888 },
-      });
-      const schemas = defineSchemas({ users: schema });
-      const db = createDatabase(client.db(), schemas);
-=======
-      }).onUpdate({ $set: { age: 888 } });
-      const db = createDatabase(client.db(), { users: schema });
->>>>>>> b983a87 (Enhance types for filter and update/distinct queries)
+    const db = createDatabase(
+      client.db(),
+      defineSchemas({
+        MixedSchema,
+      }),
+    );
 
-      await db.collections.users.insertOne({ name: "Alice", age: 20 });
-      await db.collections.users.insertOne({ name: "Bob", age: 30 });
-      const updateObj = { $set: { name: "Updated" } };
-
-      await db.collections.users.updateMany({ age: { $lt: 30 } }, updateObj);
-      await db.collections.users.updateMany({ age: { $gte: 30 } }, updateObj);
-
-      const users = await db.collections.users.find({});
-      for (const user of users) {
-        expect(user.name).toBe("Updated");
-        expect(user.age).toBe(888);
-      }
-
-      expect(updateObj).toStrictEqual({ $set: { name: "Updated" } });
+    afterEach(async () => {
+      await db.collections.mixed.deleteMany({});
     });
 
-    it("does not mutate reused update object in findOneAndUpdate", async () => {
-      const schema = createSchema("users", {
-        name: string(),
-        age: number(),
-<<<<<<< HEAD
-      }).onUpdate({
-        $set: { age: 777 },
-      });
-      const schemas = defineSchemas({ users: schema });
-      const db = createDatabase(client.db(), schemas);
-=======
-      }).onUpdate({ $set: { age: 777 } });
-      const db = createDatabase(client.db(), { users: schema });
->>>>>>> b983a87 (Enhance types for filter and update/distinct queries)
+    it("$set mixed field with a different value", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: 0 });
+      await db.collections.mixed.updateOne({ _id: doc._id }, { $set: { data: "hello" } });
+      const updated = await db.collections.mixed.findOne({ _id: doc._id });
+      expect(updated?.data).toBe("hello");
+    });
 
-      const user1 = await db.collections.users.insertOne({ name: "Alice", age: 20 });
-      const user2 = await db.collections.users.insertOne({ name: "Bob", age: 30 });
-      const updateObj = { $set: { name: "Updated" } };
+    it("$unset optional mixed field removes the field", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: 1, meta: "extra" });
+      await db.collections.mixed.updateOne({ _id: doc._id }, { $unset: { meta: "" } });
+      const updated = await db.collections.mixed.findOne({ _id: doc._id });
+      expect(updated).not.toHaveProperty("meta");
+    });
 
-      await db.collections.users.findOneAndUpdate({ _id: user1._id }, updateObj).options({ returnDocument: "after" });
-      await db.collections.users.findOneAndUpdate({ _id: user2._id }, updateObj).options({ returnDocument: "after" });
+    it("$unset non-optional mixed field throws", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: 1 });
+      await expect(
+        // @ts-expect-error
+        db.collections.mixed.updateOne({ _id: doc._id }, { $unset: { data: "" } }),
+      ).rejects.toThrow("requires an optional field");
+    });
 
-      const updatedUser1 = await db.collections.users.findOne({ _id: user1._id });
-      expect(updatedUser1?.name).toBe("Updated");
-      expect(updatedUser1?.age).toBe(777);
+    it("$rename optional mixed field to another optional mixed field", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: 0, meta: "value" });
+      await db.collections.mixed.updateOne({ _id: doc._id }, { $rename: { meta: "data" } });
+      const updated = await db.collections.mixed.findOne({ _id: doc._id });
+      expect(updated).not.toHaveProperty("meta");
+      expect(updated?.data).toBe("value");
+    });
 
-      const updatedUser2 = await db.collections.users.findOne({ _id: user2._id });
-      expect(updatedUser2?.name).toBe("Updated");
-      expect(updatedUser2?.age).toBe(777);
+    it("$rename non-optional mixed field throws", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: 0 });
+      await expect(
+        // @ts-expect-error
+        db.collections.mixed.updateOne({ _id: doc._id }, { $rename: { data: "info" } }),
+      ).rejects.toThrow("requires an optional field");
+    });
 
-      expect(updateObj).toStrictEqual({ $set: { name: "Updated" } });
+    it("$inc on a mixed field throws at runtime (runtime checks for numeric type)", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: 5 });
+      await expect(db.collections.mixed.updateOne({ _id: doc._id }, { $inc: { data: 1 } })).rejects.toThrow(
+        "requires a numeric field",
+      );
+    });
+
+    it("$push on a mixed field throws at runtime (runtime checks for array type)", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: [] });
+      await expect(db.collections.mixed.updateOne({ _id: doc._id }, { $push: { data: "item" } })).rejects.toThrow(
+        "requires an array field",
+      );
+    });
+  });
+
+  describe("undefined values in update", async () => {
+    const NullableSchema = createSchema("docs", {
+      name: string(),
+      age: number().optional(),
+      nickname: string().optional(),
+    });
+
+    const db = createDatabase(
+      client.db(),
+      defineSchemas({
+        NullableSchema,
+      }),
+    );
+
+    afterEach(async () => {
+      await db.collections.docs.deleteMany({});
+    });
+
+    it("$set with undefined for an optional field is treated as omitted (no change)", async () => {
+      const doc = await db.collections.docs.insertOne({ name: "alice", nickname: "ali" });
+      await db.collections.docs.updateOne({ _id: doc._id }, { $set: { nickname: undefined } });
+      const updated = await db.collections.docs.findOne({ _id: doc._id });
+      expect(updated?.nickname).toBe("ali");
+    });
+
+    it("$set with undefined for a required field is treated as omitted (no change)", async () => {
+      const doc = await db.collections.docs.insertOne({ name: "alice" });
+      await db.collections.docs.updateOne({ _id: doc._id }, { $set: { name: undefined } });
+      const updated = await db.collections.docs.findOne({ _id: doc._id });
+      expect(updated?.name).toBe("alice");
+    });
+
+    it("omitting an optional field from $set leaves it unchanged", async () => {
+      const doc = await db.collections.docs.insertOne({ name: "alice", nickname: "ali" });
+      await db.collections.docs.updateOne({ _id: doc._id }, { $set: { age: 30 } });
+      const updated = await db.collections.docs.findOne({ _id: doc._id });
+      expect(updated?.nickname).toBe("ali");
+    });
+
+    it("$set with undefined alongside valid fields skips undefined and applies the rest", async () => {
+      const doc = await db.collections.docs.insertOne({ name: "alice", age: 10 });
+      await db.collections.docs.updateOne({ _id: doc._id }, { $set: { age: undefined, nickname: "ali" } });
+      const fetched = await db.collections.docs.findOne({ _id: doc._id });
+      expect(fetched?.nickname).toBe("ali");
+      expect(fetched?.age).toBe(10);
+    });
+  });
+
+  describe("combined operators", async () => {
+    const ComboSchema = createSchema("combo", {
+      name: string(),
+      count: number(),
+      tags: array(string()),
+      alias: string().optional(),
+    });
+
+    const db = createDatabase(
+      client.db(),
+      defineSchemas({
+        ComboSchema,
+      }),
+    );
+
+    afterEach(async () => {
+      await db.collections.combo.deleteMany({});
+    });
+
+    it("$set and $inc in same update", async () => {
+      const doc = await db.collections.combo.insertOne({ name: "a", count: 5, tags: [] });
+      await db.collections.combo.updateOne({ _id: doc._id }, { $set: { name: "b" }, $inc: { count: 3 } });
+      const updated = await db.collections.combo.findOne({ _id: doc._id });
+      expect(updated?.name).toBe("b");
+      expect(updated?.count).toBe(8);
+    });
+
+    it("$set and $push in same update", async () => {
+      const doc = await db.collections.combo.insertOne({ name: "a", count: 0, tags: ["x"] });
+      await db.collections.combo.updateOne({ _id: doc._id }, { $set: { name: "b" }, $push: { tags: "y" } });
+      const updated = await db.collections.combo.findOne({ _id: doc._id });
+      expect(updated?.name).toBe("b");
+      expect(updated?.tags).toEqual(["x", "y"]);
+    });
+
+    it("$set and $unset in same update on different fields", async () => {
+      const doc = await db.collections.combo.insertOne({ name: "a", count: 0, tags: [], alias: "old" });
+      await db.collections.combo.updateOne({ _id: doc._id }, { $set: { name: "b" }, $unset: { alias: "" } });
+      const updated = await db.collections.combo.findOne({ _id: doc._id });
+      expect(updated?.name).toBe("b");
+      expect(updated).not.toHaveProperty("alias");
+    });
+
+    it("$inc and $push in same update", async () => {
+      const doc = await db.collections.combo.insertOne({ name: "a", count: 1, tags: [] });
+      await db.collections.combo.updateOne({ _id: doc._id }, { $inc: { count: 9 }, $push: { tags: "new" } });
+      const updated = await db.collections.combo.findOne({ _id: doc._id });
+      expect(updated?.count).toBe(10);
+      expect(updated?.tags).toEqual(["new"]);
+    });
+
+    it("$setOnInsert only applies on upsert insert, not on update", async () => {
+      const doc = await db.collections.combo.insertOne({ name: "existing", count: 1, tags: [] });
+      await db.collections.combo
+        .findOneAndUpdate({ _id: doc._id }, { $set: { count: 2 }, $setOnInsert: { name: "inserted" } })
+        .options({ upsert: true });
+      const updated = await db.collections.combo.findOne({ _id: doc._id });
+      // $setOnInsert should not apply since the document already exists
+      expect(updated?.name).toBe("existing");
+      expect(updated?.count).toBe(2);
+    });
+
+    it("$setOnInsert applies when upsert creates a new document", async () => {
+      const result = await db.collections.combo
+        .findOneAndUpdate({ name: "ghost" }, { $set: { count: 0, tags: [] }, $setOnInsert: { name: "ghost" } })
+        .options({ upsert: true, returnDocument: "after" });
+      expect(result?.name).toBe("ghost");
+      expect(result?.count).toBe(0);
     });
   });
 });

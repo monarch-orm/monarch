@@ -85,6 +85,7 @@ function parseFieldsOperator(
 ) {
   const parsed: Record<string, any> = {};
   for (const [path, value] of Object.entries(fields)) {
+    if (value === undefined) continue;
     const pathType = MonarchType.index(schemaType, path.split("."), -1);
     const parser = MonarchType.parser(pathType);
     parsed[path] = parser(value);
@@ -101,6 +102,7 @@ function parseArrayOperator(
 ) {
   const parsed: Record<string, any> = {};
   for (const [path, value] of Object.entries(fields)) {
+    if (value === undefined) continue;
     const pathType = MonarchType.index(schemaType, path.split("."), -1);
     if (!MonarchType.isInstanceOf(pathType, MonarchArray)) {
       throw MonarchParseError.create({ path, message: `operator '${op}' requires an array field` });
@@ -125,6 +127,7 @@ function parseArrayAllOperator(
 ) {
   const parsed: Record<string, any> = {};
   for (const [path, value] of Object.entries(fields)) {
+    if (value === undefined) continue;
     const pathType = MonarchType.index(schemaType, path.split("."), -1);
     if (!MonarchType.isInstanceOf(pathType, MonarchArray)) {
       throw MonarchParseError.create({ path, message: `operator '$pullAll' requires an array field` });
@@ -145,6 +148,7 @@ function parseArrayPassThroughOperator(
 ) {
   const parsed: Record<string, any> = {};
   for (const [path, value] of Object.entries(fields)) {
+    if (value === undefined) continue;
     const pathType = MonarchType.index(schemaType, path.split("."), -1);
     if (!MonarchType.isInstanceOf(pathType, MonarchArray)) {
       throw MonarchParseError.create({ path, message: `operator '${op}' requires an array field` });
@@ -163,6 +167,7 @@ function parseNumericPassThroughOperator(
 ) {
   const parsed: Record<string, any> = {};
   for (const [path, value] of Object.entries(fields)) {
+    if (value === undefined) continue;
     const pathType = MonarchType.index(schemaType, path.split("."), -1);
     if (
       !MonarchType.isInstanceOf(pathType, MonarchNumber) &&
@@ -187,6 +192,7 @@ function parseUnsetOperator(
 ) {
   const parsed: Record<string, any> = {};
   for (const [path, value] of Object.entries(fields)) {
+    if (value === undefined) continue;
     const pathType = MonarchType.index(schemaType, path.split("."), -1);
     if (!MonarchType.isInstanceOf(pathType, MonarchOptional)) {
       throw MonarchParseError.create({ path, message: `operator '$unset' requires an optional field` });
@@ -204,6 +210,7 @@ function parseDateOperator(
 ) {
   const parsed: Record<string, any> = {};
   for (const [path, value] of Object.entries(fields)) {
+    if (value === undefined) continue;
     const pathType = MonarchType.index(schemaType, path.split("."), -1);
     if (!MonarchType.isInstanceOf(pathType, MonarchDate)) {
       throw MonarchParseError.create({ path, message: `operator '$currentDate' requires a date field` });
@@ -224,6 +231,7 @@ function parseBitOperator(
 ) {
   const parsed: Record<string, any> = {};
   for (const [path, value] of Object.entries(fields)) {
+    if (value === undefined) continue;
     const pathType = MonarchType.index(schemaType, path.split("."), -1);
     if (
       !MonarchType.isInstanceOf(pathType, MonarchNumber) &&
@@ -245,6 +253,7 @@ function parseRenameOperator(
 ) {
   const parsed: Record<string, any> = {};
   for (const [path, value] of Object.entries(fields)) {
+    if (value === undefined) continue;
     const sourceType = MonarchType.index(schemaType, path.split("."), -1);
     if (!MonarchType.isInstanceOf(sourceType, MonarchOptional)) {
       throw MonarchParseError.create({

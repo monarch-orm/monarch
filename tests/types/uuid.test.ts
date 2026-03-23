@@ -1,6 +1,6 @@
 import { UUID } from "mongodb";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { createDatabase, createSchema, Schema } from "../../src";
+import { createDatabase, createSchema, defineSchemas, Schema } from "../../src";
 import { uuid } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
@@ -29,13 +29,9 @@ describe("uuid", () => {
   test("rejects non-string / non-UUID input types", () => {
     const schema = createSchema("test", { value: uuid() });
     // @ts-expect-error
-    expect(() => Schema.input(schema, { value: 123 })).toThrowError(
-      "expected 'UUID' or 'string' received 'number'",
-    );
+    expect(() => Schema.input(schema, { value: 123 })).toThrowError("expected 'UUID' or 'string' received 'number'");
     // @ts-expect-error
-    expect(() => Schema.input(schema, { value: {} })).toThrowError(
-      "expected 'UUID' or 'string' received 'object'",
-    );
+    expect(() => Schema.input(schema, { value: {} })).toThrowError("expected 'UUID' or 'string' received 'object'");
   });
 
   test("works with nullable and optional", () => {
@@ -64,11 +60,11 @@ describe("uuid", () => {
       await server.stop();
     });
 
-    const UUIDSchema = createSchema("bson_uuid", {
+    const UUIDSchema = createSchema("data", {
       value: uuid().optional(),
     });
 
-    const { collections } = createDatabase(client.db(), { data: UUIDSchema });
+    const { collections } = createDatabase(client.db(), defineSchemas({ UUIDSchema }));
 
     afterAll(async () => {
       await collections.data.deleteMany({});

@@ -1,7 +1,7 @@
-import type { Filter as MongoFilter, FindOptions, Collection as MongoCollection } from "mongodb";
-import type { Filter } from "../../schema/filter-types";
+import type { FindOptions, Collection as MongoCollection, Filter as MongoFilter } from "mongodb";
 import type { AnyRelations } from "../../relations/relations";
 import type { InferRelationObjectPopulation, Population } from "../../relations/type-helpers";
+import type { Filter } from "../../schema/filter-types";
 import { type AnySchema, Schema } from "../../schema/schema";
 import type { InferSchemaData, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
 import type { TrueKeys } from "../../utils/type-helpers";

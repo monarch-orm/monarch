@@ -1,4 +1,9 @@
-import type { Filter as MongoFilter, FindOneAndReplaceOptions, Collection as MongoCollection, WithoutId } from "mongodb";
+import type {
+  FindOneAndReplaceOptions,
+  Collection as MongoCollection,
+  Filter as MongoFilter,
+  WithoutId,
+} from "mongodb";
 import type { Filter } from "../../schema/filter-types";
 import { type AnySchema, Schema } from "../../schema/schema";
 import type { InferSchemaData, InferSchemaInput, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
@@ -65,10 +70,14 @@ export class FindOneAndReplaceQuery<
   protected async exec(): Promise<QueryOutput<TOutput, TOmit> | null> {
     const extras = addExtraInputsToProjection(this._projection, Schema.options(this.schema).virtuals);
     const replacement = Schema.input(this.schema, this._replacement as InferSchemaInput<TSchema>);
-    const res = await this.collection.findOneAndReplace(this._filter as MongoFilter<InferSchemaData<TSchema>>, replacement, {
-      ...this._options,
-      projection: this._projection,
-    });
+    const res = await this.collection.findOneAndReplace(
+      this._filter as MongoFilter<InferSchemaData<TSchema>>,
+      replacement,
+      {
+        ...this._options,
+        projection: this._projection,
+      },
+    );
     return res
       ? (Schema.output(this.schema, res as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
           TOutput,

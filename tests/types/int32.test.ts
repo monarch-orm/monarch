@@ -1,6 +1,6 @@
 import { Int32 } from "mongodb";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { createDatabase, createSchema, Schema } from "../../src";
+import { createDatabase, createSchema, defineSchemas, Schema } from "../../src";
 import { int32 } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
@@ -52,11 +52,11 @@ describe("int32", () => {
       await server.stop();
     });
 
-    const IntSchema = createSchema("bson_int32", {
+    const IntSchema = createSchema("data", {
       value: int32().optional(),
     });
 
-    const { collections } = createDatabase(client.db(), { data: IntSchema });
+    const { collections } = createDatabase(client.db(), defineSchemas({ IntSchema }));
 
     afterAll(async () => {
       await collections.data.deleteMany({});

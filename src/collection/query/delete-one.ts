@@ -1,4 +1,4 @@
-import type { DeleteOptions, DeleteResult, Filter as MongoFilter, Collection as MongoCollection } from "mongodb";
+import type { DeleteOptions, DeleteResult, Collection as MongoCollection, Filter as MongoFilter } from "mongodb";
 import type { Filter } from "../../schema/filter-types";
 import type { AnySchema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";

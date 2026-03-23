@@ -59,12 +59,7 @@ describe("binary", () => {
       binaryField: binary().optional(),
     });
 
-    const { collections } = createDatabase(
-      client.db(),
-      defineSchemas({
-        bsonData: BsonDataSchema,
-      }),
-    );
+    const { collections } = createDatabase(client.db(), defineSchemas({ BsonDataSchema }));
 
     afterAll(async () => {
       await collections.bsonData.deleteMany({});

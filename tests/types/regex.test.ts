@@ -1,6 +1,6 @@
 import { BSONRegExp } from "mongodb";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { createDatabase, createSchema, Schema } from "../../src";
+import { createDatabase, createSchema, defineSchemas, Schema } from "../../src";
 import { regex } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
@@ -73,11 +73,11 @@ describe("regex", () => {
       await server.stop();
     });
 
-    const RegexSchema = createSchema("bson_regex", {
+    const RegexSchema = createSchema("data", {
       pattern: regex().optional(),
     });
 
-    const { collections } = createDatabase(client.db(), { data: RegexSchema });
+    const { collections } = createDatabase(client.db(), defineSchemas({ RegexSchema }));
 
     afterAll(async () => {
       await collections.data.deleteMany({});

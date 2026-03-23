@@ -81,12 +81,7 @@ describe("decimal128", () => {
       decimalField: decimal128().optional(),
     });
 
-    const { collections } = createDatabase(
-      client.db(),
-      defineSchemas({
-        bsonData: BsonDataSchema,
-      }),
-    );
+    const { collections } = createDatabase(client.db(), defineSchemas({ BsonDataSchema }));
 
     afterAll(async () => {
       await collections.bsonData.deleteMany({});

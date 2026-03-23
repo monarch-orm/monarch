@@ -1,4 +1,4 @@
-import type { Filter as MongoFilter, FindOneAndDeleteOptions, Collection as MongoCollection } from "mongodb";
+import type { FindOneAndDeleteOptions, Collection as MongoCollection, Filter as MongoFilter } from "mongodb";
 import type { Filter } from "../../schema/filter-types";
 import { type AnySchema, Schema } from "../../schema/schema";
 import type { InferSchemaData, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";

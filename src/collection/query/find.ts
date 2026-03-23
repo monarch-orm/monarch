@@ -1,4 +1,10 @@
-import type { AbstractCursor, Filter as MongoFilter, FindOptions, Collection as MongoCollection, Sort as MongoSort } from "mongodb";
+import type {
+  AbstractCursor,
+  FindOptions,
+  Collection as MongoCollection,
+  Filter as MongoFilter,
+  Sort as MongoSort,
+} from "mongodb";
 import type { AnyRelations } from "../../relations/relations";
 import type { InferRelationObjectPopulation, Population } from "../../relations/type-helpers";
 import type { Filter } from "../../schema/filter-types";

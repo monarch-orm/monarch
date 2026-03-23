@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
-import { createDatabase, createSchema } from "../../src";
-import { array, boolean, literal, number, object, string, tuple, union } from "../../src/types";
+import { createDatabase, createSchema, defineSchemas } from "../../src";
+import { array, boolean, literal, mixed, number, object, string, tuple, union } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
 describe("Distinct Operations", async () => {
@@ -16,9 +16,10 @@ describe("Distinct Operations", async () => {
     permissions: array(object({ resource: string(), action: string() })).optional(),
     tags: array(string()).nullable().optional(),
     badge: tuple([literal("role"), literal("scope"), union(literal("read"), literal("write"))]).optional(),
+    meta: mixed().optional(),
   });
 
-  const { collections } = createDatabase(client.db(), { users: UserSchema });
+  const { collections } = createDatabase(client.db(), defineSchemas({ UserSchema }));
 
   const mockUsers = [
     {
@@ -212,6 +213,18 @@ describe("Distinct Operations", async () => {
       const tiers = await collections.users.distinct("badge.2");
       expect(tiers).toEqual(expect.arrayContaining(["read", "write"]));
       expect(tiers).toHaveLength(2);
+    });
+
+    it("uses dot notation on a mixed field with a valid nested value", async () => {
+      await collections.users.insertMany([
+        { name: "a", email: "a@example.com", isVerified: false, meta: { region: "EU" } },
+        { name: "b", email: "b@example.com", isVerified: false, meta: { region: "US" } },
+        { name: "c", email: "c@example.com", isVerified: false, meta: { region: "EU" } },
+        { name: "d", email: "d@example.com", isVerified: false },
+      ]);
+      const regions = await collections.users.distinct("meta.region");
+      expect(regions).toEqual(expect.arrayContaining(["EU", "US"]));
+      expect(regions).toHaveLength(2);
     });
   });
 });
