@@ -12,12 +12,13 @@ import {
   MonarchType,
   type AnyMonarchType,
 } from "../types";
-import type { UpdateFilter } from "./filter-types";
+import type { UpdateFilter } from "./type-helpers";
 
 export function updateParser<T extends AnyMonarchType>(
   schemaType: T,
   schemaUpdate: (() => UpdateFilter<any>) | undefined,
   update: UpdateFilter<any>,
+  upsert: boolean,
 ) {
   let updates: Map<string, { op: string; value: any }> | undefined;
   const schemaUpdateObj = schemaUpdate?.();
@@ -29,11 +30,14 @@ export function updateParser<T extends AnyMonarchType>(
       }
     }
   }
+
+  let setOnInsertSkipSet: Set<string> | undefined;
+  if (upsert || update.$setOnInsert) setOnInsertSkipSet = new Set();
+
   const input: StrictUpdateFilter<any> = {};
 
   // Field update operators: parse value through field's type
-  if (update.$set) input.$set = parseFieldsOperator(schemaType, update.$set, updates);
-  if (update.$setOnInsert) input.$setOnInsert = parseFieldsOperator(schemaType, update.$setOnInsert, updates);
+  if (update.$set) input.$set = parseFieldsOperator(schemaType, update.$set, updates, setOnInsertSkipSet);
   if (update.$min) input.$min = parseFieldsOperator(schemaType, update.$min, updates);
   if (update.$max) input.$max = parseFieldsOperator(schemaType, update.$max, updates);
 
@@ -53,7 +57,7 @@ export function updateParser<T extends AnyMonarchType>(
   if (update.$mul) input.$mul = parseNumericPassThroughOperator("$mul", schemaType, update.$mul, updates);
 
   // Field removal: requires optional field, pass through
-  if (update.$unset) input.$unset = parseUnsetOperator(schemaType, update.$unset, updates);
+  if (update.$unset) input.$unset = parseUnsetOperator(schemaType, update.$unset, updates, setOnInsertSkipSet);
 
   // Date operator: requires date field, pass through
   if (update.$currentDate) input.$currentDate = parseDateOperator(schemaType, update.$currentDate, updates);
@@ -62,17 +66,22 @@ export function updateParser<T extends AnyMonarchType>(
   if (update.$bit) input.$bit = parseBitOperator(schemaType, update.$bit, updates);
 
   // Rename operator: requires optional source, compatible destination
-  if (update.$rename) input.$rename = parseRenameOperator(schemaType, update.$rename, updates);
+  if (update.$rename) input.$rename = parseRenameOperator(schemaType, update.$rename, updates, setOnInsertSkipSet);
 
   // Apply default schema updates
   if (schemaUpdateObj && updates?.size) {
-    const defaultUpdates = updateParser(schemaType, undefined, schemaUpdateObj);
+    const defaultUpdates = updateParser(schemaType, undefined, schemaUpdateObj, false);
     for (const [op, fields] of Object.entries(defaultUpdates)) {
       if (!input[op]) input[op] = {};
       for (const [path, value] of Object.entries(fields)) {
         if (updates.has(path)) input[op][path] = value;
       }
     }
+  }
+
+  // Upsert update: parse and flatten full document
+  if (setOnInsertSkipSet) {
+    input.$setOnInsert = parseSetOnInsertOperator(schemaType, update.$setOnInsert ?? {}, setOnInsertSkipSet);
   }
 
   return input;
@@ -82,6 +91,7 @@ function parseFieldsOperator(
   schemaType: AnyMonarchType,
   fields: Record<string, unknown>,
   schemaUpdates?: Map<string, { op: string; value: any }>,
+  setOnInsertSkipSet?: Set<string>,
 ) {
   const parsed: Record<string, any> = {};
   for (const [path, value] of Object.entries(fields)) {
@@ -90,6 +100,7 @@ function parseFieldsOperator(
     const parser = MonarchType.parser(pathType);
     parsed[path] = parser(value);
     if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+    setOnInsertSkipSet?.add(path);
   }
   return parsed;
 }
@@ -189,6 +200,7 @@ function parseUnsetOperator(
   schemaType: AnyMonarchType,
   fields: Record<string, unknown>,
   schemaUpdates?: Map<string, { op: string; value: any }>,
+  setOnInsertSkipSet?: Set<string>,
 ) {
   const parsed: Record<string, any> = {};
   for (const [path, value] of Object.entries(fields)) {
@@ -199,6 +211,7 @@ function parseUnsetOperator(
     }
     parsed[path] = value;
     if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+    setOnInsertSkipSet?.add(path);
   }
   return parsed;
 }
@@ -250,6 +263,7 @@ function parseRenameOperator(
   schemaType: AnyMonarchType,
   fields: Record<string, string>,
   schemaUpdates?: Map<string, { op: string; value: any }>,
+  setOnInsertSkipSet?: Set<string>,
 ) {
   const parsed: Record<string, any> = {};
   for (const [path, value] of Object.entries(fields)) {
@@ -271,6 +285,7 @@ function parseRenameOperator(
     }
     parsed[path] = value;
     if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+    setOnInsertSkipSet?.add(path);
   }
   return parsed;
 }
@@ -285,4 +300,39 @@ function removeUpdateConflict(updatePath: string, schemaUpdates: Map<string, { o
       schemaUpdates.delete(schemaUpdatePath);
     }
   }
+}
+
+function parseSetOnInsertOperator(
+  schemaType: AnyMonarchType,
+  fields: Record<string, unknown>,
+  setOnInsertSkipSet: Set<string>,
+) {
+  try {
+    const parser = MonarchType.parser(schemaType);
+    return flattenObject(parser(fields), setOnInsertSkipSet);
+  } catch (error) {
+    throw MonarchParseError.create({ message: `$setOnInsert: ${error}` });
+  }
+}
+
+function flattenObject(obj: Record<string, any>, skipSet: Set<string>) {
+  const out: Record<string, any> = {};
+  const stack = [{ obj, path: "" }];
+
+  while (stack.length) {
+    const { obj, path } = stack.pop()!;
+
+    for (const [key, value] of Object.entries(obj)) {
+      const nextPath = path ? `${path}.${key}` : key;
+
+      if (skipSet.has(nextPath)) continue;
+
+      if (value !== null && typeof value === "object" && Object.getPrototypeOf(value) === Object.prototype) {
+        stack.push({ obj: value, path: nextPath });
+      } else {
+        out[nextPath] = value;
+      }
+    }
+  }
+  return out;
 }

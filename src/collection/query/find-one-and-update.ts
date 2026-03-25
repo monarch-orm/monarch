@@ -5,9 +5,14 @@ import type {
   Filter as MongoFilter,
   UpdateFilter as MongoUpdateFilter,
 } from "mongodb";
-import type { Filter, UpdateFilter } from "../../schema/filter-types";
 import { type AnySchema, Schema } from "../../schema/schema";
-import type { InferSchemaData, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
+import type {
+  Filter,
+  InferSchemaData,
+  InferSchemaOmit,
+  InferSchemaOutput,
+  UpdateFilter,
+} from "../../schema/type-helpers";
 import type { TrueKeys } from "../../utils/type-helpers";
 import type { BoolProjection, Projection } from "../types/query-options";
 import { addExtraInputsToProjection, makeProjection } from "../utils/projection";
@@ -69,7 +74,9 @@ export class FindOneAndUpdateQuery<
   }
 
   protected async exec(): Promise<QueryOutput<TOutput, TOmit> | null> {
-    const update = Array.isArray(this._update) ? this._update : Schema.updateInput(this.schema, this._update);
+    const update = Array.isArray(this._update)
+      ? this._update
+      : Schema.updateInput(this.schema, this._update, this._options.upsert ?? false);
 
     const extras = addExtraInputsToProjection(this._projection, Schema.options(this.schema).virtuals);
     const res = await this.collection.findOneAndUpdate(

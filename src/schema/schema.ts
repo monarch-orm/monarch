@@ -5,13 +5,13 @@ import { MonarchObject, object } from "../types";
 import { objectId } from "../types/objectId";
 import { MonarchType, type AnyMonarchType } from "../types/type";
 import type { MergeAll, MergeN1All, Pretty } from "../utils/type-helpers";
-import type { UpdateFilter } from "./filter-types";
 import type { SchemaIndexes } from "./indexes";
 import type {
   InferSchemaData,
   InferSchemaInput,
   InferSchemaOutput,
   InferSchemaTypes,
+  UpdateFilter,
   WithObjectId,
 } from "./type-helpers";
 import { updateParser } from "./update";
@@ -34,7 +34,7 @@ export class Schema<
   TVirtuals extends Record<string, AnyVirtual> = {},
 > {
   private type: MonarchObject<TTypes>;
-  private update?: () => UpdateFilter<this>;
+  private update?: () => UpdateFilter<any>;
 
   /**
    * Creates a Schema instance.
@@ -146,10 +146,11 @@ export class Schema<
    *
    * @param schema - Schema instance
    * @param update - Update data with dot-path keys and their new values
+   * @param upsert - Upsert parses $setOnInsert if true
    * @returns Parsed update data
    */
-  public static updateInput<T extends AnySchema>(schema: T, update: UpdateFilter<T>) {
-    return updateParser(schema.type, schema.update, update);
+  public static updateInput<T extends AnySchema>(schema: T, update: UpdateFilter<T>, upsert: boolean) {
+    return updateParser(schema.type, schema.update, update, upsert);
   }
 
   /**

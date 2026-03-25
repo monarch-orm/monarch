@@ -9,7 +9,7 @@ import type { AnyRelation, AnyRelations, Relation, RelationField } from "./relat
 type ValidRelationFieldType<TRelation extends "one" | "many" | "refs" | undefined> = TRelation extends "refs"
   ? Array<string | number | ObjectId>
   : string | number | ObjectId;
-export type SchemaRelatableField<T extends AnySchema, TRelation extends "one" | "many" | "refs" | undefined> = keyof {
+export type SchemaRelatableField<TRelation extends "one" | "many" | "refs" | undefined, T extends AnySchema> = keyof {
   [K in keyof InferSchemaInput<T> as NonNullable<InferSchemaInput<T>[K]> extends ValidRelationFieldType<TRelation>
     ? K
     : never]: unknown;

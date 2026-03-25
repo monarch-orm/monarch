@@ -5,9 +5,8 @@ import type {
   UpdateResult,
   WithoutId,
 } from "mongodb";
-import type { Filter } from "../../schema/filter-types";
 import { Schema, type AnySchema } from "../../schema/schema";
-import type { InferSchemaData, InferSchemaInput } from "../../schema/type-helpers";
+import type { Filter, InferSchemaData, InferSchemaInput } from "../../schema/type-helpers";
 import { Query } from "./base";
 
 /**

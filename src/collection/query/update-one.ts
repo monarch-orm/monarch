@@ -6,9 +6,8 @@ import type {
   UpdateOptions,
   UpdateResult,
 } from "mongodb";
-import type { Filter, UpdateFilter } from "../../schema/filter-types";
 import { type AnySchema, Schema } from "../../schema/schema";
-import type { InferSchemaData } from "../../schema/type-helpers";
+import type { Filter, InferSchemaData, UpdateFilter } from "../../schema/type-helpers";
 import { Query } from "./base";
 
 /**
@@ -38,7 +37,9 @@ export class UpdateOneQuery<TSchema extends AnySchema> extends Query<TSchema, Up
   }
 
   protected async exec(): Promise<UpdateResult<InferSchemaData<TSchema>>> {
-    const update = Array.isArray(this._update) ? this._update : Schema.updateInput(this.schema, this._update);
+    const update = Array.isArray(this._update)
+      ? this._update
+      : Schema.updateInput(this.schema, this._update, this._options.upsert ?? false);
 
     const res = await this.collection.updateOne(
       this._filter as MongoFilter<InferSchemaData<TSchema>>,

@@ -9,12 +9,9 @@ import {
   ObjectId,
   type WithoutId,
 } from "mongodb";
-import { MonarchError } from "../errors";
 import type { AnyRelations } from "../relations/relations";
-import type { DistinctFilter, Filter, UpdateFilter } from "../schema/filter-types";
-import { makeIndexes } from "../schema/indexes";
 import { type AnySchema, Schema } from "../schema/schema";
-import type { InferSchemaData, InferSchemaInput } from "../schema/type-helpers";
+import type { DistinctFilter, Filter, InferSchemaData, InferSchemaInput, UpdateFilter } from "../schema/type-helpers";
 import { MonarchObjectId } from "../types/objectId";
 import { MonarchType } from "../types/type";
 import type { Index } from "../utils/type-helpers";
@@ -51,23 +48,12 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    */
   constructor(
     db: Db,
+    readyPromise: Promise<void>,
     public schema: TSchema,
     public relations: TDbRelations,
   ) {
-    // create indexes
-    const options = Schema.options(schema);
-    if (options.indexes) {
-      const indexes = makeIndexes(options.indexes);
-      const indexesPromises = Object.entries(indexes).map(async ([key, [fields, options]]) => {
-        await db.createIndex(schema.name, fields, options).catch((error) => {
-          throw new MonarchError(`failed to create index '${key}': ${error}`);
-        });
-      });
-      this._readyPromise = Promise.all(indexesPromises).then(() => undefined);
-    } else {
-      this._readyPromise = Promise.resolve();
-    }
     this._collection = db.collection<InferSchemaData<TSchema>>(this.schema.name);
+    this._readyPromise = readyPromise;
   }
 
   /**

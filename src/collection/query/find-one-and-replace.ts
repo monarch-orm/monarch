@@ -4,9 +4,14 @@ import type {
   Filter as MongoFilter,
   WithoutId,
 } from "mongodb";
-import type { Filter } from "../../schema/filter-types";
 import { type AnySchema, Schema } from "../../schema/schema";
-import type { InferSchemaData, InferSchemaInput, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
+import type {
+  Filter,
+  InferSchemaData,
+  InferSchemaInput,
+  InferSchemaOmit,
+  InferSchemaOutput,
+} from "../../schema/type-helpers";
 import type { TrueKeys } from "../../utils/type-helpers";
 import type { BoolProjection, Projection } from "../types/query-options";
 import { addExtraInputsToProjection, makeProjection } from "../utils/projection";

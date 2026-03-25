@@ -1,19 +1,24 @@
 /**
  * Base error class for Monarch ORM errors.
  */
-export class MonarchError extends Error {}
+export class MonarchError extends Error {
+  public cause?: unknown;
+
+  constructor(message: string, cause?: unknown) {
+    super(message);
+    this.cause = cause;
+  }
+}
 
 /**
  * Schema parsing and validation error.
  */
 export class MonarchParseError extends MonarchError {
   public path: (string | number)[];
-  public cause?: Error;
 
-  private constructor(message: string, path: (string | number)[], cause?: Error) {
-    super(message);
+  private constructor(message: string, path: (string | number)[], cause?: unknown) {
+    super(message, cause);
     this.path = path;
-    this.cause = cause;
   }
 
   static create({ path, message }: { path?: string | number; message: string }): MonarchParseError {
@@ -23,7 +28,7 @@ export class MonarchParseError extends MonarchError {
 
   static fromCause({ path, cause }: { path?: string | number; cause: unknown }): MonarchParseError {
     let prevPath: (string | number)[] = [];
-    let rootCause: Error | undefined;
+    let rootCause: unknown | undefined;
 
     if (cause instanceof MonarchParseError) {
       prevPath = cause.path;
@@ -31,7 +36,8 @@ export class MonarchParseError extends MonarchError {
     } else if (cause instanceof Error) {
       rootCause = cause;
     }
-    const message = rootCause?.message ?? String(cause);
+
+    const message = rootCause instanceof Error ? rootCause.message : String(rootCause);
 
     if (!path) return new MonarchParseError(message, prevPath, rootCause);
 

@@ -610,12 +610,7 @@ describe("Update Operations", async () => {
       meta: mixed().optional(),
     });
 
-    const db = createDatabase(
-      client.db(),
-      defineSchemas({
-        MixedSchema,
-      }),
-    );
+    const db = createDatabase(client.db(), defineSchemas({ MixedSchema }));
 
     afterEach(async () => {
       await db.collections.mixed.deleteMany({});
@@ -681,12 +676,7 @@ describe("Update Operations", async () => {
       nickname: string().optional(),
     });
 
-    const db = createDatabase(
-      client.db(),
-      defineSchemas({
-        NullableSchema,
-      }),
-    );
+    const db = createDatabase(client.db(), defineSchemas({ NullableSchema }));
 
     afterEach(async () => {
       await db.collections.docs.deleteMany({});
@@ -730,12 +720,7 @@ describe("Update Operations", async () => {
       alias: string().optional(),
     });
 
-    const db = createDatabase(
-      client.db(),
-      defineSchemas({
-        ComboSchema,
-      }),
-    );
+    const db = createDatabase(client.db(), defineSchemas({ ComboSchema }));
 
     afterEach(async () => {
       await db.collections.combo.deleteMany({});
@@ -772,24 +757,53 @@ describe("Update Operations", async () => {
       expect(updated?.count).toBe(10);
       expect(updated?.tags).toEqual(["new"]);
     });
+  });
 
-    it("$setOnInsert only applies on upsert insert, not on update", async () => {
-      const doc = await db.collections.combo.insertOne({ name: "existing", count: 1, tags: [] });
-      await db.collections.combo
-        .findOneAndUpdate({ _id: doc._id }, { $set: { count: 2 }, $setOnInsert: { name: "inserted" } })
+  describe("upsert / $setOnInsert", async () => {
+    const UpsertSchema = createSchema("docs", {
+      name: string(),
+      count: number(),
+      tags: array(string()),
+      alias: string().optional(),
+    });
+
+    const db = createDatabase(client.db(), defineSchemas({ UpsertSchema }));
+
+    afterEach(async () => {
+      await db.collections.docs.deleteMany({});
+    });
+
+    it("$setOnInsert does not apply when document already exists", async () => {
+      const doc = await db.collections.docs.insertOne({ name: "existing", count: 1, tags: [] });
+      await db.collections.docs
+        .findOneAndUpdate(
+          { _id: doc._id },
+          { $set: { count: 2 }, $setOnInsert: { name: "inserted", count: 0, tags: [] } },
+        )
         .options({ upsert: true });
-      const updated = await db.collections.combo.findOne({ _id: doc._id });
-      // $setOnInsert should not apply since the document already exists
+      const updated = await db.collections.docs.findOne({ _id: doc._id });
       expect(updated?.name).toBe("existing");
       expect(updated?.count).toBe(2);
     });
 
     it("$setOnInsert applies when upsert creates a new document", async () => {
-      const result = await db.collections.combo
-        .findOneAndUpdate({ name: "ghost" }, { $set: { count: 0, tags: [] }, $setOnInsert: { name: "ghost" } })
+      const result = await db.collections.docs
+        .findOneAndUpdate(
+          { name: "ghost" },
+          { $set: { count: 0, tags: [] }, $setOnInsert: { name: "ghost", count: 0, tags: [] } },
+        )
         .options({ upsert: true, returnDocument: "after" });
       expect(result?.name).toBe("ghost");
       expect(result?.count).toBe(0);
+    });
+
+    it("$setOnInsert fields fails validation when upsert is true", async () => {
+      await expect(
+        db.collections.docs
+          // @ts-expect-error
+          .findOneAndUpdate({ name: "ghost" }, { $set: { name: "alice" }, $setOnInsert: { count: 1 } })
+          .options({ upsert: true }),
+      ).rejects.toThrow();
     });
   });
 });

@@ -1,7 +1,6 @@
 import type { DistinctOptions, Collection as MongoCollection, Filter as MongoFilter } from "mongodb";
-import type { DistinctFilter, Filter } from "../../schema/filter-types";
 import type { AnySchema } from "../../schema/schema";
-import type { InferSchemaData } from "../../schema/type-helpers";
+import type { DistinctFilter, Filter, InferSchemaData } from "../../schema/type-helpers";
 import { Query } from "./base";
 
 export class DistinctQuery<

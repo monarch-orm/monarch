@@ -22,20 +22,24 @@ import { uuid } from "./types/uuid";
 export { ObjectId } from "mongodb";
 export { Collection } from "./collection/collection";
 export { createClient, createDatabase, Database, type InferInput, type InferOutput } from "./database";
-export { MonarchError } from "./errors";
+export { MonarchError, MonarchParseError } from "./errors";
+export { createSchema, createShape, defineSchemas, mergeSchemas, Schema, Schemas } from "./schema/schema";
 export type {
   Condition,
+  CreateIndexKey,
   DistinctFilter,
   Filter,
   FilterOperations,
   FilterOperators,
+  IndexKey,
+  InferSchemaData,
+  InferSchemaInput,
+  InferSchemaOutput,
   RootFilterOperators,
   UpdateFilter,
-} from "./schema/filter-types";
-export { createSchema, createShape, defineSchemas, mergeSchemas, Schema, Schemas } from "./schema/schema";
-export { type InferSchemaInput, type InferSchemaOutput } from "./schema/type-helpers";
+} from "./schema/type-helpers";
 export { virtual, type Virtual } from "./schema/virtuals";
-export { toObjectId } from "./utils/objectId";
+export { toObjectId } from "./utils/misc";
 
 /**
  * Monarch types namespace for convenient access.

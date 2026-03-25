@@ -7,9 +7,8 @@ import type {
 } from "mongodb";
 import type { AnyRelations } from "../../relations/relations";
 import type { InferRelationObjectPopulation, Population } from "../../relations/type-helpers";
-import type { Filter } from "../../schema/filter-types";
 import { type AnySchema, Schema } from "../../schema/schema";
-import type { InferSchemaData, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
+import type { Filter, InferSchemaData, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
 import type { TrueKeys } from "../../utils/type-helpers";
 import type { PipelineStage } from "../types/pipeline-stage";
 import type { BoolProjection, Projection, Sort } from "../types/query-options";
