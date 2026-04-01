@@ -62,9 +62,9 @@ export class Database<TSchemas extends Schemas<any, any>> {
       // Create resolver which resolves immediately if initialize is false
       const resolver = createAsyncResolver();
       this.readyPromises[schema.name] = resolver;
-      if (options?.initialize ?? true)
+      if (options?.initialize ?? true) {
         collectionsInit.push({ schema, defaultValidation: options?.validation, resolver });
-      else resolver.resolve();
+      } else resolver.resolve();
 
       this.collections[key as keyof typeof this.collections] = new Collection(
         db,
@@ -82,9 +82,7 @@ export class Database<TSchemas extends Schemas<any, any>> {
 
   /**
    * Promise that resolves when all collection initialization tasks complete.
-   *
-   * This includes collection creation/modification, optional document validation setup,
-   * and optional index creation.
+   * This includes collection creation, index creation and document validation setup.
    */
   public get isReady() {
     return Promise.all(Object.values(this.readyPromises).map((r) => r.promise)).then<void>(() => undefined);
@@ -95,7 +93,7 @@ export class Database<TSchemas extends Schemas<any, any>> {
    *
    * @param options - Init options
    */
-  public async initialize(options?: InitOptions<keyof TSchemas & string>) {
+  public async initialize(options?: InitOptions<keyof TSchemas["schemas"] & string>) {
     const promises: Promise<void>[] = [];
     const collections = Object.values(this.collections).map((c: Collection<any, any>): CollectionInit => {
       const resolver = createAsyncResolver();
@@ -168,7 +166,10 @@ function initializeCollections(db: Db, collections: CollectionInit[], options?: 
   for (const c of collections) {
     // Skip disabled collections
     const enabled = options?.collections ? options.collections[c.schema.name] === true : true;
-    if (!enabled) continue;
+    if (!enabled) {
+      c.resolver.resolve();
+      continue;
+    }
 
     run(async () => {
       const existing = await existingPromise;

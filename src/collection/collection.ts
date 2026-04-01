@@ -58,9 +58,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
 
   /**
    * Promise that resolves when this collection's initialization tasks complete.
-   *
-   * This reflects the database initialization flow (collection setup, validation, indexes)
-   * for this schema, or resolves immediately when initialization is disabled.
+   * This includes collection creation, index creation and document validation setup.
    */
   public get isReady() {
     return this._readyPromise;

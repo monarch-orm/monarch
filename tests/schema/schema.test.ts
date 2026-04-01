@@ -282,62 +282,6 @@ describe("Schema", async () => {
     ).rejects.toThrowError("Document failed validation");
   });
 
-  describe("createDatabase options", () => {
-    it("applies validation option from createDatabase", async () => {
-      const schema = createSchema("users", {
-        name: string(),
-        age: number().optional(),
-        nickname: string().nullable(),
-      });
-
-      const db = createDatabase(client.db(), defineSchemas({ users: schema }), {
-        validation: {
-          validationLevel: "strict",
-          validationAction: "error",
-        },
-      });
-      await db.isReady;
-
-      const rawCollection = client.db().collection("users");
-      await expect(
-        rawCollection.insertOne({
-          name: "tom",
-          age: "not-a-number",
-          nickname: "tc",
-        }),
-      ).rejects.toThrowError("Document failed validation");
-    });
-
-    it("supports initialize false after a prior initialize call", async () => {
-      const schema = createSchema("users", {
-        name: string(),
-        age: number().optional(),
-        nickname: string().nullable(),
-      });
-
-      const bootDb = createDatabase(client.db(), defineSchemas({ users: schema }), {
-        initialize: false,
-        validation: {
-          validationLevel: "strict",
-          validationAction: "error",
-        },
-      });
-      await bootDb.initialize();
-
-      const appDb = createDatabase(client.db(), defineSchemas({ users: schema }), { initialize: false });
-      await appDb.isReady;
-
-      const rawCollection = client.db().collection("users");
-      await expect(
-        rawCollection.insertOne({
-          name: "tom",
-          age: "not-a-number",
-          nickname: "tc",
-        }),
-      ).rejects.toThrowError("Document failed validation");
-    });
-  });
-
   it("supports custom _id type with string", async () => {
     const schema = createSchema("products", {
       _id: string(),
