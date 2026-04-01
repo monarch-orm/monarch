@@ -23,4 +23,12 @@ describe("tuple", () => {
       "expected 'array' with 2 elements received 3 elements",
     );
   });
+
+  test("rejects optional tuple item type", () => {
+    expect(() =>
+      createSchema("test", {
+        items: tuple([number(), number().optional()]),
+      }),
+    ).toThrowError("tuple item at index 1 cannot be optional");
+  });
 });

@@ -1,5 +1,5 @@
-import { MonarchParseError } from "../errors";
-import { MonarchNullable, MonarchType, type AnyMonarchType } from "./type";
+import { MonarchError, MonarchParseError } from "../errors";
+import { MonarchNullable, MonarchOptional, MonarchType, type AnyMonarchType } from "./type";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
 import type { JSONSchema } from "./type.schema";
 
@@ -16,6 +16,10 @@ export const array = <T extends AnyMonarchType>(type: T) => new MonarchArray(typ
  */
 export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTypeInput<T>[], InferTypeOutput<T>[]> {
   constructor(private type: T) {
+    if (MonarchType.isInstanceOf(type, MonarchOptional)) {
+      throw new MonarchError("array item type cannot be optional");
+    }
+
     super((input) => {
       if (!Array.isArray(input)) {
         throw MonarchParseError.create({ message: `expected 'array' received '${typeof input}'` });

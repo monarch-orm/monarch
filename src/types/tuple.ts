@@ -1,5 +1,5 @@
-import { MonarchParseError } from "../errors";
-import { MonarchNullable, MonarchType, type AnyMonarchType } from "./type";
+import { MonarchError, MonarchParseError } from "../errors";
+import { MonarchNullable, MonarchOptional, MonarchType, type AnyMonarchType } from "./type";
 import type { InferTypeTupleInput, InferTypeTupleOutput } from "./type-helpers";
 import type { JSONSchema } from "./type.schema";
 
@@ -21,6 +21,12 @@ export class MonarchTuple<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
   InferTypeTupleOutput<T>
 > {
   constructor(private types: T) {
+    for (const [index, type] of types.entries()) {
+      if (MonarchType.isInstanceOf(type, MonarchOptional)) {
+        throw new MonarchError(`tuple item at index ${index} cannot be optional`);
+      }
+    }
+
     super((input) => {
       if (Array.isArray(input)) {
         if (input.length !== types.length) {

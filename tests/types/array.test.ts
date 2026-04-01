@@ -105,4 +105,12 @@ describe("array", () => {
     const undefinedData = Schema.input(schema, { items: ["a"] });
     expect(undefinedData).toStrictEqual({ items: ["a"] });
   });
+
+  test("rejects optional array item type", () => {
+    expect(() =>
+      createSchema("test", {
+        items: array(number().optional()),
+      }),
+    ).toThrowError("array item type cannot be optional");
+  });
 });
