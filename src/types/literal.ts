@@ -1,5 +1,6 @@
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Literal type.
@@ -23,5 +24,9 @@ export class MonarchLiteral<T> extends MonarchType<T, T> {
 
   protected copy() {
     return new MonarchLiteral(this.values);
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return { enum: [...this.values] };
   }
 }

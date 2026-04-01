@@ -1,6 +1,7 @@
 import { Double } from "mongodb";
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Double type for 64-bit floating point numbers.
@@ -23,5 +24,9 @@ export class MonarchDouble extends MonarchType<Double | number, number> {
 
   protected copy() {
     return new MonarchDouble();
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return { bsonType: "double" };
   }
 }

@@ -1,6 +1,7 @@
 import { MonarchParseError } from "../errors";
-import { type AnyMonarchType, MonarchType } from "./type";
+import { MonarchNullable, MonarchType, type AnyMonarchType } from "./type";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Record type.
@@ -51,6 +52,19 @@ export class MonarchRecord<T extends AnyMonarchType> extends MonarchType<
 
   protected copy() {
     return new MonarchRecord(this.type);
+  }
+
+  protected jsonSchema(): JSONSchema {
+    let valueSchema = MonarchType.jsonSchema(this.type);
+    const isNullable = MonarchType.isInstanceOf(this.type, MonarchNullable);
+    if (isNullable) valueSchema = MonarchNullable.nullableJsonSchema(valueSchema);
+    return {
+      bsonType: "object",
+      additionalProperties: false,
+      patternProperties: {
+        ".*": valueSchema,
+      },
+    };
   }
 
   public static type<T extends AnyMonarchType>(array: MonarchRecord<T>): T {

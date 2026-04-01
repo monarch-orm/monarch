@@ -15,6 +15,7 @@ import type {
   WithObjectId,
 } from "./type-helpers";
 import { updateParser } from "./update";
+import type { SchemaValidation } from "./validation";
 import type { AnyVirtual, SchemaVirtuals, Virtual } from "./virtuals";
 
 type SchemaOmit<TTypes extends Record<string, AnyMonarchType>> = {
@@ -50,6 +51,7 @@ export class Schema<
       omit?: SchemaOmit<TTypes>;
       virtuals?: SchemaVirtuals<TTypes, TVirtuals>;
       indexes?: SchemaIndexes<TTypes>;
+      validation?: SchemaValidation;
     },
   ) {
     this.type = object(types);
@@ -101,6 +103,11 @@ export class Schema<
    */
   public indexes(indexes: SchemaIndexes<TTypes>) {
     this.options.indexes = indexes;
+    return this;
+  }
+
+  public validation(validation: SchemaValidation) {
+    this.options.validation = validation;
     return this;
   }
 

@@ -1,5 +1,6 @@
 import { MonarchError, MonarchParseError } from "../errors";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Parser function type.
@@ -106,6 +107,12 @@ export abstract class MonarchType<TInput, TOutput extends TInput = TInput> {
    */
   public static index<T extends AnyMonarchType>(type: T, path: string[], depth: number): AnyMonarchType {
     return type.index(path, depth);
+  }
+
+  protected abstract jsonSchema(): JSONSchema;
+
+  public static jsonSchema<T extends AnyMonarchType>(type: T): JSONSchema {
+    return type.jsonSchema();
   }
 
   /**
@@ -263,6 +270,10 @@ export class MonarchNullable<T extends AnyMonarchType> extends MonarchType<
     return MonarchType.index(this.type, path, depth);
   }
 
+  protected jsonSchema(): JSONSchema {
+    return MonarchType.jsonSchema(this.type);
+  }
+
   protected copy() {
     return new MonarchNullable(this.type);
   }
@@ -273,6 +284,24 @@ export class MonarchNullable<T extends AnyMonarchType> extends MonarchType<
 
   public static type<T extends AnyMonarchType>(nullable: MonarchNullable<T>): T {
     return nullable.type;
+  }
+
+  public static nullableJsonSchema(schema: JSONSchema): JSONSchema {
+    const nullableSchema: JSONSchema = { ...schema };
+
+    if (schema.bsonType) {
+      const bsonType = Array.isArray(schema.bsonType) ? [...schema.bsonType] : [schema.bsonType];
+      if (!bsonType.includes("null")) bsonType.push("null");
+      nullableSchema.bsonType = bsonType;
+    }
+
+    if (schema.type) {
+      const type = Array.isArray(schema.type) ? [...schema.type] : [schema.type];
+      if (!type.includes("null")) type.push("null");
+      nullableSchema.type = type;
+    }
+
+    return nullableSchema;
   }
 }
 
@@ -303,6 +332,10 @@ export class MonarchOptional<T extends AnyMonarchType> extends MonarchType<
   protected index(path: string[], depth: number): AnyMonarchType {
     if (depth === path.length - 1) return this;
     throw MonarchParseError.create({ message: `updates must replace the entire optional value` });
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return MonarchType.jsonSchema(this.type);
   }
 
   protected copy() {
@@ -355,6 +388,10 @@ export class MonarchDefaulted<T extends AnyMonarchType> extends MonarchType<
   protected index(path: string[], depth: number): AnyMonarchType {
     if (depth === path.length - 1) return this;
     return MonarchType.index(this.type, path, depth);
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return MonarchType.jsonSchema(this.type);
   }
 
   protected copy() {

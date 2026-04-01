@@ -1,6 +1,7 @@
 import { BSONRegExp } from "mongodb";
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Regex type.
@@ -26,5 +27,9 @@ export class MonarchRegex extends MonarchType<BSONRegExp | RegExp, RegExp> {
 
   protected copy() {
     return new MonarchRegex();
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return { bsonType: "regex" };
   }
 }

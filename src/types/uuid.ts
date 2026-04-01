@@ -2,6 +2,7 @@ import { UUID } from "mongodb";
 import { randomUUID } from "node:crypto";
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * UUID type.
@@ -30,6 +31,10 @@ export class MonarchUUID extends MonarchType<UUID | string, UUID> {
 
   protected copy() {
     return new MonarchUUID();
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return { bsonType: "binData" };
   }
 
   public auto() {

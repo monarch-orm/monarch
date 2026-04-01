@@ -1,4 +1,5 @@
 import { type AnyMonarchType, MonarchType } from "./type";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Mixed type.
@@ -21,5 +22,9 @@ export class MonarchMixed extends MonarchType<unknown, unknown> {
 
   protected copy() {
     return new MonarchMixed();
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return {};
   }
 }

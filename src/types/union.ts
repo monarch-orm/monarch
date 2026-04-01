@@ -1,11 +1,12 @@
 import { MonarchParseError } from "../errors";
-import { type AnyMonarchType, MonarchType } from "./type";
+import { MonarchNullable, MonarchType, type AnyMonarchType } from "./type";
 import type {
   InferTypeTaggedUnionInput,
   InferTypeTaggedUnionOutput,
   InferTypeUnionInput,
   InferTypeUnionOutput,
 } from "./type-helpers";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Union type.
@@ -49,6 +50,18 @@ export class MonarchUnion<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
 
   protected copy() {
     return new MonarchUnion(this.variants);
+  }
+
+  protected jsonSchema(): JSONSchema {
+    const anyOf = this.variants.map((variant) => {
+      let variantSchema = MonarchType.jsonSchema(variant);
+      const isNullable = MonarchType.isInstanceOf(variant, MonarchNullable);
+      if (isNullable) variantSchema = MonarchNullable.nullableJsonSchema(variantSchema);
+      return variantSchema;
+    });
+    return {
+      anyOf,
+    };
   }
 }
 
@@ -112,5 +125,24 @@ export class MonarchTaggedUnion<T extends Record<string, AnyMonarchType>> extend
 
   protected copy() {
     return new MonarchTaggedUnion(this.variants);
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return {
+      oneOf: Object.entries(this.variants).map(([tag, type]) => {
+        let valueSchema = MonarchType.jsonSchema(type);
+        const isNullable = MonarchType.isInstanceOf(type, MonarchNullable);
+        if (isNullable) valueSchema = MonarchNullable.nullableJsonSchema(valueSchema);
+        return {
+          bsonType: "object",
+          additionalProperties: false,
+          required: ["tag", "value"],
+          properties: {
+            tag: { enum: [tag] },
+            value: valueSchema,
+          },
+        };
+      }),
+    };
   }
 }

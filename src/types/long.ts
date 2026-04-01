@@ -1,6 +1,7 @@
 import { Long } from "mongodb";
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Long type for 64-bit integers.
@@ -28,5 +29,9 @@ export class MonarchLong extends MonarchType<Long | number | bigint, Long | numb
 
   protected copy() {
     return new MonarchLong();
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return { bsonType: "long" };
   }
 }

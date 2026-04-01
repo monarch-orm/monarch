@@ -1,5 +1,6 @@
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Number type.
@@ -21,6 +22,10 @@ export class MonarchNumber extends MonarchType<number, number> {
 
   protected copy() {
     return new MonarchNumber();
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return { type: "number" };
   }
 
   /**

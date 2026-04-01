@@ -1,4 +1,4 @@
-import { MongoClient, Collection as MongoCollection, type Db, type Document, type MongoClientOptions } from "mongodb";
+import { MongoClient, Collection as MongoCollection, type Db, type MongoClientOptions } from "mongodb";
 import { version } from "../package.json";
 import { Collection } from "./collection/collection";
 import type { BoolProjection, WithProjection } from "./collection/types/query-options";
@@ -8,6 +8,7 @@ import { applyIndexes } from "./schema/indexes";
 import type { AnySchema, Schemas } from "./schema/schema";
 import { Schema } from "./schema/schema";
 import type { InferSchemaInput, InferSchemaOmit, InferSchemaOutput } from "./schema/type-helpers";
+import { getValidator, type SchemaValidation, type Validator } from "./schema/validation";
 import { createAsyncLimiter, createAsyncResolver, type AsyncResolver } from "./utils/misc";
 import type { IdFirst, Merge, Pretty } from "./utils/type-helpers";
 
@@ -49,20 +50,20 @@ export class Database<TSchemas extends Schemas<any, any>> {
   constructor(
     public db: Db,
     schemas: TSchemas,
-    options?: { initialize?: boolean },
+    private options?: { validation?: SchemaValidation; initialize?: boolean },
   ) {
     this.schemas = schemas.schemas;
     this.relations = schemas.relations;
     this.collections = {} as typeof this.collections;
     this.readyPromises = {};
 
-    const readyPromises: Record<string, AsyncResolver> = {};
     const collectionsInit: CollectionInit[] = [];
     for (const [key, schema] of Object.entries(this.schemas as Record<string, AnySchema>)) {
       // Create resolver which resolves immediately if initialize is false
       const resolver = createAsyncResolver();
       this.readyPromises[schema.name] = resolver;
-      if (options?.initialize ?? true) collectionsInit.push({ schema, resolver });
+      if (options?.initialize ?? true)
+        collectionsInit.push({ schema, defaultValidation: options?.validation, resolver });
       else resolver.resolve();
 
       this.collections[key as keyof typeof this.collections] = new Collection(
@@ -80,7 +81,10 @@ export class Database<TSchemas extends Schemas<any, any>> {
   }
 
   /**
-   * Promise that resolves when all collection indexes are created.
+   * Promise that resolves when all collection initialization tasks complete.
+   *
+   * This includes collection creation/modification, optional document validation setup,
+   * and optional index creation.
    */
   public get isReady() {
     return Promise.all(Object.values(this.readyPromises).map((r) => r.promise)).then<void>(() => undefined);
@@ -93,10 +97,10 @@ export class Database<TSchemas extends Schemas<any, any>> {
    */
   public async initialize(options?: InitOptions<keyof TSchemas & string>) {
     const promises: Promise<void>[] = [];
-    const collections: CollectionInit[] = Object.values(this.collections).map((c: Collection<any, any>) => {
+    const collections = Object.values(this.collections).map((c: Collection<any, any>): CollectionInit => {
       const resolver = createAsyncResolver();
       promises.push(resolver.promise);
-      return { schema: c.schema, resolver };
+      return { schema: c.schema, defaultValidation: this.options?.validation, resolver };
     });
     initializeCollections(this.db, collections, options);
     return Promise.all(promises);
@@ -137,27 +141,21 @@ export class Database<TSchemas extends Schemas<any, any>> {
 export function createDatabase<T extends Schemas<any, any>>(
   db: Db,
   schemas: T,
-  options?: { initialize?: boolean },
+  options?: { validation?: SchemaValidation; initialize?: boolean },
 ): Database<T> {
   return new Database(db, schemas, options);
 }
 
 type InitOptions<T extends string> = {
-  validator?: boolean;
   indexes?: boolean;
+  validation?: boolean;
   collections?: Partial<Record<T, true>>;
 };
 
 type CollectionInit = {
   schema: AnySchema;
-  validation?: Validation;
+  defaultValidation?: SchemaValidation;
   resolver: AsyncResolver;
-};
-
-type Validation = {
-  validator?: Document;
-  validationLevel?: "off" | "strict" | "moderate";
-  validationAction?: "warn" | "error";
 };
 
 function initializeCollections(db: Db, collections: CollectionInit[], options?: InitOptions<any>) {
@@ -175,10 +173,17 @@ function initializeCollections(db: Db, collections: CollectionInit[], options?: 
     run(async () => {
       const existing = await existingPromise;
       const exists = existing.has(c.schema.name);
+      const schemaOptions = Schema.options(c.schema);
 
-      // Create collection with document validation or modify it
+      // Get schema validation
+      let validation: (SchemaValidation & { validator: Validator }) | undefined;
+      const validationOptions = schemaOptions.validation ?? c.defaultValidation;
+      if ((options?.validation ?? true) && validationOptions) {
+        validation = { ...validationOptions, validator: getValidator(c.schema) };
+      }
+
+      // Create or modify collection with document validation
       let coll: MongoCollection;
-      const validation = (options?.validator ?? true) ? c.validation : undefined;
       if (!exists) {
         coll = await db.createCollection(c.schema.name, validation);
       } else {
@@ -187,7 +192,6 @@ function initializeCollections(db: Db, collections: CollectionInit[], options?: 
       }
 
       // Create schema indexes
-      const schemaOptions = Schema.options(c.schema);
       if ((options?.indexes ?? true) && schemaOptions.indexes) {
         await applyIndexes(coll, schemaOptions.indexes);
       }

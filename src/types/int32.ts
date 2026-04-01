@@ -1,6 +1,7 @@
 import { Int32 } from "mongodb";
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Int32 type for 32-bit integers.
@@ -29,5 +30,9 @@ export class MonarchInt32 extends MonarchType<Int32 | number> {
 
   protected copy() {
     return new MonarchInt32();
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return { bsonType: "int" };
   }
 }

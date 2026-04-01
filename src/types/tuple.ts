@@ -1,6 +1,7 @@
 import { MonarchParseError } from "../errors";
-import { type AnyMonarchType, MonarchType } from "./type";
+import { MonarchNullable, MonarchType, type AnyMonarchType } from "./type";
 import type { InferTypeTupleInput, InferTypeTupleOutput } from "./type-helpers";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Tuple type.
@@ -59,5 +60,22 @@ export class MonarchTuple<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
 
   protected copy() {
     return new MonarchTuple(this.types);
+  }
+
+  protected jsonSchema(): JSONSchema {
+    const items = this.types.map((type) => {
+      let itemSchema = MonarchType.jsonSchema(type);
+      const isNullable = MonarchType.isInstanceOf(type, MonarchNullable);
+      if (isNullable) itemSchema = MonarchNullable.nullableJsonSchema(itemSchema);
+      return itemSchema;
+    });
+
+    return {
+      bsonType: "array",
+      items,
+      minItems: this.types.length,
+      maxItems: this.types.length,
+      additionalItems: false,
+    };
   }
 }

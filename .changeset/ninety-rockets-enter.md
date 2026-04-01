@@ -2,4 +2,4 @@
 "monarch-orm": minor
 ---
 
-$setOnInsert validates full document
+`$setOnInsert` validates full document

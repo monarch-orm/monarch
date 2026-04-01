@@ -1,5 +1,6 @@
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Boolean type.
@@ -21,5 +22,9 @@ export class MonarchBoolean extends MonarchType<boolean, boolean> {
 
   protected copy() {
     return new MonarchBoolean();
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return { bsonType: "bool" };
   }
 }

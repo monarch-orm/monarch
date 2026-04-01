@@ -1,5 +1,6 @@
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Date type.
@@ -21,6 +22,10 @@ export class MonarchDate extends MonarchType<Date, Date> {
 
   protected copy() {
     return new MonarchDate();
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return { bsonType: "date" };
   }
 
   /**

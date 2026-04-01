@@ -1,5 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createDatabase, createSchema, defineSchemas, virtual } from "../../src";
+import { getValidator } from "../../src/schema/validation";
 import { boolean, number, string } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
@@ -209,6 +210,132 @@ describe("Schema", async () => {
         age: 0,
       });
     }).rejects.toThrowError("E11000 duplicate key error");
+  });
+
+  it("builds mongodb validator json schema", () => {
+    const schema = createSchema("users", {
+      name: string(),
+      age: number().optional(),
+      nickname: string().nullable(),
+    });
+
+    const validator = getValidator(schema);
+    expect(validator).toStrictEqual({
+      $jsonSchema: {
+        bsonType: "object",
+        additionalProperties: false,
+        properties: {
+          _id: { bsonType: "objectId" },
+          name: { bsonType: "string" },
+          age: { type: "number" },
+          nickname: { bsonType: ["string", "null"] },
+        },
+        required: ["name", "nickname"],
+      },
+    });
+  });
+
+  it("enforces schema validation at database level", async () => {
+    const schema = createSchema("users", {
+      name: string(),
+      age: number().optional(),
+      nickname: string().nullable(),
+    }).validation({
+      validationLevel: "strict",
+      validationAction: "error",
+    });
+
+    const db = createDatabase(client.db(), defineSchemas({ users: schema }));
+    await db.isReady;
+
+    const rawCollection = client.db().collection("users");
+
+    await expect(
+      rawCollection.insertOne({
+        name: "tom",
+        nickname: "tc",
+      }),
+    ).resolves.toMatchObject({
+      acknowledged: true,
+    });
+
+    await expect(
+      rawCollection.insertOne({
+        name: "tom",
+        age: "not-a-number",
+        nickname: "tc",
+      }),
+    ).rejects.toThrowError("Document failed validation");
+
+    await expect(
+      rawCollection.insertOne({
+        name: "tom",
+      }),
+    ).rejects.toThrowError("Document failed validation");
+
+    await expect(
+      rawCollection.insertOne({
+        name: "tom",
+        nickname: "tc",
+        extra: true,
+      }),
+    ).rejects.toThrowError("Document failed validation");
+  });
+
+  describe("createDatabase options", () => {
+    it("applies validation option from createDatabase", async () => {
+      const schema = createSchema("users", {
+        name: string(),
+        age: number().optional(),
+        nickname: string().nullable(),
+      });
+
+      const db = createDatabase(client.db(), defineSchemas({ users: schema }), {
+        validation: {
+          validationLevel: "strict",
+          validationAction: "error",
+        },
+      });
+      await db.isReady;
+
+      const rawCollection = client.db().collection("users");
+      await expect(
+        rawCollection.insertOne({
+          name: "tom",
+          age: "not-a-number",
+          nickname: "tc",
+        }),
+      ).rejects.toThrowError("Document failed validation");
+    });
+
+    it("supports initialize false after a prior initialize call", async () => {
+      const schema = createSchema("users", {
+        name: string(),
+        age: number().optional(),
+        nickname: string().nullable(),
+      });
+
+      const bootDb = createDatabase(client.db(), defineSchemas({ users: schema }), {
+        initialize: false,
+        validation: {
+          validationLevel: "strict",
+          validationAction: "error",
+        },
+      });
+      await bootDb.initialize();
+
+      const appDb = createDatabase(client.db(), defineSchemas({ users: schema }), { initialize: false });
+      await appDb.isReady;
+
+      const rawCollection = client.db().collection("users");
+      await expect(
+        rawCollection.insertOne({
+          name: "tom",
+          age: "not-a-number",
+          nickname: "tc",
+        }),
+      ).rejects.toThrowError("Document failed validation");
+    });
   });
 
   it("supports custom _id type with string", async () => {

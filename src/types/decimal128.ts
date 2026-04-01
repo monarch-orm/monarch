@@ -1,6 +1,7 @@
 import { Decimal128 } from "mongodb";
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Decimal128 type for high-precision decimals.
@@ -29,5 +30,9 @@ export class MonarchDecimal128 extends MonarchType<Decimal128 | string, Decimal1
 
   protected copy() {
     return new MonarchDecimal128();
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return { bsonType: "decimal" };
   }
 }

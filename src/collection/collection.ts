@@ -57,7 +57,10 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
   }
 
   /**
-   * Promise that resolves when collection indexes are created.
+   * Promise that resolves when this collection's initialization tasks complete.
+   *
+   * This reflects the database initialization flow (collection setup, validation, indexes)
+   * for this schema, or resolves immediately when initialization is disabled.
    */
   public get isReady() {
     return this._readyPromise;

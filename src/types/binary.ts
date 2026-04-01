@@ -1,6 +1,7 @@
 import { Binary } from "mongodb";
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Binary type.
@@ -23,5 +24,9 @@ export class MonarchBinary extends MonarchType<Buffer | Binary, Binary> {
 
   protected copy() {
     return new MonarchBinary();
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return { bsonType: "binData" };
   }
 }

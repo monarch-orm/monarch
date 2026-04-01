@@ -1,6 +1,7 @@
 import { MonarchParseError } from "../errors";
-import { type AnyMonarchType, MonarchType } from "./type";
+import { MonarchNullable, MonarchType, type AnyMonarchType } from "./type";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Array type.
@@ -48,6 +49,16 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
 
   protected copy() {
     return new MonarchArray(this.type);
+  }
+
+  protected jsonSchema(): JSONSchema {
+    let itemSchema = MonarchType.jsonSchema(this.type);
+    const isNullable = MonarchType.isInstanceOf(this.type, MonarchNullable);
+    if (isNullable) itemSchema = MonarchNullable.nullableJsonSchema(itemSchema);
+    return {
+      bsonType: "array",
+      items: itemSchema,
+    };
   }
 
   public static type<T extends AnyMonarchType>(array: MonarchArray<T>): T {

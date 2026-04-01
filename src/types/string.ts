@@ -1,5 +1,6 @@
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * String type.
@@ -21,6 +22,10 @@ export class MonarchString extends MonarchType<string, string> {
 
   protected copy() {
     return new MonarchString();
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return { bsonType: "string" };
   }
 
   /**
