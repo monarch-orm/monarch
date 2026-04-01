@@ -331,6 +331,13 @@ describe("Update Operations", async () => {
         expect(updated?.tags).toEqual(["y"]);
       });
 
+      it("$pullAll parses each element through type", async () => {
+        const doc = await db.collections.arrays.insertOne({ name: "a", tags: ["x", "y"], nums: [] });
+        await db.collections.arrays.updateOne({ _id: doc._id }, { $pullAll: { tags: ["X"] } });
+        const updated = await db.collections.arrays.findOne({ _id: doc._id });
+        expect(updated?.tags).toEqual(["y"]);
+      });
+
       it("$pop removes last element", async () => {
         const doc = await db.collections.arrays.insertOne({ name: "a", tags: ["x", "y", "z"], nums: [] });
         await db.collections.arrays.updateOne({ _id: doc._id }, { $pop: { tags: 1 } });
@@ -353,12 +360,37 @@ describe("Update Operations", async () => {
         ).rejects.toThrow("requires an array field");
       });
 
+      it("$pullAll rejects non-array field", async () => {
+        const doc = await db.collections.numeric.insertOne({ name: "a", count: 0 });
+        await expect(
+          // @ts-expect-error
+          db.collections.numeric.updateOne({ _id: doc._id }, { $pullAll: { count: [1] } }),
+        ).rejects.toThrow("requires an array field");
+      });
+
       it("$pop rejects non-array field", async () => {
         const doc = await db.collections.numeric.insertOne({ name: "a", count: 0 });
         // @ts-expect-error
         await expect(db.collections.numeric.updateOne({ _id: doc._id }, { $pop: { count: 1 } })).rejects.toThrow(
           "requires an array field",
         );
+      });
+    });
+
+    describe("$bit", () => {
+      it("$bit applies bitwise operation to numeric field", async () => {
+        const doc = await db.collections.numeric.insertOne({ name: "a", count: 6 });
+        await db.collections.numeric.updateOne({ _id: doc._id }, { $bit: { count: { and: 3 } } });
+        const updated = await db.collections.numeric.findOne({ _id: doc._id });
+        expect(updated?.count).toBe(2);
+      });
+
+      it("$bit rejects non-integer field", async () => {
+        const doc = await db.collections.arrays.insertOne({ name: "a", tags: [], nums: [] });
+        await expect(
+          // @ts-expect-error
+          db.collections.arrays.updateOne({ _id: doc._id }, { $bit: { tags: { and: 1 } } }),
+        ).rejects.toThrow("requires an integer field");
       });
     });
 

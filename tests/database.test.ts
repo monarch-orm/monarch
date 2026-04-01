@@ -137,4 +137,47 @@ describe("Database options", async () => {
     const postsRaw = client.db().collection("posts");
     await expect(postsRaw.insertOne({})).resolves.toMatchObject({ acknowledged: true });
   });
+
+  it("schema validation option takes precedence over createDatabase validation option", async () => {
+    const schema = createSchema("users", {
+      name: string(),
+    }).validation({
+      validationLevel: "off",
+    });
+
+    const db = createDatabase(client.db(), defineSchemas({ users: schema }), {
+      validation: {
+        validationLevel: "strict",
+        validationAction: "error",
+      },
+    });
+    await db.isReady;
+
+    const rawCollection = client.db().collection("users");
+    await expect(rawCollection.insertOne({})).resolves.toMatchObject({ acknowledged: true });
+  });
+
+  it("applies validator to existing collection via collMod on reinitialize", async () => {
+    const schema = createSchema("users", {
+      name: string(),
+      nickname: string(),
+    });
+
+    const firstDb = createDatabase(client.db(), defineSchemas({ users: schema }), { initialize: false });
+    await firstDb.initialize({ validation: false });
+
+    const rawCollection = client.db().collection("users");
+    await expect(rawCollection.insertOne({})).resolves.toMatchObject({ acknowledged: true });
+
+    const secondDb = createDatabase(client.db(), defineSchemas({ users: schema }), {
+      initialize: false,
+      validation: {
+        validationLevel: "strict",
+        validationAction: "error",
+      },
+    });
+    await secondDb.initialize();
+
+    await expect(rawCollection.insertOne({})).rejects.toThrowError("Document failed validation");
+  });
 });
