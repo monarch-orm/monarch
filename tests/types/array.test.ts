@@ -20,9 +20,9 @@ describe("array", () => {
     expect(data).toStrictEqual({ items: [0, 1] });
   });
 
-  test("min - validates minimum array length", () => {
+  test("minLength - validates minimum array length", () => {
     const schema = createSchema("test", {
-      items: array(string()).min(2),
+      items: array(string()).minLength(2),
     });
 
     const data = Schema.input(schema, { items: ["a", "b"] });
@@ -35,9 +35,9 @@ describe("array", () => {
     expect(() => Schema.input(schema, { items: [] })).toThrowError("array must have at least 2 elements");
   });
 
-  test("max - validates maximum array length", () => {
+  test("maxLength - validates maximum array length", () => {
     const schema = createSchema("test", {
-      items: array(string()).max(3),
+      items: array(string()).maxLength(3),
     });
 
     const data = Schema.input(schema, { items: ["a", "b", "c"] });
@@ -78,7 +78,7 @@ describe("array", () => {
 
   test("array methods can be chained", () => {
     const schema = createSchema("test", {
-      items: array(string()).min(2).max(5),
+      items: array(string()).minLength(2).maxLength(5),
     });
 
     const data = Schema.input(schema, { items: ["a", "b", "c"] });
@@ -92,8 +92,8 @@ describe("array", () => {
 
   test("array methods work with nullable and optional", () => {
     const schema = createSchema("test", {
-      items: array(string()).min(1).nullable(),
-      optionalItems: array(number()).max(3).optional(),
+      items: array(string()).minLength(1).nullable(),
+      optionalItems: array(number()).maxLength(3).optional(),
     });
 
     const data = Schema.input(schema, { items: ["a"], optionalItems: [1, 2] });

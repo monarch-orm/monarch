@@ -12,7 +12,7 @@ export const date = () => new MonarchDate();
 /**
  * Type for Date fields.
  */
-export class MonarchDate extends MonarchType<Date, Date> {
+export class MonarchDate extends MonarchType<Date> {
   constructor() {
     super((input) => {
       if (input instanceof Date) return input;

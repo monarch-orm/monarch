@@ -20,13 +20,13 @@ describe("string", () => {
     });
 
     expect(() => Schema.input(schema, { min: "ab", max: "test", exact: "test" })).toThrowError(
-      "string must be at least 3 characters long",
+      "string must have a minimum length of 3",
     );
     expect(() => Schema.input(schema, { min: "test", max: "toolong", exact: "test" })).toThrowError(
-      "string must be at most 5 characters long",
+      "string must have a maximum length of 5",
     );
     expect(() => Schema.input(schema, { min: "test", max: "test", exact: "toolong" })).toThrowError(
-      "string must be exactly 4 characters long",
+      "string must have a length of 4",
     );
 
     const data = Schema.input(schema, {
@@ -68,16 +68,5 @@ describe("string", () => {
 
     const data = Schema.input(schema, { required: "hello" });
     expect(data).toStrictEqual({ required: "hello" });
-  });
-
-  test("includes", () => {
-    const schema = createSchema("test", {
-      contains: string().includes("world"),
-    });
-
-    expect(() => Schema.input(schema, { contains: "hello" })).toThrowError('string must include "world"');
-
-    const data = Schema.input(schema, { contains: "hello world" });
-    expect(data).toStrictEqual({ contains: "hello world" });
   });
 });

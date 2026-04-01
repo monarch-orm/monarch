@@ -1,5 +1,5 @@
 import { MonarchParseError } from "../errors";
-import { MonarchNullable, MonarchType, type AnyMonarchType } from "./type";
+import { MonarchType, type AnyMonarchType } from "./type";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
 import type { JSONSchema } from "./type.schema";
 
@@ -37,6 +37,10 @@ export class MonarchRecord<T extends AnyMonarchType> extends MonarchType<
     });
   }
 
+  protected copy() {
+    return new MonarchRecord(this.type);
+  }
+
   protected index(path: string[], depth: number): AnyMonarchType {
     if (depth === path.length - 1) return this;
     const key = path[depth + 1];
@@ -50,19 +54,12 @@ export class MonarchRecord<T extends AnyMonarchType> extends MonarchType<
     throw MonarchParseError.create({ message: `expected a string key` });
   }
 
-  protected copy() {
-    return new MonarchRecord(this.type);
-  }
-
   protected jsonSchema(): JSONSchema {
-    let valueSchema = MonarchType.jsonSchema(this.type);
-    const isNullable = MonarchType.isInstanceOf(this.type, MonarchNullable);
-    if (isNullable) valueSchema = MonarchNullable.nullableJsonSchema(valueSchema);
     return {
       bsonType: "object",
       additionalProperties: false,
       patternProperties: {
-        ".*": valueSchema,
+        ".*": MonarchType.jsonSchema(this.type),
       },
     };
   }

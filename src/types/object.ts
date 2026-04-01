@@ -1,5 +1,5 @@
 import { MonarchParseError } from "../errors";
-import { MonarchNullable, MonarchOptional, MonarchType, type AnyMonarchType } from "./type";
+import { MonarchOptional, MonarchType, type AnyMonarchType } from "./type";
 import type { InferTypeInput, InferTypeObjectInput, InferTypeObjectOutput } from "./type-helpers";
 import type { JSONSchema } from "./type.schema";
 
@@ -42,6 +42,10 @@ export class MonarchObject<T extends Record<string, AnyMonarchType>> extends Mon
     });
   }
 
+  protected copy() {
+    return new MonarchObject(this.types);
+  }
+
   protected index(path: string[], depth: number): AnyMonarchType {
     if (depth === path.length - 1) return this;
     const key = path[depth + 1];
@@ -55,19 +59,12 @@ export class MonarchObject<T extends Record<string, AnyMonarchType>> extends Mon
     throw MonarchParseError.create({ message: `unknown field '${key}'` });
   }
 
-  protected copy() {
-    return new MonarchObject(this.types);
-  }
-
   protected jsonSchema(): JSONSchema {
     const properties: Record<string, JSONSchema> = {};
     const required: string[] = [];
 
     for (const [key, type] of Object.entries(this.types)) {
-      let fieldSchema = MonarchType.jsonSchema(type);
-      const isNullable = MonarchType.isInstanceOf(type, MonarchNullable);
-      if (isNullable) fieldSchema = MonarchNullable.nullableJsonSchema(fieldSchema);
-      properties[key] = fieldSchema;
+      properties[key] = MonarchType.jsonSchema(type);
       const isOptional = MonarchType.isInstanceOf(type, MonarchOptional);
       if (!isOptional) required.push(key);
     }

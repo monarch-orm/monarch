@@ -12,7 +12,7 @@ export const boolean = () => new MonarchBoolean();
 /**
  * Type for boolean fields.
  */
-export class MonarchBoolean extends MonarchType<boolean, boolean> {
+export class MonarchBoolean extends MonarchType<boolean> {
   constructor() {
     super((input) => {
       if (typeof input === "boolean") return input;

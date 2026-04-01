@@ -1,3 +1,5 @@
+import type { Parser } from "./type";
+
 /**
  * MongoDB JSON Schema (Draft 4 based with BSON extensions)
  */
@@ -69,22 +71,12 @@ export type BsonType =
   | "minKey"
   | "maxKey";
 
-/**
- * JSON Schema Draft 4
- */
-export type JSONSchema4 = {
-  // Core
-  id?: string; // Note: Draft 4 uses 'id', not '$id'
-  $schema?: string;
-  $ref?: string;
-  default?: any;
+export function jsonSchemaParser<TInput, TOutput>(parser: Parser<TInput, TOutput>, schema: JSONSchema) {
+  const parserSchema = jsonSchemaFromParser(parser);
+  parser["$jsonSchema" as keyof typeof parser] = { ...parserSchema, ...schema } as (typeof parser)[keyof typeof parser];
+  return parser;
+}
 
-  // Validation: Objects
-  definitions?: { [key: string]: JSONSchema4 };
-  dependencies?: { [key: string]: JSONSchema4 | string[] };
-
-  // Formats
-  format?: string;
-};
-
-export type JSONSchema4TypeName = "string" | "number" | "integer" | "boolean" | "object" | "array" | "null";
+export function jsonSchemaFromParser<TInput, TOutput>(parser: Parser<TInput, TOutput>) {
+  return parser["$jsonSchema" as keyof typeof parser] as JSONSchema | undefined;
+}

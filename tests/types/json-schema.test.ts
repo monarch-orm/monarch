@@ -10,7 +10,6 @@ import {
   literal,
   long,
   mixed,
-  MonarchNullable,
   MonarchType,
   number,
   object,
@@ -23,7 +22,6 @@ import {
   union,
   uuid,
 } from "../../src/types";
-import { JSONSchema } from "../../src/types/type.schema";
 
 describe("JSON Schema", () => {
   describe("primitive and bson types", () => {
@@ -85,8 +83,12 @@ describe("JSON Schema", () => {
   });
 
   describe("modifier types", () => {
-    it("should keep nullable schema as passthrough", () => {
-      expect(MonarchType.jsonSchema(string().nullable())).toStrictEqual({ bsonType: "string" });
+    it("should append null for nullable schema", () => {
+      expect(MonarchType.jsonSchema(string().nullable())).toStrictEqual({ bsonType: ["string", "null"] });
+    });
+
+    it("should append null for nullable schema without bsonType", () => {
+      expect(MonarchType.jsonSchema(number().nullable())).toStrictEqual({ type: ["number", "null"] });
     });
 
     it("should keep optional schema as passthrough", () => {
@@ -95,6 +97,56 @@ describe("JSON Schema", () => {
 
     it("should keep defaulted schema as passthrough", () => {
       expect(MonarchType.jsonSchema(number().default(42))).toStrictEqual({ type: "number" });
+    });
+  });
+
+  describe("json schema-compatible modifiers", () => {
+    it("should build string modifier schema", () => {
+      expect(
+        MonarchType.jsonSchema(
+          string()
+            .minLength(2)
+            .maxLength(5)
+            .pattern(/^[a-z]+$/)
+            .nonempty(),
+        ),
+      ).toStrictEqual({
+        bsonType: "string",
+        minLength: 1,
+        maxLength: 5,
+        pattern: "^[a-z]+$",
+      });
+
+      expect(MonarchType.jsonSchema(string().length(4))).toStrictEqual({
+        bsonType: "string",
+        minLength: 4,
+        maxLength: 4,
+      });
+    });
+
+    it("should build number modifier schema", () => {
+      expect(MonarchType.jsonSchema(number().min(1).max(9).integer())).toStrictEqual({
+        type: "number",
+        minimum: 1,
+        maximum: 9,
+        multipleOf: 1,
+      });
+    });
+
+    it("should build array modifier schema", () => {
+      expect(MonarchType.jsonSchema(array(string()).minLength(1).maxLength(3))).toStrictEqual({
+        bsonType: "array",
+        items: { bsonType: "string" },
+        minItems: 1,
+        maxItems: 3,
+      });
+
+      expect(MonarchType.jsonSchema(array(number()).length(2))).toStrictEqual({
+        bsonType: "array",
+        items: { type: "number" },
+        minItems: 2,
+        maxItems: 2,
+      });
     });
   });
 
@@ -278,27 +330,6 @@ describe("JSON Schema", () => {
           },
         },
         required: ["id", "profile", "tags", "preferences", "pair", "status", "kind"],
-      });
-    });
-  });
-
-  describe("nullable", () => {
-    it("should clone schema without mutating input", () => {
-      const input: JSONSchema = { bsonType: "string" };
-      const output = MonarchNullable.nullableJsonSchema(input);
-
-      expect(output).toStrictEqual({ bsonType: ["string", "null"] });
-      expect(input).toStrictEqual({ bsonType: "string" });
-    });
-
-    it("should add null to both bsonType and type when both exist", () => {
-      const output = MonarchNullable.nullableJsonSchema({
-        bsonType: "string",
-        type: "string",
-      });
-      expect(output).toStrictEqual({
-        bsonType: ["string", "null"],
-        type: ["string", "null"],
       });
     });
   });

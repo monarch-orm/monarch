@@ -1,6 +1,6 @@
 import { MonarchError, MonarchParseError } from "../errors";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
-import type { JSONSchema } from "./type.schema";
+import { jsonSchemaFromParser, jsonSchemaParser, type JSONSchema } from "./type.schema";
 
 /**
  * Parser function type.
@@ -18,7 +18,14 @@ function pipeParser<Input, InterOutput, Output>(
   prevParser: Parser<Input, InterOutput>,
   nextParser: Parser<InterOutput, Output>,
 ): Parser<Input, Output> {
-  return (input) => nextParser(prevParser(input));
+  const parser: Parser<Input, Output> = (input) => nextParser(prevParser(input));
+
+  const prevSchema = jsonSchemaFromParser(prevParser);
+  const nextSchema = jsonSchemaFromParser(nextParser);
+  if (prevSchema) jsonSchemaParser(parser, prevSchema);
+  if (nextSchema) jsonSchemaParser(parser, nextSchema);
+
+  return parser;
 }
 
 export type AnyMonarchType<TInput = any, TOutput extends TInput = TInput> = MonarchType<TInput, TOutput>;
@@ -112,7 +119,7 @@ export abstract class MonarchType<TInput, TOutput extends TInput = TInput> {
   protected abstract jsonSchema(): JSONSchema;
 
   public static jsonSchema<T extends AnyMonarchType>(type: T): JSONSchema {
-    return type.jsonSchema();
+    return { ...jsonSchemaFromParser(type.parser), ...type.jsonSchema() };
   }
 
   /**
@@ -258,11 +265,14 @@ export class MonarchNullable<T extends AnyMonarchType> extends MonarchType<
 > {
   constructor(private type: T) {
     const parser = MonarchType.parser(type);
-
     super((input) => {
       if (input === null) return null;
       return parser(input);
     });
+  }
+
+  protected copy() {
+    return new MonarchNullable(this.type);
   }
 
   protected index(path: string[], depth: number): AnyMonarchType {
@@ -271,11 +281,18 @@ export class MonarchNullable<T extends AnyMonarchType> extends MonarchType<
   }
 
   protected jsonSchema(): JSONSchema {
-    return MonarchType.jsonSchema(this.type);
-  }
-
-  protected copy() {
-    return new MonarchNullable(this.type);
+    const schema = MonarchType.jsonSchema(this.type);
+    if (schema.bsonType) {
+      const bsonType = Array.isArray(schema.bsonType) ? [...schema.bsonType] : [schema.bsonType];
+      if (!bsonType.includes("null")) bsonType.push("null");
+      schema.bsonType = bsonType;
+    }
+    if (schema.type) {
+      const type = Array.isArray(schema.type) ? [...schema.type] : [schema.type];
+      if (!type.includes("null")) type.push("null");
+      schema.type = type;
+    }
+    return schema;
   }
 
   protected isInstanceOf(target: new (...args: any[]) => any) {
@@ -284,24 +301,6 @@ export class MonarchNullable<T extends AnyMonarchType> extends MonarchType<
 
   public static type<T extends AnyMonarchType>(nullable: MonarchNullable<T>): T {
     return nullable.type;
-  }
-
-  public static nullableJsonSchema(schema: JSONSchema): JSONSchema {
-    const nullableSchema: JSONSchema = { ...schema };
-
-    if (schema.bsonType) {
-      const bsonType = Array.isArray(schema.bsonType) ? [...schema.bsonType] : [schema.bsonType];
-      if (!bsonType.includes("null")) bsonType.push("null");
-      nullableSchema.bsonType = bsonType;
-    }
-
-    if (schema.type) {
-      const type = Array.isArray(schema.type) ? [...schema.type] : [schema.type];
-      if (!type.includes("null")) type.push("null");
-      nullableSchema.type = type;
-    }
-
-    return nullableSchema;
   }
 }
 
@@ -322,7 +321,6 @@ export class MonarchOptional<T extends AnyMonarchType> extends MonarchType<
 > {
   constructor(private type: T) {
     const parser = MonarchType.parser(type);
-
     super((input) => {
       if (input === undefined) return undefined;
       return parser(input);
@@ -375,7 +373,6 @@ export class MonarchDefaulted<T extends AnyMonarchType> extends MonarchType<
     private defaultInput: InferTypeInput<T> | (() => InferTypeInput<T>),
   ) {
     const parser = MonarchType.parser(type);
-
     super((input) => {
       if (input === undefined) {
         const defaultValue = MonarchDefaulted.isDefaultFunction(defaultInput) ? defaultInput() : defaultInput;

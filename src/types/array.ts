@@ -1,7 +1,7 @@
 import { MonarchError, MonarchParseError } from "../errors";
-import { MonarchNullable, MonarchOptional, MonarchType, type AnyMonarchType } from "./type";
+import { MonarchOptional, MonarchType, type AnyMonarchType } from "./type";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
-import type { JSONSchema } from "./type.schema";
+import { jsonSchemaParser, type JSONSchema } from "./type.schema";
 
 /**
  * Array type.
@@ -38,6 +38,10 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
     });
   }
 
+  protected copy() {
+    return new MonarchArray(this.type);
+  }
+
   protected index(path: string[], depth: number): AnyMonarchType {
     if (depth === path.length - 1) return this;
     const index = path[depth + 1];
@@ -51,17 +55,10 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
     throw MonarchParseError.create({ message: `expected a numeric index or positional operator` });
   }
 
-  protected copy() {
-    return new MonarchArray(this.type);
-  }
-
   protected jsonSchema(): JSONSchema {
-    let itemSchema = MonarchType.jsonSchema(this.type);
-    const isNullable = MonarchType.isInstanceOf(this.type, MonarchNullable);
-    if (isNullable) itemSchema = MonarchNullable.nullableJsonSchema(itemSchema);
     return {
       bsonType: "array",
-      items: itemSchema,
+      items: MonarchType.jsonSchema(this.type),
     };
   }
 
@@ -75,13 +72,18 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
    * @param length - Minimum length
    * @returns MonarchArray with length validation
    */
-  public min(length: number) {
-    return this.parse((input) => {
-      if (input.length < length) {
-        throw MonarchParseError.create({ message: `array must have at least ${length} elements` });
-      }
-      return input;
-    });
+  public minLength(length: number) {
+    return this.parse(
+      jsonSchemaParser(
+        (input) => {
+          if (input.length < length) {
+            throw MonarchParseError.create({ message: `array must have at least ${length} elements` });
+          }
+          return input;
+        },
+        { minItems: length },
+      ),
+    );
   }
 
   /**
@@ -90,13 +92,18 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
    * @param length - Maximum length
    * @returns MonarchArray with length validation
    */
-  public max(length: number) {
-    return this.parse((input) => {
-      if (input.length > length) {
-        throw MonarchParseError.create({ message: `array must have at most ${length} elements` });
-      }
-      return input;
-    });
+  public maxLength(length: number) {
+    return this.parse(
+      jsonSchemaParser(
+        (input) => {
+          if (input.length > length) {
+            throw MonarchParseError.create({ message: `array must have at most ${length} elements` });
+          }
+          return input;
+        },
+        { maxItems: length },
+      ),
+    );
   }
 
   /**
@@ -106,12 +113,17 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
    * @returns MonarchArray with length validation
    */
   public length(length: number) {
-    return this.parse((input) => {
-      if (input.length !== length) {
-        throw MonarchParseError.create({ message: `array must have exactly ${length} elements` });
-      }
-      return input;
-    });
+    return this.parse(
+      jsonSchemaParser(
+        (input) => {
+          if (input.length !== length) {
+            throw MonarchParseError.create({ message: `array must have exactly ${length} elements` });
+          }
+          return input;
+        },
+        { minItems: length, maxItems: length },
+      ),
+    );
   }
 
   /**
@@ -120,11 +132,16 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
    * @returns MonarchArray with non-empty validation
    */
   public nonempty() {
-    return this.parse((input) => {
-      if (input.length === 0) {
-        throw MonarchParseError.create({ message: "array must not be empty" });
-      }
-      return input;
-    });
+    return this.parse(
+      jsonSchemaParser(
+        (input) => {
+          if (input.length === 0) {
+            throw MonarchParseError.create({ message: "array must not be empty" });
+          }
+          return input;
+        },
+        { minItems: 1 },
+      ),
+    );
   }
 }

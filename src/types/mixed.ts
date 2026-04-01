@@ -11,17 +11,17 @@ export const mixed = () => new MonarchMixed();
 /**
  * Type for mixed fields.
  */
-export class MonarchMixed extends MonarchType<unknown, unknown> {
+export class MonarchMixed extends MonarchType<unknown> {
   constructor() {
     super((input) => input);
   }
 
-  protected index(_path: string[], _depth: number): AnyMonarchType {
-    return this;
-  }
-
   protected copy() {
     return new MonarchMixed();
+  }
+
+  protected index(_path: string[], _depth: number): AnyMonarchType {
+    return this;
   }
 
   protected jsonSchema(): JSONSchema {

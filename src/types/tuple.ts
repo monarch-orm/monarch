@@ -1,5 +1,5 @@
 import { MonarchError, MonarchParseError } from "../errors";
-import { MonarchNullable, MonarchOptional, MonarchType, type AnyMonarchType } from "./type";
+import { MonarchOptional, MonarchType, type AnyMonarchType } from "./type";
 import type { InferTypeTupleInput, InferTypeTupleOutput } from "./type-helpers";
 import type { JSONSchema } from "./type.schema";
 
@@ -49,6 +49,10 @@ export class MonarchTuple<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
     });
   }
 
+  protected copy() {
+    return new MonarchTuple(this.types);
+  }
+
   protected index(path: string[], depth: number): AnyMonarchType {
     if (depth === path.length - 1) return this;
     const index = path[depth + 1];
@@ -64,21 +68,10 @@ export class MonarchTuple<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
     throw MonarchParseError.create({ message: `expected a valid tuple index` });
   }
 
-  protected copy() {
-    return new MonarchTuple(this.types);
-  }
-
   protected jsonSchema(): JSONSchema {
-    const items = this.types.map((type) => {
-      let itemSchema = MonarchType.jsonSchema(type);
-      const isNullable = MonarchType.isInstanceOf(type, MonarchNullable);
-      if (isNullable) itemSchema = MonarchNullable.nullableJsonSchema(itemSchema);
-      return itemSchema;
-    });
-
     return {
       bsonType: "array",
-      items,
+      items: this.types.map(MonarchType.jsonSchema),
       minItems: this.types.length,
       maxItems: this.types.length,
       additionalItems: false,

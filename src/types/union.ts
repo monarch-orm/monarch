@@ -1,5 +1,5 @@
 import { MonarchParseError } from "../errors";
-import { MonarchNullable, MonarchType, type AnyMonarchType } from "./type";
+import { MonarchType, type AnyMonarchType } from "./type";
 import type {
   InferTypeTaggedUnionInput,
   InferTypeTaggedUnionOutput,
@@ -43,24 +43,18 @@ export class MonarchUnion<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
     });
   }
 
+  protected copy() {
+    return new MonarchUnion(this.variants);
+  }
+
   protected index(path: string[], depth: number): AnyMonarchType {
     if (depth === path.length - 1) return this;
     throw MonarchParseError.create({ message: `updates must replace the entire union value` });
   }
 
-  protected copy() {
-    return new MonarchUnion(this.variants);
-  }
-
   protected jsonSchema(): JSONSchema {
-    const anyOf = this.variants.map((variant) => {
-      let variantSchema = MonarchType.jsonSchema(variant);
-      const isNullable = MonarchType.isInstanceOf(variant, MonarchNullable);
-      if (isNullable) variantSchema = MonarchNullable.nullableJsonSchema(variantSchema);
-      return variantSchema;
-    });
     return {
-      anyOf,
+      anyOf: this.variants.map(MonarchType.jsonSchema),
     };
   }
 }
@@ -118,28 +112,25 @@ export class MonarchTaggedUnion<T extends Record<string, AnyMonarchType>> extend
     });
   }
 
+  protected copy() {
+    return new MonarchTaggedUnion(this.variants);
+  }
+
   protected index(path: string[], depth: number): AnyMonarchType {
     if (depth === path.length - 1) return this;
     throw MonarchParseError.create({ message: `updates must replace the entire tagged union value` });
   }
 
-  protected copy() {
-    return new MonarchTaggedUnion(this.variants);
-  }
-
   protected jsonSchema(): JSONSchema {
     return {
       oneOf: Object.entries(this.variants).map(([tag, type]) => {
-        let valueSchema = MonarchType.jsonSchema(type);
-        const isNullable = MonarchType.isInstanceOf(type, MonarchNullable);
-        if (isNullable) valueSchema = MonarchNullable.nullableJsonSchema(valueSchema);
         return {
           bsonType: "object",
           additionalProperties: false,
           required: ["tag", "value"],
           properties: {
             tag: { enum: [tag] },
-            value: valueSchema,
+            value: MonarchType.jsonSchema(type),
           },
         };
       }),
