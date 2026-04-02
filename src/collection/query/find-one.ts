@@ -1,13 +1,13 @@
-import type { Filter, FindOptions, Collection as MongoCollection } from "mongodb";
+import type { FindOptions, Collection as MongoCollection, Filter as MongoFilter } from "mongodb";
 import type { AnyRelations } from "../../relations/relations";
 import type { InferRelationObjectPopulation, Population } from "../../relations/type-helpers";
 import { type AnySchema, Schema } from "../../schema/schema";
-import type { InferSchemaData, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
+import type { Filter, InferSchemaData, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
 import type { TrueKeys } from "../../utils/type-helpers";
+import { addPipelineMetas, addPopulations, expandPopulations, getSortDirection } from "../population";
+import { addExtraInputsToProjection, makeProjection } from "../projection";
 import type { PipelineStage } from "../types/pipeline-stage";
 import type { BoolProjection, Projection } from "../types/query-options";
-import { addPipelineMetas, addPopulations, expandPopulations, getSortDirection } from "../utils/population";
-import { addExtraInputsToProjection, makeProjection } from "../utils/projection";
 import { Query, type QueryOutput } from "./base";
 
 /**
@@ -24,15 +24,15 @@ export class FindOneQuery<
   private _population: Population<TDbRelations, TSchema["name"]> = {};
 
   constructor(
-    protected _schema: TSchema,
-    protected _relations: TDbRelations,
-    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
-    protected _readyPromise: Promise<void>,
-    private _filter: Filter<InferSchemaData<TSchema>>,
+    schema: TSchema,
+    collection: MongoCollection<InferSchemaData<TSchema>>,
+    readyPromise: Promise<void>,
+    private _relations: TDbRelations,
+    private _filter: Filter<TSchema>,
     private _options: FindOptions = {},
   ) {
-    super(_schema, _collection, _readyPromise);
-    this._projection = makeProjection("omit", _schema.options.omit ?? {});
+    super(schema, collection, readyPromise);
+    this._projection = makeProjection("omit", Schema.options(schema).omit ?? {});
   }
 
   /**
@@ -86,21 +86,20 @@ export class FindOneQuery<
   }
 
   protected async exec(): Promise<QueryOutput<TOutput, TOmit, TPopulate> | null> {
-    await this._readyPromise;
     if (Object.keys(this._population).length) {
-      return this._execWithPopulate();
+      return this.execWithPopulate();
     }
-    return this._execWithoutPopulate();
+    return this.execWithoutPopulate();
   }
 
-  private async _execWithoutPopulate(): Promise<QueryOutput<TOutput, TOmit, TPopulate> | null> {
-    const extras = addExtraInputsToProjection(this._projection, this._schema.options.virtuals);
-    const res = await this._collection.findOne(this._filter, {
+  private async execWithoutPopulate(): Promise<QueryOutput<TOutput, TOmit, TPopulate> | null> {
+    const extras = addExtraInputsToProjection(this._projection, Schema.options(this.schema).virtuals);
+    const res = await this.collection.findOne(this._filter as MongoFilter<InferSchemaData<TSchema>>, {
       ...this._options,
       projection: this._projection,
     });
     return res
-      ? (Schema.decode(this._schema, res as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
+      ? (Schema.output(this.schema, res as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
           TOutput,
           TOmit,
           TPopulate
@@ -108,12 +107,12 @@ export class FindOneQuery<
       : res;
   }
 
-  private async _execWithPopulate(): Promise<QueryOutput<TOutput, TOmit, TPopulate> | null> {
+  private async execWithPopulate(): Promise<QueryOutput<TOutput, TOmit, TPopulate> | null> {
     const pipeline: PipelineStage<InferSchemaOutput<TSchema>>[] = [
       // @ts-ignore
       { $match: this._filter },
     ];
-    const extras = addExtraInputsToProjection(this._projection, this._schema.options.virtuals, this._population);
+    const extras = addExtraInputsToProjection(this._projection, Schema.options(this.schema).virtuals, this._population);
     if (Object.keys(this._projection).length) {
       // @ts-ignore
       pipeline.push({ $project: this._projection });
@@ -122,7 +121,7 @@ export class FindOneQuery<
     const populations = addPopulations(pipeline, {
       relations: this._relations,
       population: this._population,
-      schema: this._schema,
+      schema: this.schema,
     });
 
     addPipelineMetas(pipeline, {
@@ -131,7 +130,7 @@ export class FindOneQuery<
       sort: getSortDirection(this._options.sort),
     });
 
-    const res = await this._collection
+    const res = await this.collection
       .aggregate(pipeline)
       .map(
         (doc) =>
@@ -139,7 +138,7 @@ export class FindOneQuery<
             populations,
             projection: this._projection,
             extras,
-            schema: this._schema,
+            schema: this.schema,
             doc,
           }) as QueryOutput<TOutput, TOmit, TPopulate>,
       )

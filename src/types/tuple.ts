@@ -1,6 +1,7 @@
-import { MonarchParseError } from "../errors";
-import { type AnyMonarchType, MonarchType } from "./type";
+import { MonarchError, MonarchParseError } from "../errors";
+import { MonarchOptional, MonarchType, type AnyMonarchType } from "./type";
 import type { InferTypeTupleInput, InferTypeTupleOutput } from "./type-helpers";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Tuple type.
@@ -20,12 +21,18 @@ export class MonarchTuple<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
   InferTypeTupleOutput<T>
 > {
   constructor(private types: T) {
+    for (const [index, type] of types.entries()) {
+      if (MonarchType.isInstanceOf(type, MonarchOptional)) {
+        throw new MonarchError(`tuple item at index ${index} cannot be optional`);
+      }
+    }
+
     super((input) => {
       if (Array.isArray(input)) {
         if (input.length !== types.length) {
-          throw new MonarchParseError(
-            `expected 'array' with ${types.length} elements received ${input.length} elements`,
-          );
+          throw MonarchParseError.create({
+            message: `expected 'array' with ${types.length} elements received ${input.length} elements`,
+          });
         }
         const parsed = [] as InferTypeTupleOutput<T>;
         for (const [index, type] of types.entries()) {
@@ -33,19 +40,41 @@ export class MonarchTuple<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
             const parser = MonarchType.parser(type);
             parsed[index] = parser(input[index]);
           } catch (error) {
-            if (error instanceof MonarchParseError) {
-              throw new MonarchParseError({ path: index, error });
-            }
-            throw error;
+            throw MonarchParseError.fromCause({ path: index, cause: error });
           }
         }
         return parsed;
       }
-      throw new MonarchParseError(`expected 'array' received '${typeof input}'`);
+      throw MonarchParseError.create({ message: `expected 'array' received '${typeof input}'` });
     });
   }
 
   protected copy() {
     return new MonarchTuple(this.types);
+  }
+
+  protected index(path: string[], depth: number): AnyMonarchType {
+    if (depth === path.length - 1) return this;
+    const index = path[depth + 1];
+    const parsedIndex = index ? Number(index) : -1;
+    const elementType = this.types[parsedIndex];
+    if (elementType) {
+      try {
+        return MonarchType.index(elementType, path, depth + 1);
+      } catch (error) {
+        throw MonarchParseError.fromCause({ path: index, cause: error });
+      }
+    }
+    throw MonarchParseError.create({ message: `expected a valid tuple index` });
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return {
+      bsonType: "array",
+      items: this.types.map(MonarchType.jsonSchema),
+      minItems: this.types.length,
+      maxItems: this.types.length,
+      additionalItems: false,
+    };
   }
 }

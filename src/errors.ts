@@ -1,46 +1,48 @@
 /**
  * Base error class for Monarch ORM errors.
  */
-export class MonarchError extends Error {}
+export class MonarchError extends Error {
+  public cause?: unknown;
+
+  constructor(message: string, cause?: unknown) {
+    super(message);
+    this.cause = cause;
+  }
+}
 
 /**
  * Schema parsing and validation error.
  */
 export class MonarchParseError extends MonarchError {
-  private path: (string | number)[];
-  private cause?: MonarchParseError;
+  public path: (string | number)[];
 
-  constructor(message: string);
-  constructor(cause: { path: string | number; error: MonarchParseError });
-  constructor(
-    error:
-      | string
-      | {
-          path: string | number;
-          error: MonarchParseError;
-        },
-  ) {
-    let message: string;
-    let path: (string | number)[] = [];
-    let cause: MonarchParseError | undefined;
+  private constructor(message: string, path: (string | number)[], cause?: unknown) {
+    super(message, cause);
+    this.path = path;
+  }
 
-    if (typeof error === "string") {
-      message = error;
-    } else {
-      cause = error.error.cause ?? error.error;
-      path = [error.path, ...error.error.path];
+  static create({ path, message }: { path?: string | number; message: string }): MonarchParseError {
+    if (!path) return new MonarchParseError(message, []);
+    return new MonarchParseError(`${path}: ${message}`, [path]);
+  }
 
-      const pathString = path.reduce((acc, p, i) => {
-        if (typeof p === "number") {
-          return `${acc}[${p}]`;
-        }
-        return i === 0 ? p : `${acc}.${p}`;
-      }, "");
-      message = `${pathString}: ${cause.message}`;
+  static fromCause({ path, cause }: { path?: string | number; cause: unknown }): MonarchParseError {
+    let prevPath: (string | number)[] = [];
+    let rootCause: unknown | undefined;
+
+    if (cause instanceof MonarchParseError) {
+      prevPath = cause.path;
+      rootCause = cause.cause ?? cause;
+    } else if (cause instanceof Error) {
+      rootCause = cause;
     }
 
-    super(message);
-    this.path = path;
-    this.cause = cause;
+    const message = rootCause instanceof Error ? rootCause.message : String(rootCause);
+
+    if (!path) return new MonarchParseError(message, prevPath, rootCause);
+
+    const newPath = [path, ...prevPath];
+    const pathString = newPath.reduce((acc, p, i) => (i === 0 ? `${p}` : `${acc}.${p}`), "");
+    return new MonarchParseError(`${pathString}: ${message}`, newPath, rootCause);
   }
 }

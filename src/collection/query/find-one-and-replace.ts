@@ -1,9 +1,20 @@
-import type { Filter, FindOneAndReplaceOptions, Collection as MongoCollection, WithoutId } from "mongodb";
+import type {
+  FindOneAndReplaceOptions,
+  Collection as MongoCollection,
+  Filter as MongoFilter,
+  WithoutId,
+} from "mongodb";
 import { type AnySchema, Schema } from "../../schema/schema";
-import type { InferSchemaData, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
+import type {
+  Filter,
+  InferSchemaData,
+  InferSchemaInput,
+  InferSchemaOmit,
+  InferSchemaOutput,
+} from "../../schema/type-helpers";
 import type { TrueKeys } from "../../utils/type-helpers";
+import { addExtraInputsToProjection, makeProjection } from "../projection";
 import type { BoolProjection, Projection } from "../types/query-options";
-import { addExtraInputsToProjection, makeProjection } from "../utils/projection";
 import { Query, type QueryOutput } from "./base";
 
 /**
@@ -17,15 +28,15 @@ export class FindOneAndReplaceQuery<
   private _projection: Projection<InferSchemaOutput<TSchema>>;
 
   constructor(
-    protected _schema: TSchema,
-    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
-    protected _readyPromise: Promise<void>,
-    private _filter: Filter<InferSchemaData<TSchema>>,
-    private _replacement: WithoutId<InferSchemaData<TSchema>>,
+    schema: TSchema,
+    collection: MongoCollection<InferSchemaData<TSchema>>,
+    readyPromise: Promise<void>,
+    private _filter: Filter<TSchema>,
+    private _replacement: WithoutId<InferSchemaInput<TSchema>>,
     private _options: FindOneAndReplaceOptions = {},
   ) {
-    super(_schema, _collection, _readyPromise);
-    this._projection = makeProjection("omit", _schema.options.omit ?? {});
+    super(schema, collection, readyPromise);
+    this._projection = makeProjection("omit", Schema.options(schema).omit ?? {});
   }
 
   /**
@@ -62,14 +73,18 @@ export class FindOneAndReplaceQuery<
   }
 
   protected async exec(): Promise<QueryOutput<TOutput, TOmit> | null> {
-    await this._readyPromise;
-    const extras = addExtraInputsToProjection(this._projection, this._schema.options.virtuals);
-    const res = await this._collection.findOneAndReplace(this._filter, this._replacement, {
-      ...this._options,
-      projection: this._projection,
-    });
+    const extras = addExtraInputsToProjection(this._projection, Schema.options(this.schema).virtuals);
+    const replacement = Schema.input(this.schema, this._replacement as InferSchemaInput<TSchema>);
+    const res = await this.collection.findOneAndReplace(
+      this._filter as MongoFilter<InferSchemaData<TSchema>>,
+      replacement,
+      {
+        ...this._options,
+        projection: this._projection,
+      },
+    );
     return res
-      ? (Schema.decode(this._schema, res as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
+      ? (Schema.output(this.schema, res as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
           TOutput,
           TOmit
         >)

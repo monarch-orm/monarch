@@ -1,5 +1,6 @@
 import { MonarchError, MonarchParseError } from "../errors";
 import type { InferTypeInput, InferTypeOutput } from "./type-helpers";
+import { jsonSchemaFromParser, jsonSchemaParser, type JSONSchema } from "./type.schema";
 
 /**
  * Parser function type.
@@ -13,14 +14,21 @@ export type Parser<Input, Output> = (input: Input) => Output;
  * @param nextParser - Second parser
  * @returns Chained parser
  */
-export function pipeParser<Input, InterOutput, Output>(
+function pipeParser<Input, InterOutput, Output>(
   prevParser: Parser<Input, InterOutput>,
   nextParser: Parser<InterOutput, Output>,
 ): Parser<Input, Output> {
-  return (input) => nextParser(prevParser(input));
+  const parser: Parser<Input, Output> = (input) => nextParser(prevParser(input));
+
+  const prevSchema = jsonSchemaFromParser(prevParser);
+  const nextSchema = jsonSchemaFromParser(nextParser);
+  if (prevSchema) jsonSchemaParser(parser, prevSchema);
+  if (nextSchema) jsonSchemaParser(parser, nextSchema);
+
+  return parser;
 }
 
-export type AnyMonarchType<TInput = any, TOutput = TInput> = MonarchType<TInput, TOutput>;
+export type AnyMonarchType<TInput = any, TOutput extends TInput = TInput> = MonarchType<TInput, TOutput>;
 
 /**
  * Base class for all Monarch types.
@@ -63,11 +71,56 @@ export type AnyMonarchType<TInput = any, TOutput = TInput> = MonarchType<TInput,
  * or `validate()`, they use `MonarchType.copy()` to create a new instance with the modified parser
  * while preserving the type. This allows method chaining while maintaining type safety.
  */
-export abstract class MonarchType<TInput, TOutput = TInput> {
-  constructor(
-    protected parser: Parser<TInput, TOutput>,
-    private updater?: Parser<void, TOutput>,
-  ) {}
+export abstract class MonarchType<TInput, TOutput extends TInput = TInput> {
+  constructor(protected parser: Parser<TInput, TOutput>) {}
+
+  /**
+   * Gets parser function from type.
+   *
+   * @param type - Monarch type
+   * @returns Parser function
+   */
+  public static parser<T extends AnyMonarchType>(type: T): Parser<InferTypeInput<T>, InferTypeOutput<T>> {
+    return type.parser;
+  }
+
+  /**
+   * Returns the type at the given path.
+   *
+   * `path` is a dot-separated field path split into segments (e.g. `"a.b.c"` becomes `["a","b","c"]`),
+   * and `depth` is the current depth. Compound types override this to walk their
+   * shape and delegate into the appropriate inner type for deeper segments.
+   *
+   * The base implementation is the leaf behavior: returns itself only at
+   * the final segment and throws for any deeper path.
+   *
+   * @param path - Dot-separated field path split into segments
+   * @param depth - Current depth index into `path`
+   * @returns Type at the current path segment
+   * @throws If `depth` is not the last segment
+   */
+  protected index(path: string[], depth: number): AnyMonarchType {
+    if (depth === path.length - 1) return this;
+    throw MonarchParseError.create({ message: `path '${path[depth + 1]}' does not exist on type` });
+  }
+
+  /**
+   * Returns the type at the given path on a type instance.
+   *
+   * @param type - Monarch type
+   * @param path - Dot-separated field path split into segments
+   * @param depth - Current depth index into `path`
+   * @returns Type at the given path
+   */
+  public static index<T extends AnyMonarchType>(type: T, path: string[], depth: number): AnyMonarchType {
+    return type.index(path, depth);
+  }
+
+  protected abstract jsonSchema(): JSONSchema;
+
+  public static jsonSchema<T extends AnyMonarchType>(type: T): JSONSchema {
+    return { ...jsonSchemaFromParser(type.parser), ...type.jsonSchema() };
+  }
 
   /**
    * Creates a fresh instance of this type in its default state.
@@ -104,28 +157,11 @@ export abstract class MonarchType<TInput, TOutput = TInput> {
       );
     }
     copy.parser = type.parser;
-    copy.updater = type.updater;
     return copy as T;
   }
 
-  /**
-   * Gets parser function from type.
-   *
-   * @param type - Monarch type
-   * @returns Parser function
-   */
-  public static parser<T extends AnyMonarchType>(type: T): Parser<InferTypeInput<T>, InferTypeOutput<T>> {
-    return type.parser;
-  }
-
-  /**
-   * Gets updater function from type.
-   *
-   * @param type - Monarch type
-   * @returns Updater function or undefined
-   */
-  public static updater<T extends AnyMonarchType>(type: T): (() => InferTypeOutput<T>) | undefined {
-    return type.updater;
+  protected isInstanceOf(target: new (...args: any) => AnyMonarchType) {
+    return this instanceof target;
   }
 
   /**
@@ -140,10 +176,6 @@ export abstract class MonarchType<TInput, TOutput = TInput> {
     target: T,
   ): type is InstanceType<T> {
     return type.isInstanceOf(target);
-  }
-
-  protected isInstanceOf(target: new (...args: any) => AnyMonarchType) {
-    return this instanceof target;
   }
 
   /**
@@ -175,18 +207,6 @@ export abstract class MonarchType<TInput, TOutput = TInput> {
   }
 
   /**
-   * Transform input.
-   *
-   * Transform is applied after previous validations and transforms have been applied.
-   * @param fn function that returns a transformed input.
-   */
-  public transform<TTransformOutput>(fn: Parser<TOutput, TTransformOutput>): MonarchType<TInput, TTransformOutput> {
-    const transform = new CustomType(pipeParser(this.parser, fn));
-    if (this.updater) transform.updater = pipeParser(this.updater, fn);
-    return transform;
-  }
-
-  /**
    * Validate input.
    *
    * Validation is applied after previous validations and transforms have been applied.
@@ -197,7 +217,7 @@ export abstract class MonarchType<TInput, TOutput = TInput> {
     const copy = MonarchType.copy(this);
     copy.parser = pipeParser(copy.parser, (input) => {
       const valid = fn(input);
-      if (!valid) throw new MonarchParseError(message);
+      if (!valid) throw MonarchParseError.create({ message });
       return input;
     });
     return copy;
@@ -224,52 +244,7 @@ export abstract class MonarchType<TInput, TOutput = TInput> {
   public parse(fn: Parser<TOutput, TOutput>) {
     const copy = MonarchType.copy(this);
     copy.parser = pipeParser(copy.parser, fn);
-    if (copy.updater) {
-      copy.updater = pipeParser(copy.updater, fn);
-    }
     return copy;
-  }
-
-  /**
-   * Auto-update field on every update operation.
-   *
-   * NOTE: onUpdate only works on top-level schema fields. It does not work on nested fields within objects or array elements.
-   *
-   * @param updateFn function that returns the new value for this field on update operations.
-   */
-  public onUpdate(updateFn: () => TInput) {
-    const copy = MonarchType.copy(this);
-    copy.updater = pipeParser(updateFn, this.parser);
-    return copy;
-  }
-}
-
-/**
- * Creates a MonarchType with a custom parser function.
- *
- * @param parser - Parser function that transforms input to output
- * @returns MonarchType instance
- *
- * @example
- * ```ts
- * const positiveNumber = type((input: number) => {
- *   if (input <= 0) {
- *     throw new MonarchParseError('number must be positive');
- *   }
- *   return input;
- * });
- * ```
- */
-export const type = <TInput, TOutput = TInput>(parser: Parser<TInput, TOutput>): MonarchType<TInput, TOutput> =>
-  new CustomType(parser);
-
-class CustomType<TInput, TOutput = TInput> extends MonarchType<TInput, TOutput> {
-  constructor(protected parser: Parser<TInput, TOutput>) {
-    super(parser);
-  }
-
-  protected copy() {
-    return new CustomType<TInput, TOutput>(this.parser);
   }
 }
 
@@ -290,20 +265,42 @@ export class MonarchNullable<T extends AnyMonarchType> extends MonarchType<
 > {
   constructor(private type: T) {
     const parser = MonarchType.parser(type);
-    const updater = MonarchType.updater(type);
-
     super((input) => {
       if (input === null) return null;
       return parser(input);
-    }, updater);
+    });
   }
 
   protected copy() {
     return new MonarchNullable(this.type);
   }
 
+  protected index(path: string[], depth: number): AnyMonarchType {
+    if (depth === path.length - 1) return this;
+    return MonarchType.index(this.type, path, depth);
+  }
+
+  protected jsonSchema(): JSONSchema {
+    const schema = MonarchType.jsonSchema(this.type);
+    if (schema.bsonType) {
+      const bsonType = Array.isArray(schema.bsonType) ? [...schema.bsonType] : [schema.bsonType];
+      if (!bsonType.includes("null")) bsonType.push("null");
+      schema.bsonType = bsonType;
+    }
+    if (schema.type) {
+      const type = Array.isArray(schema.type) ? [...schema.type] : [schema.type];
+      if (!type.includes("null")) type.push("null");
+      schema.type = type;
+    }
+    return schema;
+  }
+
   protected isInstanceOf(target: new (...args: any[]) => any) {
     return this instanceof target || MonarchType.isInstanceOf(this.type, target);
+  }
+
+  public static type<T extends AnyMonarchType>(nullable: MonarchNullable<T>): T {
+    return nullable.type;
   }
 }
 
@@ -324,12 +321,19 @@ export class MonarchOptional<T extends AnyMonarchType> extends MonarchType<
 > {
   constructor(private type: T) {
     const parser = MonarchType.parser(type);
-    const updater = MonarchType.updater(type);
-
     super((input) => {
       if (input === undefined) return undefined;
       return parser(input);
-    }, updater);
+    });
+  }
+
+  protected index(path: string[], depth: number): AnyMonarchType {
+    if (depth === path.length - 1) return this;
+    throw MonarchParseError.create({ message: `updates must replace the entire optional value` });
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return MonarchType.jsonSchema(this.type);
   }
 
   protected copy() {
@@ -338,6 +342,10 @@ export class MonarchOptional<T extends AnyMonarchType> extends MonarchType<
 
   protected isInstanceOf(target: new (...args: any[]) => any) {
     return this instanceof target || MonarchType.isInstanceOf(this.type, target);
+  }
+
+  public static type<T extends AnyMonarchType>(optional: MonarchOptional<T>): T {
+    return optional.type;
   }
 }
 
@@ -365,15 +373,22 @@ export class MonarchDefaulted<T extends AnyMonarchType> extends MonarchType<
     private defaultInput: InferTypeInput<T> | (() => InferTypeInput<T>),
   ) {
     const parser = MonarchType.parser(type);
-    const updater = MonarchType.updater(type);
-
     super((input) => {
       if (input === undefined) {
         const defaultValue = MonarchDefaulted.isDefaultFunction(defaultInput) ? defaultInput() : defaultInput;
         return parser(defaultValue);
       }
       return parser(input);
-    }, updater);
+    });
+  }
+
+  protected index(path: string[], depth: number): AnyMonarchType {
+    if (depth === path.length - 1) return this;
+    return MonarchType.index(this.type, path, depth);
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return MonarchType.jsonSchema(this.type);
   }
 
   protected copy() {
@@ -382,6 +397,10 @@ export class MonarchDefaulted<T extends AnyMonarchType> extends MonarchType<
 
   protected isInstanceOf(target: new (...args: any[]) => any) {
     return this instanceof target || MonarchType.isInstanceOf(this.type, target);
+  }
+
+  public static type<T extends AnyMonarchType>(defaulted: MonarchDefaulted<T>): T {
+    return defaulted.type;
   }
 
   private static isDefaultFunction<T>(val: unknown): val is () => T {

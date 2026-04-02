@@ -11,7 +11,7 @@ describe("decimal128", () => {
     });
 
     const testDecimal = Decimal128.fromString("123.456");
-    const data = Schema.encode(schema, { value: testDecimal });
+    const data = Schema.input(schema, { value: testDecimal });
     expect(data).toStrictEqual({ value: testDecimal });
     expect(data.value).toBeInstanceOf(Decimal128);
   });
@@ -21,7 +21,7 @@ describe("decimal128", () => {
       value: decimal128(),
     });
 
-    const data = Schema.encode(schema, { value: "123.456" });
+    const data = Schema.input(schema, { value: "123.456" });
     expect(data.value).toBeInstanceOf(Decimal128);
     expect(data.value.toString()).toBe("123.456");
   });
@@ -32,7 +32,7 @@ describe("decimal128", () => {
     });
 
     const highPrecision = "123456789.123456789123456789";
-    const data = Schema.encode(schema, { value: highPrecision });
+    const data = Schema.input(schema, { value: highPrecision });
     expect(data.value).toBeInstanceOf(Decimal128);
     expect(data.value.toString()).toBe(highPrecision);
   });
@@ -43,11 +43,11 @@ describe("decimal128", () => {
     });
 
     // @ts-expect-error
-    expect(() => Schema.encode(schema, { value: 123 })).toThrowError(
+    expect(() => Schema.input(schema, { value: 123 })).toThrowError(
       "expected 'Decimal128' or 'string' received 'number'",
     );
     // @ts-expect-error
-    expect(() => Schema.encode(schema, { value: {} })).toThrowError(
+    expect(() => Schema.input(schema, { value: {} })).toThrowError(
       "expected 'Decimal128' or 'string' received 'object'",
     );
   });
@@ -58,10 +58,10 @@ describe("decimal128", () => {
       optionalDecimal: decimal128().optional(),
     });
 
-    const nullData = Schema.encode(schema, { nullableDecimal: null });
+    const nullData = Schema.input(schema, { nullableDecimal: null });
     expect(nullData).toStrictEqual({ nullableDecimal: null });
 
-    const undefinedData = Schema.encode(schema, { nullableDecimal: Decimal128.fromString("99.99") });
+    const undefinedData = Schema.input(schema, { nullableDecimal: Decimal128.fromString("99.99") });
     expect(undefinedData.nullableDecimal?.toString()).toBe("99.99");
   });
 
@@ -81,12 +81,7 @@ describe("decimal128", () => {
       decimalField: decimal128().optional(),
     });
 
-    const { collections } = createDatabase(
-      client.db(),
-      defineSchemas({
-        bsonData: BsonDataSchema,
-      }),
-    );
+    const { collections } = createDatabase(client.db(), defineSchemas({ BsonDataSchema }));
 
     afterAll(async () => {
       await collections.bsonData.deleteMany({});

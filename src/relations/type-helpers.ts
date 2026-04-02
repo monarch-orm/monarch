@@ -2,20 +2,15 @@ import type { ObjectId } from "mongodb";
 import type { Limit, Skip, Sort } from "../collection/types/pipeline-stage";
 import type { BoolProjection, WithProjection } from "../collection/types/query-options";
 import type { AnySchema } from "../schema/schema";
-import type { InferSchemaOmit, InferSchemaOutput, SchemaInputWithId } from "../schema/type-helpers";
+import type { InferSchemaInput, InferSchemaOmit, InferSchemaOutput } from "../schema/type-helpers";
 import type { ExtractIfArray, Index, Merge, Pretty } from "../utils/type-helpers";
 import type { AnyRelation, AnyRelations, Relation, RelationField } from "./relations";
 
 type ValidRelationFieldType<TRelation extends "one" | "many" | "refs" | undefined> = TRelation extends "refs"
   ? Array<string | number | ObjectId>
   : string | number | ObjectId;
-export type SchemaRelatableField<
-  TRelation extends "one" | "many" | "refs" | undefined,
-  TSchema extends AnySchema,
-> = keyof {
-  [K in keyof SchemaInputWithId<TSchema> as NonNullable<
-    SchemaInputWithId<TSchema>[K]
-  > extends ValidRelationFieldType<TRelation>
+export type SchemaRelatableField<TRelation extends "one" | "many" | "refs" | undefined, T extends AnySchema> = keyof {
+  [K in keyof InferSchemaInput<T> as NonNullable<InferSchemaInput<T>[K]> extends ValidRelationFieldType<TRelation>
     ? K
     : never]: unknown;
 };

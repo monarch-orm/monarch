@@ -1,9 +1,9 @@
-import type { Filter, FindOneAndDeleteOptions, Collection as MongoCollection } from "mongodb";
+import type { FindOneAndDeleteOptions, Collection as MongoCollection, Filter as MongoFilter } from "mongodb";
 import { type AnySchema, Schema } from "../../schema/schema";
-import type { InferSchemaData, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
+import type { Filter, InferSchemaData, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
 import type { TrueKeys } from "../../utils/type-helpers";
+import { addExtraInputsToProjection, makeProjection } from "../projection";
 import type { BoolProjection, Projection } from "../types/query-options";
-import { addExtraInputsToProjection, makeProjection } from "../utils/projection";
 import { Query, type QueryOutput } from "./base";
 
 /**
@@ -17,14 +17,14 @@ export class FindOneAndDeleteQuery<
   private _projection: Projection<InferSchemaOutput<TSchema>>;
 
   constructor(
-    protected _schema: TSchema,
-    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
-    protected _readyPromise: Promise<void>,
-    private _filter: Filter<InferSchemaData<TSchema>>,
+    schema: TSchema,
+    collection: MongoCollection<InferSchemaData<TSchema>>,
+    readyPromise: Promise<void>,
+    private _filter: Filter<TSchema>,
     private _options: FindOneAndDeleteOptions = {},
   ) {
-    super(_schema, _collection, _readyPromise);
-    this._projection = makeProjection("omit", _schema.options.omit ?? {});
+    super(schema, collection, readyPromise);
+    this._projection = makeProjection("omit", Schema.options(schema).omit ?? {});
   }
 
   /**
@@ -61,14 +61,13 @@ export class FindOneAndDeleteQuery<
   }
 
   protected async exec(): Promise<QueryOutput<TOutput, TOmit> | null> {
-    await this._readyPromise;
-    const extras = addExtraInputsToProjection(this._projection, this._schema.options.virtuals);
-    const res = await this._collection.findOneAndDelete(this._filter, {
+    const extras = addExtraInputsToProjection(this._projection, Schema.options(this.schema).virtuals);
+    const res = await this.collection.findOneAndDelete(this._filter as MongoFilter<InferSchemaData<TSchema>>, {
       ...this._options,
       projection: this._projection,
     });
     return res
-      ? (Schema.decode(this._schema, res as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
+      ? (Schema.output(this.schema, res as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
           TOutput,
           TOmit
         >)

@@ -1,5 +1,6 @@
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
+import { jsonSchemaParser, type JSONSchema } from "./type.schema";
 
 /**
  * Number type.
@@ -11,16 +12,20 @@ export const number = () => new MonarchNumber();
 /**
  * Type for number fields.
  */
-export class MonarchNumber extends MonarchType<number, number> {
+export class MonarchNumber extends MonarchType<number> {
   constructor() {
     super((input) => {
       if (typeof input === "number") return input;
-      throw new MonarchParseError(`expected 'number' received '${typeof input}'`);
+      throw MonarchParseError.create({ message: `expected 'number' received '${typeof input}'` });
     });
   }
 
   protected copy() {
     return new MonarchNumber();
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return { type: "number" };
   }
 
   /**
@@ -30,12 +35,17 @@ export class MonarchNumber extends MonarchType<number, number> {
    * @returns MonarchNumber with min validation
    */
   public min(value: number) {
-    return this.parse((input) => {
-      if (input < value) {
-        throw new MonarchParseError(`number must be greater than or equal to ${value}`);
-      }
-      return input;
-    });
+    return this.parse(
+      jsonSchemaParser(
+        (input) => {
+          if (input < value) {
+            throw MonarchParseError.create({ message: `number must be greater than or equal to ${value}` });
+          }
+          return input;
+        },
+        { minimum: value },
+      ),
+    );
   }
 
   /**
@@ -45,12 +55,17 @@ export class MonarchNumber extends MonarchType<number, number> {
    * @returns MonarchNumber with max validation
    */
   public max(value: number) {
-    return this.parse((input) => {
-      if (input > value) {
-        throw new MonarchParseError(`number must be less than or equal to ${value}`);
-      }
-      return input;
-    });
+    return this.parse(
+      jsonSchemaParser(
+        (input) => {
+          if (input > value) {
+            throw MonarchParseError.create({ message: `number must be less than or equal to ${value}` });
+          }
+          return input;
+        },
+        { maximum: value },
+      ),
+    );
   }
 
   /**
@@ -59,11 +74,16 @@ export class MonarchNumber extends MonarchType<number, number> {
    * @returns MonarchNumber with integer validation
    */
   public integer() {
-    return this.parse((input) => {
-      if (!Number.isInteger(input)) {
-        throw new MonarchParseError("number must be an integer");
-      }
-      return input;
-    });
+    return this.parse(
+      jsonSchemaParser(
+        (input) => {
+          if (!Number.isInteger(input)) {
+            throw MonarchParseError.create({ message: "number must be an integer" });
+          }
+          return input;
+        },
+        { multipleOf: 1 },
+      ),
+    );
   }
 }

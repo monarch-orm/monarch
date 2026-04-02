@@ -10,22 +10,18 @@ describe("Union Types", () => {
       });
 
       // @ts-expect-error
-      expect(() => Schema.encode(schema, { emailOrPhone: {} })).toThrowError(
-        "no matching variant found for union type",
-      );
+      expect(() => Schema.input(schema, { emailOrPhone: {} })).toThrowError("no matching variant found for union type");
       // @ts-expect-error
-      expect(() => Schema.encode(schema, { emailOrPhone: [] })).toThrowError(
-        "no matching variant found for union type",
-      );
+      expect(() => Schema.input(schema, { emailOrPhone: [] })).toThrowError("no matching variant found for union type");
       // @ts-expect-error
-      expect(() => Schema.encode(schema, { emailOrPhone: null })).toThrowError(
+      expect(() => Schema.input(schema, { emailOrPhone: null })).toThrowError(
         "no matching variant found for union type",
       );
 
-      const data1 = Schema.encode(schema, { emailOrPhone: "test" });
+      const data1 = Schema.input(schema, { emailOrPhone: "test" });
       expect(data1).toStrictEqual({ emailOrPhone: "test" });
 
-      const data2 = Schema.encode(schema, { emailOrPhone: 42 });
+      const data2 = Schema.input(schema, { emailOrPhone: 42 });
       expect(data2).toStrictEqual({ emailOrPhone: 42 });
     });
   });
@@ -36,53 +32,53 @@ describe("Union Types", () => {
         color: taggedUnion({
           rgba: object({ r: number(), g: number(), b: number(), a: string() }),
           hex: string(),
-          hsl: tuple([string(), string(), string()]).transform(([f, s, t]) => f + s + t),
+          hsl: tuple([string(), string(), string()]),
         }),
       });
 
       // @ts-expect-error
-      expect(() => Schema.encode(schema, {})).toThrowError("expected 'object' received 'undefined'");
+      expect(() => Schema.input(schema, {})).toThrowError("expected 'object' received 'undefined'");
       // @ts-expect-error
-      expect(() => Schema.encode(schema, { color: {} })).toThrowError("missing field");
+      expect(() => Schema.input(schema, { color: {} })).toThrowError("missing field");
       // @ts-expect-error
-      expect(() => Schema.encode(schema, { color: { tag: "hex" } })).toThrowError(
+      expect(() => Schema.input(schema, { color: { tag: "hex" } })).toThrowError(
         "missing field 'value' in tagged union",
       );
       expect(() =>
         // @ts-expect-error
-        Schema.encode(schema, { color: { value: "#fff" } }),
+        Schema.input(schema, { color: { value: "#fff" } }),
       ).toThrowError("missing field 'tag' in tagged union");
       expect(() =>
-        Schema.encode(schema, {
+        Schema.input(schema, {
           // @ts-expect-error
           color: { tag: "hex", value: "#fff", extra: "user" },
         }),
       ).toThrowError("unknown field 'extra', tagged union may only specify 'tag' and 'value' fields");
       expect(() =>
         // @ts-expect-error
-        Schema.encode(schema, { color: { tag: "hwb", value: "#fff" } }),
+        Schema.input(schema, { color: { tag: "hwb", value: "#fff" } }),
       ).toThrowError("unknown tag 'hwb'");
       expect(() =>
         // @ts-expect-error
-        Schema.encode(schema, { color: { tag: "hsl", value: "#fff" } }),
+        Schema.input(schema, { color: { tag: "hsl", value: "#fff" } }),
       ).toThrowError("invalid value for tag 'hsl'");
-      const data1 = Schema.encode(schema, {
+      const data1 = Schema.input(schema, {
         color: { tag: "rgba", value: { r: 0, g: 0, b: 0, a: "100%" } },
       });
       expect(data1).toStrictEqual({
         color: { tag: "rgba", value: { r: 0, g: 0, b: 0, a: "100%" } },
       });
-      const data2 = Schema.encode(schema, {
+      const data2 = Schema.input(schema, {
         color: { tag: "hex", value: "#fff" },
       });
       expect(data2).toStrictEqual({
         color: { tag: "hex", value: "#fff" },
       });
-      const data3 = Schema.encode(schema, {
+      const data3 = Schema.input(schema, {
         color: { tag: "hsl", value: ["0", "0", "0"] },
       });
       expect(data3).toStrictEqual({
-        color: { tag: "hsl", value: "000" },
+        color: { tag: "hsl", value: ["0", "0", "0"] },
       });
     });
   });

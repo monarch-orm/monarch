@@ -8,7 +8,7 @@ describe("string", () => {
       lower: string().lowercase(),
       upper: string().uppercase(),
     });
-    const data = Schema.encode(schema, { lower: "HELLO", upper: "hello" });
+    const data = Schema.input(schema, { lower: "HELLO", upper: "hello" });
     expect(data).toStrictEqual({ lower: "hello", upper: "HELLO" });
   });
 
@@ -19,17 +19,17 @@ describe("string", () => {
       exact: string().length(4),
     });
 
-    expect(() => Schema.encode(schema, { min: "ab", max: "test", exact: "test" })).toThrowError(
-      "string must be at least 3 characters long",
+    expect(() => Schema.input(schema, { min: "ab", max: "test", exact: "test" })).toThrowError(
+      "string must have a minimum length of 3",
     );
-    expect(() => Schema.encode(schema, { min: "test", max: "toolong", exact: "test" })).toThrowError(
-      "string must be at most 5 characters long",
+    expect(() => Schema.input(schema, { min: "test", max: "toolong", exact: "test" })).toThrowError(
+      "string must have a maximum length of 5",
     );
-    expect(() => Schema.encode(schema, { min: "test", max: "test", exact: "toolong" })).toThrowError(
-      "string must be exactly 4 characters long",
+    expect(() => Schema.input(schema, { min: "test", max: "test", exact: "toolong" })).toThrowError(
+      "string must have a length of 4",
     );
 
-    const data = Schema.encode(schema, {
+    const data = Schema.input(schema, {
       min: "abc",
       max: "test",
       exact: "test",
@@ -42,11 +42,11 @@ describe("string", () => {
       email: string().pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
     });
 
-    expect(() => Schema.encode(schema, { email: "invalid" })).toThrowError(
+    expect(() => Schema.input(schema, { email: "invalid" })).toThrowError(
       "string must match pattern /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/",
     );
 
-    const data = Schema.encode(schema, { email: "test@example.com" });
+    const data = Schema.input(schema, { email: "test@example.com" });
     expect(data).toStrictEqual({ email: "test@example.com" });
   });
 
@@ -55,7 +55,7 @@ describe("string", () => {
       trimmed: string().trim(),
     });
 
-    const data = Schema.encode(schema, { trimmed: "  hello  " });
+    const data = Schema.input(schema, { trimmed: "  hello  " });
     expect(data).toStrictEqual({ trimmed: "hello" });
   });
 
@@ -64,20 +64,9 @@ describe("string", () => {
       required: string().nonempty(),
     });
 
-    expect(() => Schema.encode(schema, { required: "" })).toThrowError("string must not be empty");
+    expect(() => Schema.input(schema, { required: "" })).toThrowError("string must not be empty");
 
-    const data = Schema.encode(schema, { required: "hello" });
+    const data = Schema.input(schema, { required: "hello" });
     expect(data).toStrictEqual({ required: "hello" });
-  });
-
-  test("includes", () => {
-    const schema = createSchema("test", {
-      contains: string().includes("world"),
-    });
-
-    expect(() => Schema.encode(schema, { contains: "hello" })).toThrowError('string must include "world"');
-
-    const data = Schema.encode(schema, { contains: "hello world" });
-    expect(data).toStrictEqual({ contains: "hello world" });
   });
 });

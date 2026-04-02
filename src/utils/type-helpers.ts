@@ -1,5 +1,3 @@
-import type { ObjectId } from "mongodb";
-
 export type Pretty<T> = { [K in keyof T]: T[K] } & {};
 export type Merge<First, Second> = Omit<First, keyof Second> & Second;
 export type MergeN1<First, Second> = Pretty<
@@ -14,6 +12,7 @@ export type MergeN1All<T extends any[]> = T extends [...infer Head, infer Tail]
   ? Pretty<MergeN1<MergeN1All<Head>, Tail>>
   : {};
 export type Index<T, K> = K extends keyof T ? T[K] : never;
+export type IsNever<T> = [T] extends [never] ? true : false;
 export type ExtractIfArray<T> = T extends (infer U)[] ? U : T;
 export type TrueKeys<T> = keyof {
   [K in keyof T as T[K] extends true ? K : never]: T[K];
@@ -22,6 +21,3 @@ export type KnownKey<T> = string extends T ? never : number extends T ? never : 
 export type KnownObjectKeys<T> = { [K in keyof T as KnownKey<K>]: T[K] };
 
 export type IdFirst<T> = "_id" extends keyof T ? { _id: T["_id"] } & Omit<T, "_id"> : T;
-export type WithRequiredObjectId<T> = "_id" extends keyof T ? T : { _id: ObjectId } & T;
-export type WithRequiredId<T> = "_id" extends keyof T ? T : { _id: ObjectId | string } & T;
-export type WithOptionalId<T> = "_id" extends keyof T ? T : { _id?: ObjectId | string } & T;

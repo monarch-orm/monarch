@@ -8,11 +8,11 @@ describe("number", () => {
       value: number(),
     });
 
-    const data = Schema.encode(schema, { value: 42 });
+    const data = Schema.input(schema, { value: 42 });
     expect(data).toStrictEqual({ value: 42 });
 
     // @ts-expect-error
-    expect(() => Schema.encode(schema, { value: "42" })).toThrowError("expected 'number' received 'string'");
+    expect(() => Schema.input(schema, { value: "42" })).toThrowError("expected 'number' received 'string'");
   });
 
   test("min and max constraints", () => {
@@ -21,10 +21,10 @@ describe("number", () => {
       max: number().max(10),
     });
 
-    expect(() => Schema.encode(schema, { min: 3, max: 8 })).toThrowError("number must be greater than or equal to 5");
-    expect(() => Schema.encode(schema, { min: 6, max: 12 })).toThrowError("number must be less than or equal to 10");
+    expect(() => Schema.input(schema, { min: 3, max: 8 })).toThrowError("number must be greater than or equal to 5");
+    expect(() => Schema.input(schema, { min: 6, max: 12 })).toThrowError("number must be less than or equal to 10");
 
-    const data = Schema.encode(schema, { min: 7, max: 8 });
+    const data = Schema.input(schema, { min: 7, max: 8 });
     expect(data).toStrictEqual({ min: 7, max: 8 });
   });
 
@@ -33,7 +33,7 @@ describe("number", () => {
       value: number().integer(),
     });
 
-    expect(() => Schema.encode(schema, { value: 5.7 })).toThrowError("number must be an integer");
+    expect(() => Schema.input(schema, { value: 5.7 })).toThrowError("number must be an integer");
   });
 
   test("validation error order - type error before value validation", () => {
@@ -46,8 +46,9 @@ describe("number", () => {
 
     // Invalid type for number().min() should throw type error first
     expect(() =>
-      Schema.encode(schema, {
-        minValue: "not a number" as any,
+      Schema.input(schema, {
+        // @ts-expect-error
+        minValue: "not a number",
         maxValue: 8,
         integerValue: 6,
       }),
@@ -55,19 +56,21 @@ describe("number", () => {
 
     // Invalid type for number().max() should throw type error first
     expect(() =>
-      Schema.encode(schema, {
+      Schema.input(schema, {
         minValue: 7,
-        maxValue: true as any,
+        // @ts-expect-error
+        maxValue: true,
         integerValue: 6,
       }),
     ).toThrowError("expected 'number' received 'boolean'");
 
     // Invalid type for number().integer() should throw type error first
     expect(() =>
-      Schema.encode(schema, {
+      Schema.input(schema, {
         minValue: 7,
         maxValue: 8,
-        integerValue: { value: 6 } as any,
+        // @ts-expect-error
+        integerValue: { value: 6 },
       }),
     ).toThrowError("expected 'number' received 'object'");
   });

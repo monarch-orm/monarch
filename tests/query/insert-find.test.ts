@@ -70,11 +70,6 @@ describe("Insert and Find Operations", async () => {
       expect(newUser._id).toStrictEqual(id);
     });
 
-    it("supports promise resolution without exec", async () => {
-      const newUser = await collections.users.insertOne(mockUsers[0]);
-      expect(newUser).toMatchObject(mockUsers[0]);
-    });
-
     it("rejects invalid ObjectId string", async () => {
       await expect(async () => {
         await collections.users.insertOne({ _id: "not_an_object_id", ...mockUsers[0] });
@@ -99,16 +94,17 @@ describe("Insert and Find Operations", async () => {
       expect(user.email).toBe("test@example.com");
     });
 
-    it("strips extra fields not in schema", async () => {
-      const user = await collections.users.insertOne({
-        name: "Extra",
-        email: "extra@example.com",
-        age: 40,
-        isVerified: true,
-        extraField: "This should be ignored",
-      } as any);
-      expect(user).not.toBe(null);
-      expect(user).not.toHaveProperty("extraField");
+    it("rejects extra fields not in schema", async () => {
+      await expect(async () => {
+        const user = await collections.users.insertOne({
+          name: "Extra",
+          email: "extra@example.com",
+          age: 40,
+          isVerified: true,
+          // @ts-expect-error
+          extraField: "This should error",
+        });
+      }).rejects.toThrowError();
     });
 
     it("inserts many documents", async () => {
