@@ -1,6 +1,6 @@
-import type { Population, PopulationOptions } from "../../relations/type-helpers";
-import type { AnyVirtual } from "../../schema/virtuals";
-import type { BoolProjection, Projection } from "../types/query-options";
+import type { Population, PopulationOptions } from "../relations/type-helpers";
+import type { AnyVirtual } from "../schema/virtuals";
+import type { BoolProjection, Projection } from "./types/query-options";
 
 export function makeProjection<T>(type: "omit" | "select", projection: BoolProjection<T>) {
   const _projection: Projection<T> = {};

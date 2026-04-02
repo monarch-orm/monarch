@@ -36,8 +36,7 @@ import { UpdateOneQuery } from "./query/update-one";
  *
  */
 export class Collection<TSchema extends AnySchema, TDbRelations extends Record<string, AnyRelations>> {
-  private _collection: MongoCollection<InferSchemaData<TSchema>>;
-  private _readyPromise: Promise<void>;
+  protected collection: MongoCollection<InferSchemaData<TSchema>>;
 
   /**
    * Creates a Collection instance.
@@ -48,12 +47,11 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    */
   constructor(
     db: Db,
-    readyPromise: Promise<void>,
-    public schema: TSchema,
-    public relations: TDbRelations,
+    protected readyPromise: Promise<void>,
+    protected relations: TDbRelations,
+    public readonly schema: TSchema,
   ) {
-    this._collection = db.collection<InferSchemaData<TSchema>>(this.schema.name);
-    this._readyPromise = readyPromise;
+    this.collection = db.collection<InferSchemaData<TSchema>>(this.schema.name);
   }
 
   /**
@@ -61,7 +59,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * This includes collection creation, index creation and document validation setup.
    */
   public get isReady() {
-    return this._readyPromise;
+    return this.readyPromise;
   }
 
   /**
@@ -70,7 +68,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns Native MongoDB collection
    */
   public raw() {
-    return this._collection;
+    return this.collection;
   }
 
   /**
@@ -81,7 +79,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns DistinctQuery instance
    */
   public distinct<K extends keyof DistinctFilter<TSchema>>(key: K, filter: Filter<TSchema> = {}) {
-    return new DistinctQuery(this.schema, this._collection, this._readyPromise, filter, key);
+    return new DistinctQuery(this.schema, this.collection, this.readyPromise, filter, key);
   }
 
   /**
@@ -91,7 +89,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns FindQuery instance
    */
   public find(filter: Filter<TSchema> = {}) {
-    return new FindQuery(this.schema, this._collection, this._readyPromise, this.relations, filter);
+    return new FindQuery(this.schema, this.collection, this.readyPromise, this.relations, filter);
   }
 
   /**
@@ -106,8 +104,8 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
 
     return new FindOneQuery(
       this.schema,
-      this._collection,
-      this._readyPromise,
+      this.collection,
+      this.readyPromise,
       this.relations,
       // @ts-ignore
       { _id: isObjectIdType ? new ObjectId(id) : id },
@@ -127,8 +125,8 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
 
     return new FindOneAndUpdateQuery(
       this.schema,
-      this._collection,
-      this._readyPromise,
+      this.collection,
+      this.readyPromise,
       // @ts-ignore
       { _id: isObjectIdType ? new ObjectId(id) : id },
       update,
@@ -147,8 +145,8 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
 
     return new FindOneAndDeleteQuery(
       this.schema,
-      this._collection,
-      this._readyPromise,
+      this.collection,
+      this.readyPromise,
       // @ts-ignore
       { _id: isObjectIdType ? new ObjectId(id) : id },
     );
@@ -161,7 +159,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns FindOneQuery instance
    */
   public findOne(filter: Filter<TSchema>) {
-    return new FindOneQuery(this.schema, this._collection, this._readyPromise, this.relations, filter);
+    return new FindOneQuery(this.schema, this.collection, this.readyPromise, this.relations, filter);
   }
 
   /**
@@ -172,7 +170,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns FindOneAndReplaceQuery instance
    */
   public findOneAndReplace(filter: Filter<TSchema>, replacement: WithoutId<InferSchemaInput<TSchema>>) {
-    return new FindOneAndReplaceQuery(this.schema, this._collection, this._readyPromise, filter, replacement);
+    return new FindOneAndReplaceQuery(this.schema, this.collection, this.readyPromise, filter, replacement);
   }
 
   /**
@@ -183,7 +181,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns FindOneAndUpdateQuery instance
    */
   public findOneAndUpdate(filter: Filter<TSchema>, update: UpdateFilter<TSchema> | Document[]) {
-    return new FindOneAndUpdateQuery(this.schema, this._collection, this._readyPromise, filter, update);
+    return new FindOneAndUpdateQuery(this.schema, this.collection, this.readyPromise, filter, update);
   }
 
   /**
@@ -193,7 +191,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns FindOneAndDeleteQuery instance
    */
   public findOneAndDelete(filter: Filter<TSchema>) {
-    return new FindOneAndDeleteQuery(this.schema, this._collection, this._readyPromise, filter);
+    return new FindOneAndDeleteQuery(this.schema, this.collection, this.readyPromise, filter);
   }
 
   /**
@@ -203,7 +201,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns InsertOneQuery instance
    */
   public insertOne(data: InferSchemaInput<TSchema>) {
-    return new InsertOneQuery(this.schema, this._collection, this._readyPromise, data);
+    return new InsertOneQuery(this.schema, this.collection, this.readyPromise, data);
   }
 
   /**
@@ -213,7 +211,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns InsertManyQuery instance
    */
   public insertMany(data: InferSchemaInput<TSchema>[]) {
-    return new InsertManyQuery(this.schema, this._collection, this._readyPromise, data);
+    return new InsertManyQuery(this.schema, this.collection, this.readyPromise, data);
   }
 
   /**
@@ -223,7 +221,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns BulkWriteQuery instance
    */
   public bulkWrite(data: AnyBulkWriteOperation<InferSchemaData<TSchema>>[]) {
-    return new BulkWriteQuery(this.schema, this._collection, this._readyPromise, data);
+    return new BulkWriteQuery(this.schema, this.collection, this.readyPromise, data);
   }
 
   /**
@@ -234,7 +232,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns ReplaceOneQuery instance
    */
   public replaceOne(filter: Filter<TSchema>, replacement: WithoutId<InferSchemaInput<TSchema>>) {
-    return new ReplaceOneQuery(this.schema, this._collection, this._readyPromise, filter, replacement);
+    return new ReplaceOneQuery(this.schema, this.collection, this.readyPromise, filter, replacement);
   }
 
   /**
@@ -245,7 +243,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns UpdateOneQuery instance
    */
   public updateOne(filter: Filter<TSchema>, update: UpdateFilter<TSchema> | Document[]) {
-    return new UpdateOneQuery(this.schema, this._collection, this._readyPromise, filter, update);
+    return new UpdateOneQuery(this.schema, this.collection, this.readyPromise, filter, update);
   }
 
   /**
@@ -256,7 +254,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns UpdateManyQuery instance
    */
   public updateMany(filter: Filter<TSchema>, update: UpdateFilter<TSchema> | Document[]) {
-    return new UpdateManyQuery(this.schema, this._collection, this._readyPromise, filter, update);
+    return new UpdateManyQuery(this.schema, this.collection, this.readyPromise, filter, update);
   }
 
   /**
@@ -266,7 +264,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns DeleteOneQuery instance
    */
   public deleteOne(filter: Filter<TSchema>) {
-    return new DeleteOneQuery(this.schema, this._collection, this._readyPromise, filter);
+    return new DeleteOneQuery(this.schema, this.collection, this.readyPromise, filter);
   }
 
   /**
@@ -276,7 +274,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns DeleteManyQuery instance
    */
   public deleteMany(filter: Filter<TSchema>) {
-    return new DeleteManyQuery(this.schema, this._collection, this._readyPromise, filter);
+    return new DeleteManyQuery(this.schema, this.collection, this.readyPromise, filter);
   }
 
   /**
@@ -285,7 +283,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns AggregationPipeline instance
    */
   public aggregate<TOutput extends any[]>() {
-    return new AggregationPipeline<TSchema, TOutput[]>(this.schema, this._collection, this._readyPromise);
+    return new AggregationPipeline<TSchema, TOutput[]>(this.schema, this.collection, this.readyPromise);
   }
 
   /**
@@ -296,7 +294,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns Promise resolving to document count
    */
   public async countDocuments(filter: Filter<TSchema> = {}, options?: CountDocumentsOptions) {
-    return await this._collection.countDocuments(filter as MongoFilter<InferSchemaData<TSchema>>, options);
+    return await this.collection.countDocuments(filter as MongoFilter<InferSchemaData<TSchema>>, options);
   }
 
   /**
@@ -306,6 +304,6 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
    * @returns Promise resolving to estimated count
    */
   public async estimatedDocumentCount(options?: EstimatedDocumentCountOptions) {
-    return await this._collection.estimatedDocumentCount(options);
+    return await this.collection.estimatedDocumentCount(options);
   }
 }

@@ -1,5 +1,5 @@
+import { detectProjection } from "../collection/projection";
 import type { Projection } from "../collection/types/query-options";
-import { detectProjection } from "../collection/utils/projection";
 import { mergeRelations, type AnyRelation, type RelationsFn, type SchemasRelations } from "../relations/relations";
 import { MonarchObject, object } from "../types";
 import { objectId } from "../types/objectId";

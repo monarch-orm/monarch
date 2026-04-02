@@ -1,8 +1,8 @@
 import type { InsertOneOptions, Collection as MongoCollection, OptionalUnlessRequiredId } from "mongodb";
 import { type AnySchema, Schema } from "../../schema/schema";
 import type { InferSchemaData, InferSchemaInput, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
+import { makeProjection } from "../projection";
 import type { Projection } from "../types/query-options";
-import { makeProjection } from "../utils/projection";
 import { Query, type QueryOutput } from "./base";
 
 /**

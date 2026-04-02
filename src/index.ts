@@ -21,7 +21,7 @@ import { uuid } from "./types/uuid";
 
 export { ObjectId } from "mongodb";
 export { Collection } from "./collection/collection";
-export { createClient, createDatabase, Database, type InferInput, type InferOutput } from "./database";
+export { createClient, createDatabase, Database, type DatabaseOptions } from "./database";
 export { MonarchError, MonarchParseError } from "./errors";
 export { createSchema, createShape, defineSchemas, mergeSchemas, Schema, Schemas } from "./schema/schema";
 export type {
@@ -39,6 +39,7 @@ export type {
   UpdateFilter,
 } from "./schema/type-helpers";
 export { virtual, type Virtual } from "./schema/virtuals";
+export { type InferInput, type InferOutput } from "./type-helpers";
 export { toObjectId } from "./utils/misc";
 
 /**

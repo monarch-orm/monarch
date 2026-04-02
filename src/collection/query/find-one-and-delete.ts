@@ -2,8 +2,8 @@ import type { FindOneAndDeleteOptions, Collection as MongoCollection, Filter as 
 import { type AnySchema, Schema } from "../../schema/schema";
 import type { Filter, InferSchemaData, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
 import type { TrueKeys } from "../../utils/type-helpers";
+import { addExtraInputsToProjection, makeProjection } from "../projection";
 import type { BoolProjection, Projection } from "../types/query-options";
-import { addExtraInputsToProjection, makeProjection } from "../utils/projection";
 import { Query, type QueryOutput } from "./base";
 
 /**

@@ -1,4 +1,4 @@
-import type { AggregateOptions, Collection as MongoCollection } from "mongodb";
+import type { AggregateOptions, AggregationCursor, Collection as MongoCollection } from "mongodb";
 import type { AnySchema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";
 import { Pipeline } from "./base";
@@ -8,12 +8,12 @@ import { Pipeline } from "./base";
  */
 export class AggregationPipeline<TSchema extends AnySchema, TOutput extends any[]> extends Pipeline<TSchema, TOutput> {
   constructor(
-    protected _schema: TSchema,
-    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
-    protected _readyPromise: Promise<void>,
-    protected _options: AggregateOptions = {},
+    schema: TSchema,
+    collection: MongoCollection<InferSchemaData<TSchema>>,
+    readyPromise: Promise<void>,
+    private _options: AggregateOptions = {},
   ) {
-    super(_schema, _collection, _readyPromise);
+    super(schema, collection, readyPromise);
   }
 
   /**
@@ -27,8 +27,17 @@ export class AggregationPipeline<TSchema extends AnySchema, TOutput extends any[
     return this;
   }
 
-  protected async exec(): Promise<TOutput> {
-    const res = await this._collection.aggregate(this._pipeline, this._options).toArray();
-    return res as TOutput;
+  /**
+   * Returns MongoDB cursor for result iteration.
+   *
+   * @returns AggregationCursor
+   */
+  public async cursor(): Promise<AggregationCursor<TOutput>> {
+    await this.readyPromise;
+    return this.collection.aggregate<TOutput>(this.pipeline, this._options);
+  }
+
+  protected async exec(): Promise<TOutput[]> {
+    return (await this.cursor()).toArray();
   }
 }

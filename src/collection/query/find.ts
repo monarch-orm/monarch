@@ -10,10 +10,10 @@ import type { InferRelationObjectPopulation, Population } from "../../relations/
 import { type AnySchema, Schema } from "../../schema/schema";
 import type { Filter, InferSchemaData, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
 import type { TrueKeys } from "../../utils/type-helpers";
+import { addPipelineMetas, addPopulations, expandPopulations, getSortDirection } from "../population";
+import { addExtraInputsToProjection, makeProjection } from "../projection";
 import type { PipelineStage } from "../types/pipeline-stage";
 import type { BoolProjection, Projection, Sort } from "../types/query-options";
-import { addPipelineMetas, addPopulations, expandPopulations, getSortDirection } from "../utils/population";
-import { addExtraInputsToProjection, makeProjection } from "../utils/projection";
 import { Query, type QueryOutput } from "./base";
 
 /**
