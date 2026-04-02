@@ -120,11 +120,21 @@ export class Schema<
     return this;
   }
 
+  /**
+   * Sets MongoDB document validation for this schema.
+   *
+   * This is applied when the collection is initialized.
+   */
   public validation(validation: SchemaValidation) {
     this.options.validation = validation;
     return this;
   }
 
+  /**
+   * Sets values to include in every update operation.
+   *
+   * Useful for fields like `updatedAt`. If a function is provided, it is called for each update.
+   */
   public onUpdate(update: UpdateFilter<this> | (() => UpdateFilter<this>)) {
     this.update = typeof update === "function" ? update : () => update;
     return this;
@@ -153,6 +163,8 @@ export class Schema<
   /**
    * Parses and validates input data according to schema type definitions.
    *
+   * Runs schema parsing, transforms, defaults, and validations.
+   *
    * @param schema - Schema instance
    * @param input - Input data to parse
    * @returns Parsed data ready for database storage
@@ -164,6 +176,8 @@ export class Schema<
 
   /**
    * Parses and validates update data for dot-path update operations.
+   *
+   * Validates update input and merges schema-level `onUpdate()` values.
    *
    * @param schema - Schema instance
    * @param update - Update data with dot-path keys and their new values
