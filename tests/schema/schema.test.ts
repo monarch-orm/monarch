@@ -166,6 +166,129 @@ describe("Schema", async () => {
     });
   });
 
+  it("renames fields in output", async () => {
+    const schema = createSchema("users", {
+      name: string(),
+      email: string(),
+      isAdmin: boolean(),
+    }).rename({
+      name: "fullName",
+      email: "emailAddress",
+    });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
+
+    const res = await db.collections.users.insertOne({
+      name: "tom cruise",
+      email: "tom@example.com",
+      isAdmin: true,
+    });
+
+    expect(res).toStrictEqual({
+      _id: res._id,
+      fullName: "tom cruise",
+      emailAddress: "tom@example.com",
+      isAdmin: true,
+    });
+
+    const doc = await db.collections.users.findOne({ _id: res._id });
+    expect(doc).toStrictEqual({
+      _id: res._id,
+      fullName: "tom cruise",
+      emailAddress: "tom@example.com",
+      isAdmin: true,
+    });
+  });
+
+  it("supports renaming _id in output", async () => {
+    const schema = createSchema("users", {
+      name: string(),
+    }).rename({
+      _id: "id",
+    });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
+
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+    });
+
+    expect(res).toStrictEqual({
+      id: res.id,
+      name: "tom",
+    });
+
+    const doc = await db.collections.users.findOne({ name: "tom" });
+    expect(doc).toStrictEqual({
+      id: res.id,
+      name: "tom",
+    });
+  });
+
+  it("keeps existing output field when a rename target exists", async () => {
+    const schema = createSchema("users", {
+      name: string(),
+      alias: number(),
+    }).rename({
+      name: "alias",
+    });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
+
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      alias: 1,
+    });
+
+    expect(res).toStrictEqual({
+      _id: res._id,
+      alias: 1,
+    });
+
+    const doc = await db.collections.users.findOne({ _id: res._id });
+    expect(doc).toStrictEqual({
+      _id: res._id,
+      alias: 1,
+    });
+  });
+
+  it("keep virtual field when a conflicting rename targets exists", async () => {
+    const schema = createSchema("users", {
+      firstName: string(),
+      nickname: string(),
+      isAdmin: boolean(),
+    })
+      .rename({
+        nickname: "role",
+      })
+      .virtuals({
+        role: virtual("isAdmin", ({ isAdmin }) => (isAdmin ? "admin" : "user")),
+      });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
+
+    const res = await db.collections.users.insertOne({
+      firstName: "tom",
+      nickname: "captain",
+      isAdmin: true,
+    });
+
+    expect(res).toStrictEqual({
+      _id: res._id,
+      firstName: "tom",
+      isAdmin: true,
+      role: "admin",
+    });
+
+    const doc = await db.collections.users.findOne({ _id: res._id });
+    expect(doc).toStrictEqual({
+      _id: res._id,
+      firstName: "tom",
+      isAdmin: true,
+      role: "admin",
+    });
+  });
+
   it("creates index", async () => {
     const schema = createSchema("users", {
       firstname: string(),

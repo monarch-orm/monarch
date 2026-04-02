@@ -84,10 +84,12 @@ export class FindOneAndReplaceQuery<
       },
     );
     return res
-      ? (Schema.output(this.schema, res as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
-          TOutput,
-          TOmit
-        >)
+      ? (Schema.output(
+          this.schema,
+          res as InferSchemaData<TSchema>,
+          this._projection,
+          extras,
+        ) as unknown as QueryOutput<TOutput, TOmit>)
       : res;
   }
 }

@@ -99,11 +99,12 @@ export class FindOneQuery<
       projection: this._projection,
     });
     return res
-      ? (Schema.output(this.schema, res as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
-          TOutput,
-          TOmit,
-          TPopulate
-        >)
+      ? (Schema.output(
+          this.schema,
+          res as InferSchemaData<TSchema>,
+          this._projection,
+          extras,
+        ) as unknown as QueryOutput<TOutput, TOmit, TPopulate>)
       : res;
   }
 

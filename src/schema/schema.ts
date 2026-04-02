@@ -4,7 +4,7 @@ import { mergeRelations, type AnyRelation, type RelationsFn, type SchemasRelatio
 import { MonarchObject, object } from "../types";
 import { objectId } from "../types/objectId";
 import { MonarchType, type AnyMonarchType } from "../types/type";
-import type { MergeAll, MergeN1All, Pretty } from "../utils/type-helpers";
+import type { MergeAll, MergeN1All, Pretty, RequiredObject } from "../utils/type-helpers";
 import type { SchemaIndexes } from "./indexes";
 import type {
   InferSchemaData,
@@ -22,7 +22,7 @@ type SchemaOmit<TTypes extends Record<string, AnyMonarchType>> = {
   [K in keyof TTypes]?: true;
 };
 
-export type AnySchema = Schema<any, any, any, any>;
+export type AnySchema = Schema<any, any, any, any, any>;
 
 /**
  * Defines the structure and behavior of a MongoDB collection.
@@ -31,8 +31,9 @@ export type AnySchema = Schema<any, any, any, any>;
 export class Schema<
   TName extends string,
   TTypes extends Record<string, AnyMonarchType>,
-  TOmit extends SchemaOmit<TTypes> = {},
-  TVirtuals extends Record<string, AnyVirtual> = {},
+  TOmit extends SchemaOmit<TTypes>,
+  TVirtuals extends Record<string, AnyVirtual>,
+  TRenames extends Record<string, string>,
 > {
   private type: MonarchObject<TTypes>;
   private update?: () => UpdateFilter<any>;
@@ -49,9 +50,10 @@ export class Schema<
     private types: TTypes,
     private options: {
       omit?: SchemaOmit<TTypes>;
-      virtuals?: SchemaVirtuals<TTypes, TVirtuals>;
       indexes?: SchemaIndexes<TTypes>;
       validation?: SchemaValidation;
+      virtuals?: SchemaVirtuals<TTypes, TVirtuals>;
+      renames?: TRenames;
     },
   ) {
     this.type = object(types);
@@ -64,7 +66,7 @@ export class Schema<
    * @returns Schema instance with omit configuration
    */
   public omit<TOmit extends SchemaOmit<TTypes>>(omit: TOmit) {
-    const schema = this as unknown as Schema<TName, TTypes, TOmit, TVirtuals>;
+    const schema = this as unknown as Schema<TName, TTypes, TOmit, TVirtuals, TRenames>;
     schema.options.omit = omit;
     return schema;
   }
@@ -78,8 +80,20 @@ export class Schema<
   public virtuals<TVirtuals extends Record<string, Virtual<Pretty<TTypes>, any, any>>>(
     virtuals: SchemaVirtuals<TTypes, TVirtuals>,
   ) {
-    const schema = this as unknown as Schema<TName, TTypes, TOmit, TVirtuals>;
+    const schema = this as unknown as Schema<TName, TTypes, TOmit, TVirtuals, TRenames>;
     schema.options.virtuals = virtuals;
+    return schema;
+  }
+
+  /**
+   * Adds renamed fields to the schema.
+   *
+   * @param renames - Object defining renamed fields
+   * @returns Schema instance with renamed fields configured
+   */
+  public rename<const TRenames extends { [K in "_id" | keyof TTypes]?: string }>(renames: TRenames) {
+    const schema = this as unknown as Schema<TName, TTypes, TOmit, TVirtuals, RequiredObject<TRenames>>;
+    schema.options.renames = renames as unknown as RequiredObject<TRenames>;
     return schema;
   }
 
@@ -192,6 +206,21 @@ export class Schema<
         delete output[key as keyof InferSchemaOutput<T>];
       }
     }
+    // rename projected fields
+    if (schema.options.renames) {
+      for (const field in schema.options.renames) {
+        const newField = schema.options.renames[field];
+        if (field in output) {
+          // add the new field only if it does not conflict with an existing output field
+          if (!(newField in output)) {
+            // @ts-ignore
+            output[newField] = output[field];
+          }
+          // @ts-ignore
+          delete output[field]; // always delete the renamed field
+        }
+      }
+    }
     return output;
   }
 }
@@ -206,7 +235,7 @@ export class Schema<
 export function createSchema<TName extends string, TTypes extends Record<string, AnyMonarchType>>(
   name: TName,
   types: TTypes,
-): Schema<TName, Pretty<WithObjectId<TTypes>>, {}, {}> {
+): Schema<TName, Pretty<WithObjectId<TTypes>>, {}, {}, {}> {
   let schemaTypes = types as Pretty<WithObjectId<TTypes>>;
   if (!schemaTypes._id) schemaTypes._id = objectId().optional();
   return new Schema(name, schemaTypes, {});

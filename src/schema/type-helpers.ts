@@ -50,15 +50,23 @@ export type InferSchemaInput<T extends AnySchema> = Pretty<
 export type _InferSchemaData<T extends AnySchema> = _InferTypeObjectOutput<InferSchemaTypes<T>>;
 export type InferSchemaData<T extends AnySchema> = Pretty<_InferSchemaData<T>>;
 export type InferSchemaOutput<T extends AnySchema> = Pretty<
-  IdFirst<Merge<_InferSchemaData<T>, InferVirtualOutput<InferSchemaVirtuals<T>>>>
+  MapRenames<IdFirst<Merge<_InferSchemaData<T>, InferVirtualOutput<InferSchemaVirtuals<T>>>>, InferSchemaRenames<T>>
 >;
 
+type MapRenames<T, TRenames extends Record<string, string>> = {
+  [K in keyof T as K extends keyof TRenames ? Exclude<TRenames[K], keyof T> : K]: T[K];
+};
+
 export type InferSchemaTypes<T extends AnySchema> =
-  T extends Schema<infer _TName, infer TTypes, infer _TOmit, infer _TVirtuals> ? TTypes : never;
+  T extends Schema<infer _TName, infer TTypes, infer _TOmit, infer _TVirtuals, infer _TRenames> ? TTypes : never;
 export type InferSchemaOmit<T extends AnySchema> =
-  T extends Schema<infer _TName, infer _TTypes, infer TOmit, infer _TVirtuals> ? TrueKeys<TOmit> : never;
+  T extends Schema<infer _TName, infer _TTypes, infer TOmit, infer _TVirtuals, infer _TRenames>
+    ? TrueKeys<TOmit>
+    : never;
 export type InferSchemaVirtuals<T extends AnySchema> =
-  T extends Schema<infer _TName, infer _TTypes, infer _TOmit, infer TVirtuals> ? TVirtuals : never;
+  T extends Schema<infer _TName, infer _TTypes, infer _TOmit, infer TVirtuals, infer _TRenames> ? TVirtuals : never;
+export type InferSchemaRenames<T extends AnySchema> =
+  T extends Schema<infer _TName, infer _TTypes, infer _TOmit, infer _TVirtuals, infer TRenames> ? TRenames : never;
 
 // Index types
 
