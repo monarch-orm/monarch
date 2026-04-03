@@ -147,11 +147,12 @@ export class FindQuery<
       .find(this._filter as MongoFilter<InferSchemaData<TSchema>>, { ...this._options, projection: this._projection })
       .map(
         (doc) =>
-          Schema.output(this.schema, doc as InferSchemaData<TSchema>, this._projection, extras) as QueryOutput<
-            TOutput,
-            TOmit,
-            TPopulate
-          >,
+          Schema.output(
+            this.schema,
+            doc as InferSchemaData<TSchema>,
+            this._projection,
+            extras,
+          ) as unknown as QueryOutput<TOutput, TOmit, TPopulate>,
       );
     return res;
   }

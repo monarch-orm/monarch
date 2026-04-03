@@ -51,6 +51,6 @@ export class InsertOneQuery<
       },
       this._projection,
       Object.keys(this._projection),
-    ) as QueryOutput<TOutput, TOmit>;
+    ) as unknown as QueryOutput<TOutput, TOmit>;
   }
 }
