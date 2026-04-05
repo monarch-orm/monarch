@@ -1,475 +1,876 @@
-
 # Monarch ORM
 
-<!-- ![Logo](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/th5xamgrr6se0x5ro4g6.png) -->
-
-**Monarch ORM** is a type-safe ORM for MongoDB, designed to provide a seamless and efficient way to interact with your MongoDB database in a type-safe manner. Monarch ensures that your data models are strictly enforced, reducing the risk of runtime errors and enhancing code maintainability.
-
-
-<!-- > Inspired by Drizzle and Mongoose. -->
-
-
-## Table of Contents
-
-- [Features](#features)
-- [Installation](#installation)
-- [Basic Usage](#basic-usage)
-- [Quick Start](#quick-start)
-  - [Defining Schemas](#defining-schemas)
-  - [Connecting to the Database](#connecting-to-the-database)
-  - [Inserting Documents](#inserting-documents)
-  - [Querying Documents](#querying-documents)
-  - [Updating Documents](#updating-documents)
-  - [Deleting Documents](#deleting-documents)
-- [Types](#types)
-  - [Primitives](#primitives)
-  - [Literals](#literals)
-  - [Objects](#objects)
-  - [Records](#records)
-  - [Arrays](#arrays)
-  - [Tuples](#tuples)
-  - [Tagged Union](#tagged-union)
-<!-- - [Type Safety](#type-safety) -->
-<!-- - [Configuration](#configuration) -->
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [Authors](#authors)
-- [License](#license)
+Type-safe MongoDB collections, schema parsing, relations, and query helpers for TypeScript.
 
 ## Features
 
-- **Strongly Typed:** Ensures type safety across your MongoDB operations.
-- **Easy Integration:** Simple setup and configuration.
-- **Powerful Schema Modifiers:** Define schemas with optional and required fields.
-- **Intuitive API:** Designed to be easy to use and understand.
-
-
+- **Strongly Typed:** Infer schema inputs and outputs for queries and collection methods.
+- **Flexible Schemas:** Use transforms, defaults, validation, virtuals, renames, and default omit rules.
+- **Typed Relations:** Define one, many, and refs relations with typed population support.
+- **Familiar MongoDB Access:** Use typed query methods, operators, aggregation, and raw collection access.
+- **Collection Initialization:** Automatically initialize collections with indexes and JSON Schema validation, or do it manually.
 
 ## Installation
 
-NPM:
 ```bash
-  npm install monarch-orm
-```
-
-Or Yarn:
-```bash
-  yarn add monarch-orm
-```
-    
-## Basic Usage
-
-```typescript
-import { boolean, createClient, createDatabase, createSchema, number, string } from "monarch-orm";
-
-    const UserSchema = createSchema("users", {
-      name: string().nullable(),
-      email: string().lowercase().optional(),
-      age: number().optional().default(10),
-      isVerified: boolean(),
-    });
-
-    const client = createClient(/** db uri **//)
-    const { collections } = createDatabase(client.db(), {
-      users: UserSchema,
-    });
-
-    const newUser = await collections.users
-      .insert()
-      .values({
-        name: "anon",
-        email: "anon@gmail.com",
-        age: 0,
-        isVerified: true,
-      })
-      ;
-
-    const users = await collections.users.find().where({});
+npm install monarch-orm
 ```
 
 ## Quick Start
 
-### Defining Schemas and connecting to the database
+```ts
+import {
+  boolean,
+  createClient,
+  createDatabase,
+  createSchema,
+  defineSchemas,
+  number,
+  string,
+} from "monarch-orm";
 
-Use the createSchema function to define the structure of your model. Specify the fields and their types, using the available types and modifiers.
+const userSchema = createSchema("users", {
+  name: string().trim(),
+  email: string().lowercase(),
+  age: number().integer().min(13).optional(),
+  isVerified: boolean().default(false),
+});
 
-```typescript
-const UserSchema = createSchema("users", {
+const schemas = defineSchemas({ userSchema });
+
+const client = createClient(process.env.MONGODB_URI!);
+await client.connect();
+
+const db = createDatabase(client.db("app"), schemas);
+
+const user = await db.collections.users.insertOne({
+  name: "Alice",
+  email: "alice@example.com",
+});
+
+const users = await db.collections.users
+  .find({ isVerified: false })
+  .select({ name: true, email: true })
+  .sort({ email: "asc" });
+```
+
+## Core Concepts
+
+### Schemas
+
+`createSchema()` defines a collection's shape. If you do not define `_id`, it defaults to `objectId()`. When a schema uses `ObjectId` for `_id`, Monarch makes the input optional for inserts.
+
+```ts
+import { array, createSchema, date, object, objectId, string } from "monarch-orm";
+
+const postSchema = createSchema("posts", {
+  title: string().trim().nonempty(),
+  body: string(),
+  authorId: objectId(),
+  contributorIds: array(objectId()).default([]),
+  metadata: object({
+    slug: string().lowercase(),
+  }),
+  publishedAt: date().optional(),
+});
+```
+
+`defineSchemas()` normalizes schemas keyed by collection name. It also holds schema relations.
+
+```ts
+const schemas = defineSchemas({ userSchema, postSchema });
+```
+
+### Relations
+
+Use `withRelations()` on a schemas object to define typed relations.
+
+```ts
+const schemas = defineSchemas({ userSchema, postSchema });
+
+const schemasWithRelations = schemas.withRelations((s) => ({
+  users: {
+    posts: s.users.$many.posts({ from: "_id", to: "authorId" }),
+  },
+  posts: {
+    author: s.posts.$one.users({ from: "authorId", to: "_id" }),
+    contributors: s.posts.$refs.users({ from: "contributorIds", to: "_id" }),
+  },
+}));
+```
+
+#### One relations
+
+Use `$one` when a local field points to a single document in another collection.
+
+```ts
+author: s.posts.$one.users({ from: "authorId", to: "_id" })
+```
+
+#### Many relations
+
+Use `$many` when one document relates to many documents in another collection by matching a local field against a foreign field.
+
+```ts
+posts: s.users.$many.posts({ from: "_id", to: "authorId" })
+```
+
+#### Refs relations
+
+Use `$refs` when a local array field stores multiple references to another collection.
+
+```ts
+contributors: s.posts.$refs.users({ from: "contributorIds", to: "_id" })
+```
+
+### Databases
+
+Pass schemas object into `createDatabase()` to get db with typed collections.
+
+```ts
+const schemas = defineSchemas({ userSchema, postSchema });
+
+const db = createDatabase(client.db("app"), schemas);
+await db.isReady;
+```
+
+By default, `createDatabase()` initializes all collections. If you want to do that manually, disable initialization and call `db.initialize()` yourself. `initialize()` can be configured and can target only selected schemas.
+
+```ts
+const db = createDatabase(client.db("app"), schemas, {
+  initialize: false,
+});
+
+await db.initialize({
+  indexes: true,
+  validation: true,
+  collections: {
+    users: true,
+  },
+});
+```
+
+`db.isReady` resolves when database initialization has finished. Each collection also has its own `isReady`, for example `db.collections.users.isReady`.
+
+## Queries
+
+Collections expose typed query methods.
+
+### `insertOne(data)`
+
+Inserts one document after parsing it through the schema.
+
+```ts
+const user = await db.collections.users.insertOne({
+  name: "Alice",
+  email: "alice@example.com",
+});
+```
+
+### `insertMany(data[])`
+
+Inserts multiple documents after parsing each one through the schema.
+
+```ts
+await db.collections.users.insertMany([
+  { name: "Grace", email: "grace@example.com" },
+  { name: "Linus", email: "linus@example.com" },
+]);
+```
+
+### `find(filter?)`
+
+Returns a query for multiple documents. It supports `select()`, `omit()`, `sort()`, `limit()`, `skip()`, `options()`, `cursor()`, and `populate()`.
+
+```ts
+const allUsers = await db.collections.users.find();
+
+const verifiedUsers = await db.collections.users
+  .find({ isVerified: true })
+  .omit({ age: true })
+  .limit(20)
+  .skip(10)
+  .sort({ email: "asc" });
+
+const cursor = await db.collections.users.find({ isVerified: true }).cursor();
+for await (const item of cursor) {
+  console.log(item.email);
+}
+```
+
+If your schema has relations, `find()` can populate them:
+
+```ts
+const posts = await db.collections.posts.find().populate({
+  author: true,
+  contributors: true,
+});
+```
+
+Populate options support nested `populate`, plus `select`, `omit`, `sort`, `skip`, and `limit` on the populated query.
+
+```ts
+const users = await db.collections.users.find().populate({
+  posts: {
+    sort: { title: -1 },
+    limit: 5,
+    populate: {
+      author: true,
+    },
+  },
+});
+```
+
+### `findOne(filter)`
+
+Returns a query for a single document. It supports `select()`, `omit()`, `options()`, and `populate()`.
+
+```ts
+const user = await db.collections.users.findOne({ email: "alice@example.com" });
+```
+
+### `findById(id)`
+
+Returns a query for a single document by `_id`. For `objectId()` schemas, it accepts either an `ObjectId` or a valid ObjectId string.
+
+```ts
+const byId = await db.collections.users.findById("67f0123456789abcdef0123");
+```
+
+### `updateOne(filter, update)`
+
+Updates one matching document. It supports `options()`.
+
+```ts
+await db.collections.users.updateOne(
+  { email: "alice@example.com" },
+  { $set: { isVerified: true } },
+);
+```
+
+### `updateMany(filter, update)`
+
+Updates all matching documents. It supports `options()`.
+
+```ts
+await db.collections.users.updateMany(
+  { isVerified: false },
+  { $set: { age: 18 } },
+);
+```
+
+### `findOneAndUpdate(filter, update)`
+
+Updates one document and returns the matched document by default, or the updated one when configured with `options({ returnDocument: "after" })`. It also supports `select()`, `omit()`, and `options()`.
+
+```ts
+const updated = await db.collections.users
+  .findOneAndUpdate(
+    { email: "alice@example.com" },
+    { $set: { isVerified: true } },
+  )
+  .options({ returnDocument: "after" });
+```
+
+### `findByIdAndUpdate(id, update)`
+
+Like `findOneAndUpdate()`, but matches by `_id`.
+
+```ts
+const updated = await db.collections.users
+  .findByIdAndUpdate("67f0123456789abcdef0123", {
+    $set: { isVerified: true },
+  })
+  .options({ returnDocument: "after" });
+```
+
+Schema parsing still runs for update input, so transforms like `.lowercase()` and validators still apply inside `$set`.
+
+### `replaceOne(filter, replacement)`
+
+Replaces one matching document. It supports `options()`.
+
+```ts
+await db.collections.users.replaceOne(
+  { email: "alice@example.com" },
+  { name: "Alice Lovelace", email: "alice@example.com" },
+);
+```
+
+### `findOneAndReplace(filter, replacement)`
+
+Replaces one document and returns the matched document by default, or the replacement when configured with `options({ returnDocument: "after" })`. It also supports `select()`, `omit()`, and `options()`.
+
+```ts
+const replaced = await db.collections.users
+  .findOneAndReplace(
+    { email: "alice@example.com" },
+    { name: "Alice", email: "alice@example.com" },
+  )
+  .options({ returnDocument: "after" });
+```
+
+### `deleteOne(filter)`
+
+Deletes one matching document.
+
+```ts
+await db.collections.users.deleteOne({ email: "alice@example.com" });
+```
+
+### `deleteMany(filter)`
+
+Deletes all matching documents.
+
+```ts
+await db.collections.users.deleteMany({ isVerified: false });
+```
+
+### `findOneAndDelete(filter)`
+
+Deletes one matching document and returns it.
+
+```ts
+const deleted = await db.collections.users.findOneAndDelete({
+  email: "alice@example.com",
+});
+```
+
+### `findByIdAndDelete(id)`
+
+Deletes one document by `_id` and returns it.
+
+```ts
+const deleted = await db.collections.users.findByIdAndDelete("67f0123456789abcdef0123");
+```
+
+### Other Collection Methods
+
+### `distinct(key, filter?)`
+
+Returns a query for the distinct values of a field.
+
+```ts
+const emails = await db.collections.users.distinct("email", { isVerified: true });
+```
+
+### `bulkWrite(operations)`
+
+Runs multiple MongoDB bulk write operations.
+
+```ts
+await db.collections.users.bulkWrite([
+  {
+    insertOne: {
+      document: {
+        name: "Alice",
+        email: "alice@example.com",
+      },
+    },
+  },
+  {
+    updateOne: {
+      filter: { email: "alice@example.com" },
+      update: { $set: { isVerified: true } },
+    },
+  },
+]);
+```
+
+### `countDocuments(filter?, options?)`
+
+Counts matching documents.
+
+```ts
+const verifiedCount = await db.collections.users.countDocuments({ isVerified: true });
+```
+
+### `estimatedDocumentCount(options?)`
+
+Returns MongoDB's estimated document count for the collection.
+
+```ts
+const totalCount = await db.collections.users.estimatedDocumentCount();
+```
+
+### `aggregate()`
+
+Builds an aggregation pipeline.
+
+```ts
+const result = await db.collections.users
+  .aggregate()
+  .addStage({ $match: { isVerified: true } })
+  .addStage({ $group: { _id: "$isVerified", count: { $sum: 1 } } });
+```
+
+### `raw()`
+
+Returns the underlying MongoDB collection.
+
+```ts
+const rawUsers = await db.collections.users.raw().find().toArray();
+```
+
+Queries are lazy, so you can build and reuse them before execution. They run only when you `await` them or call a promise method like `.then()`, `.catch()`, or `.finally()`.
+
+```ts
+let verifiedUsersQuery = db.collections.users
+  .find({ isVerified: true })
+  .omit({ age: true })
+  .sort({ email: "asc" });
+
+if (limitResults) {
+  verifiedUsersQuery = verifiedUsersQuery.limit(10);
+}
+
+const verifiedUsers = await verifiedUsersQuery;
+```
+
+### Schema features
+
+These schema methods control default output behavior, initialization behavior, and automatic write-time behavior.
+
+#### Omit fields from output
+
+`schema.omit()` defines the default output projection for that schema. Query-level `.select()` or `.omit()` overrides that default for the current query.
+
+```ts
+const userSchema = createSchema("users", {
   name: string(),
-  isVerified: boolean(),
+  passwordHash: string(),
+}).omit({
+  passwordHash: true,
 });
 ```
 
-Create a database instance using any client you deem fit and drop it into the createDatabase function
+#### Virtual fields
 
-Or you can use the built-in createClient function.
+`schema.virtuals()` adds computed output fields. Virtuals are not stored in MongoDB, but they are available in query results and can depend on omitted source fields.
 
-Then you pass your schemas to the second arguement
+```ts
+import { boolean, createSchema, string, virtual } from "monarch-orm";
 
-```typescript
-const { collections } = createDatabase(client.db(), {
-  users: UserSchema,
+const userSchema = createSchema("users", {
+  isAdmin: boolean(),
+  firstName: string(),
+  lastName: string(),
+}).virtuals({
+  role: virtual("isAdmin", ({ isAdmin }) => (isAdmin ? "admin" : "user")),
+  fullName: virtual(["firstName", "lastName"], ({ firstName, lastName }) => `${firstName} ${lastName}`),
 });
 ```
 
-### Inserting Documents
-You can insert new documents into your collection using the insert method. Ensure that the data conforms to the defined schema.
+#### Rename output fields
 
-Example: Inserting a new user
+`schema.rename()` changes field names in query output without changing how the field is stored in MongoDB.
 
-```typescript
-const newUser = await collections.users
-  .insert()
-  .values({
-    name: "Alice",
-    email: "alice@example.com",
-    age: 25,
-    isVerified: true,
-  })
-  ;
-```
-
-### Querying Documents
-Retrieve documents from your collection using the find or findOne methods.
-
-Example: Querying all users
-
-```typescript
-const users = await collections.users.find().where({});
-console.log(users);
-
-// Or just...
-const users = await collections.users.find({});
-console.log(users);
-
-
-// For finding one
-
-const user = await collections.users.find().where({
-  name: "Alice"
-});
-console.log(users);
-
-// Or...
-const user = await collections.users.findOne({
-  name: "Alice"
-});
-console.log(users);
-
-```
-
-### Updating Documents
-Update documents in your collection using the update method. You can update a single document or multiple documents based on a filter.
-
-Example: Updating a single user's email
-
-```typescript
-const updatedUser = await collections.users
-  .updateOne()
-  .set({
-    email: "alice.updated@example.com",
-  })
-  .where({
-    name: "Alice",
-  })
-  ;
-console.log(updatedUser);
-```
-
-Example: Updating multiple users' isVerified field
-
-```typescript
-const updatedUsers = await collections.users
-  .updateMany()
-  .set({
-    isVerified: true,
-  })
-  .where({
-    isVerified: false,
-  })
-  ;
-console.log(updatedUsers);
-```
-
-Note: The update method returns the number of documents updated.
-
-### Alternative setup
-You can also decentralize the models
-
-```typescript
-const { db } = createDatabase(client);
-
-const UserSchema = createSchema("users", {
+```ts
+const userSchema = createSchema("users", {
   name: string(),
-  isVerified: boolean(),
+}).rename({
+  _id: "id",
+  name: "fullName",
 });
-
-const UserModel = db(UserSchema);
-export default UserModel;
 ```
 
-And use it like this
+#### Indexes
 
-```typescript
-const user = await UserModel.findOne({
-  name: "Alice"
-});
-console.log(users);
+`schema.indexes()` declares the indexes Monarch should keep in sync during collection initialization.
+
+```ts
+const userSchema = createSchema("users", {
+  email: string().lowercase(),
+  name: string(),
+}).indexes(({ createIndex, unique }) => ({
+  email: unique("email"),
+  name: createIndex({ name: 1 }),
+}));
 ```
 
+#### Collection validation
+
+`schema.validation()` defines validation settings for the schema. Validation can also be set on the database, where it acts as a default for all schemas.
+
+```ts
+const userSchema = createSchema("users", {
+  email: string().lowercase(),
+}).validation({
+  validationLevel: "strict",
+  validationAction: "error",
+});
+```
+
+You can also set the default validation policy at the database level:
+
+```ts
+const schemas = defineSchemas({ userSchema });
+
+const db = createDatabase(client.db("app"), schemas, {
+  validation: {
+    validationLevel: "strict",
+    validationAction: "error",
+  },
+});
+```
+
+#### Automatic update fields
+
+`schema.onUpdate()` injects update operators into every update query for that schema. This is useful for fields like `updatedAt`.
+
+```ts
+import { date } from "monarch-orm";
+
+const userSchema = createSchema("users", {
+  updatedAt: date().optional(),
+}).onUpdate(() => ({
+  $set: {
+    updatedAt: new Date(),
+  },
+}));
+```
 
 ## Types
 
-### Primitives
+Monarch ships many ready-made types, but those are not the only possible types. The type system is extensible, and users can create custom types by extending `MonarchType`.
 
-#### String - string()
+### `string()`
 
-Defines a field that accepts string values.
+Parses strings and supports helpers like `.trim()`, `.lowercase()`, `.uppercase()`, `.nonempty()`, `.minLength()`, `.maxLength()`, and `.pattern()`.
 
-```typescript
-const UserSchema = createSchema("users", {
-  name: string().required(),
+```ts
+const username = string().trim().lowercase().minLength(3);
+```
+
+### `number()`
+
+Parses JavaScript numbers and supports `.min()`, `.max()`, and `.integer()`.
+
+```ts
+const age = number().integer().min(0);
+```
+
+### `boolean()`
+
+Parses booleans.
+
+```ts
+const isVerified = boolean();
+```
+
+### `date()`
+
+Parses `Date` values and supports `.before()`, `.after()`, and `.auto()`.
+
+Note: `.auto()` sets the default value for the type to `new Date()`.
+
+```ts
+const createdAt = date().auto();
+```
+
+### `objectId()`
+
+Parses MongoDB `ObjectId` values and valid `ObjectId` strings.
+
+```ts
+const authorId = objectId();
+```
+
+### `uuid()`
+
+Parses MongoDB `UUID` values and UUID strings, and supports `.auto()`.
+
+Note: `.auto()` sets the default value for the type to `crypto.randomUUID()`.
+
+```ts
+const sessionId = uuid().auto();
+```
+
+### `regex()`
+
+Parses `RegExp` and BSON regex values.
+
+```ts
+const pattern = regex();
+```
+
+### `binary()`
+
+Parses MongoDB binary values.
+
+```ts
+const fileData = binary();
+```
+
+### `int32()`
+
+Parses BSON `Int32` values.
+
+```ts
+const version = int32();
+```
+
+### `double()`
+
+Parses BSON `Double` values.
+
+```ts
+const score = double();
+```
+
+### `long()`
+
+Parses BSON `Long` values.
+
+```ts
+const totalViews = long();
+```
+
+### `decimal128()`
+
+Parses BSON `Decimal128` values.
+
+```ts
+const amount = decimal128();
+```
+
+### `object(shape)`
+
+Creates nested typed objects and rejects unknown fields.
+
+```ts
+const profile = object({
+  bio: string(),
+  website: string(),
 });
 ```
 
- - `.lowercase()`: Transforms the value to lowercase before storing.
- - `.uppercase()`: Transforms the value to uppercase before storing.
+### `array(type)`
 
-```typescript
-const UserSchema = createSchema("users", {
-  name: string().lowercase(),
-});
+Creates a typed array of values.
+
+```ts
+const tags = array(string());
 ```
 
-#### Number - number()
+### `tuple([...types])`
 
-Defines a field that accepts numeric values.
+Creates a fixed-length array with positional types.
 
-```typescript
-const UserSchema = createSchema("users", {
-  age: number().optional(),
-});
+```ts
+const coordinates = tuple([number(), number()]);
 ```
 
-#### Boolean - boolean()
+### `record(type)`
 
-Defines a field that accepts boolean values (true or false).
+Creates a string-keyed object whose values all share the same type.
 
-```typescript
-const UserSchema = createSchema("users", {
-  isVerified: boolean(),
-});
+```ts
+const scores = record(number());
 ```
 
-#### Date - date()
+### `literal(...values)`
 
-Defines a field that accepts JavaScript Date objects.
+Limits a field to an exact set of primitive values.
 
-```typescript
-const UserSchema = createSchema("users", {
-  birthDate: date(),
-});
+```ts
+const role = literal("admin", "editor", "member");
 ```
 
-#### Date String - dateString()
-Defines a field that accepts date strings in ISO format.
+### `union(...types)`
 
-```typescript
-const UserSchema = createSchema("users", {
-  registrationDate: dateString(),
-});
+Accepts multiple unrelated type variants.
+
+```ts
+const phoneOrEmail = union(string(), number());
 ```
 
-#### General Modifiers
+### `taggedUnion({ ...variants })`
 
- - `.nullable()`: Allows the field to accept null values.
- - `.default()`: Sets a default value if none is provided.
- - `.optional()`: Makes the field optional, allowing it to be omitted.
+Creates discriminated unions using a `{ tag, value }` object shape.
 
-### Literals
-
-
-The `literal()` type allows you to define a schema with fixed possible values, similar to enums in TypeScript. This is useful for enforcing specific, predefined values for a field.
-
-```typescript
-  const UserRoleSchema = createSchema("userRoles", {
-  role: literal("admin", "moderator", "customer"),
-});
-
-const user = {
-  role: "admin", // Valid
-};
-
-// Invalid example will throw a type error
-const invalidUser = {
-  role: "guest", // Error: Type '"guest"' is not assignable to type '"admin" | "moderator" | "customer"'
-};
-
-```
-
-### Objects
-
-```typescript
- 
-// all properties are required by default
-const UserSchema = object({
-  name: string(),
-  age: number(),
-});
-
-// extract the inferred type like this
-type User = InferSchemaInput<typeof UserSchema>;
-
-// equivalent to:
-type User = {
-  name: string;
-  age: number;
-};
-```
-
-
-### Records
-
-A `record()` allows you to define a flexible schema where each user can have a varying number of subjects and grades without needing to define a fixed schema for each subject.
-
-```typescript
- 
-// Define the User schema with a record for grades
-const UserSchema = createSchema("users", {
-  name: string().required(),
-  email: string().required(),
-  grades: record(number()), // Each subject will have a numeric grade
-});
-
-
-// Example of inserting a user with grades
-const { collections } = createDatabase(client.db(), {
-  users: UserSchema,
-});
-
-// Inserting a new user with grades for different subjects
-const newUser = await collections.users
-  .insert()
-  .values({
-    name: "Alice",
-    email: "alice@example.com",
-    grades: {
-      math: 90,
-      science: 85,
-      history: 88,
-    },
-  })
-  ;
-
-// Querying the user to retrieve grades
-const user = await collections.users.findOne().where({ email: "alice@example.com" });
-console.log(user.grades); 
-// Output: { math: 90, science: 85, history: 88 }
-```
-
-### Arrays
-
-```typescript
- 
-// For Example
-const ResultSchema = object({
-  name: string(),
-  scores: array(number()),
-});
-
-// extract the inferred type like this
-type Result = InferSchemaInput<typeof ResultSchema>;
-
-// equivalent to:
-type Result = {
-  name: string;
-  scores: number[];
-};
-```
-
-### Tuples
-
-Unlike arrays, A `tuple()` has a fixed number of elements but each element can have a different type.
-
-```typescript
- 
-// all properties are required by default
-const ControlSchema = object({
-  location: tuple([number(), number()]),
-});
-
-// extract the inferred type like this
-type Control = InferSchemaInput<typeof ControlSchema>;
-
-// equivalent to:
-type Control = {
-  location: [number, number];
-};
-```
-
-### Tagged Union
-
-The `taggedUnion()` allows you to define a schema for related types, each with its own structure, distinguished by a common "tag" field. This is useful for representing variable types in a type-safe manner.
-
-```typescript - taggedUnion()
-
-// You need:
-// - a tag: A string identifying the type
-// value: An object containing specific fields for that type.
-
-const NotificationSchema = createSchema("notifications", {
-  notification: taggedUnion({
-    email: object({
-      subject: string(),
-      body: string(),
-    }),
-    sms: object({
-      phoneNumber: string(),
-      message: string(),
-    }),
-    push: object({
-      title: string(),
-      content: string(),
-    }),
+```ts
+const notification = taggedUnion({
+  email: object({
+    subject: string(),
+    body: string(),
+  }),
+  sms: object({
+    message: string(),
   }),
 });
-
-const notification = ;
-await collections.notifications.insert().values({ notification: {
-  tag: "email",
-  value: {
-    subject: "Welcome!",
-    body: "Thank you for joining us.",
-  },
-} });
 ```
 
+### `mixed()`
 
-### Union
+Accepts arbitrary values when you need to opt out of strict typing for a field.
 
-The `union()` type allows you to define a field that can accept multiple different types. It's useful when a field can legitimately contain values of different types. Each type provided to `union()` acts as a possible variant for the field.
+```ts
+const metadata = mixed();
+```
 
-```typescript - union()
+## Modifiers
 
-const MilfSchema = createSchema("milf", {
-  phoneOrEmail: union(string(), number()),
+Modifiers let you adapt any type to the exact input and output behavior you want.
+
+### `.optional()`
+
+Allows a field to be omitted.
+
+```ts
+import { optional } from "monarch-orm/types";
+
+const nickname = string().optional();
+// or functional style
+const nickname2 = optional(string());
+```
+
+### `.nullable()`
+
+Allows `null`.
+
+```ts
+import { nullable } from "monarch-orm/types";
+
+const middleName = string().nullable();
+// or functional style
+const middleName2 = nullable(string());
+```
+
+### `.default(value | fn)`
+
+Provides a fallback when the input is `undefined`.
+
+```ts
+import { defaulted } from "monarch-orm/types";
+
+const isVerified = boolean().default(false);
+// or functional style
+const isVerified2 = defaulted(boolean(), false);
+```
+
+### `.validate(fn, message)`
+
+Adds validation after the base type has parsed successfully.
+
+```ts
+const username = string().validate((value) => value !== "admin", "username is reserved");
+```
+
+You can also use the exported namespace object if you prefer `m.string()` style:
+
+```ts
+import { createSchema, m } from "monarch-orm";
+
+const userSchema = createSchema("users", {
+  name: m.string(),
+  age: m.number().optional(),
 });
-
-// Output Type : { 
-//   phoneOrEmail: string | number
-// }
 ```
 
+## Operators
 
-### Mixed
+Monarch exports typed operator helpers from `monarch-orm/operators`.
 
-### Mixed
+```ts
+import { and, eq, gt, inArray } from "monarch-orm/operators";
 
-The `mixed()` type allows you to define a field that can accept any type of value. This is useful when you need maximum flexibility for a field's contents. However, use it sparingly as it bypasses TypeScript's type checking.
-
-```typescript - mixed()
-
-const AnythingSchema = createSchema("help", {
-  anything: mixed(),
-});
+const users = await db.collections.users.find(
+  and(
+    { isVerified: eq(true) },
+    { age: gt(18) },
+    { email: inArray(["alice@example.com", "grace@example.com"]) },
+  ),
+);
 ```
+
+Available helpers:
+
+- `and`
+- `or`
+- `nor`
+- `not`
+- `eq`
+- `neq`
+- `gt`
+- `gte`
+- `lt`
+- `lte`
+- `inArray`
+- `notInArray`
+- `exists`
+- `notExists`
+- `size`
+
+## Aggregation and Raw Access
+
+Use `aggregate()` for pipeline-based reads:
+
+```ts
+const result = await db.collections.users
+  .aggregate()
+  .addStage({ $match: { isVerified: true } })
+  .addStage({ $group: { _id: "$isVerified", count: { $sum: 1 } } });
+```
+
+Use `raw()` when you need the underlying MongoDB collection:
+
+```ts
+const rawUsers = await db.collections.users.raw().find().toArray();
+```
+
+## Type Helpers
+
+Monarch exports helper types for inferring collection-level input and output types from a database instance.
+
+### `InferInput<typeof db, "collectionName">`
+
+Infers the input type for a collection from a database instance.
+
+```ts
+import type { InferInput } from "monarch-orm";
+
+type UserInsert = InferInput<typeof db, "users">;
+```
+
+### `InferOutput<typeof db, "collectionName">`
+
+Infers the default output type for a collection from a database instance.
+
+```ts
+import type { InferOutput } from "monarch-orm";
+
+type UserResult = InferOutput<typeof db, "users">;
+```
+
+### `InferOutput<typeof db, "collectionName", options>`
+
+You can also model projected or populated output shapes by passing options as the third type argument.
+
+```ts
+import type { InferOutput } from "monarch-orm";
+
+type UserWithPosts = InferOutput<
+  typeof db,
+  "users",
+  {
+    populate: {
+      posts: {
+        populate: {
+          author: true;
+        };
+      };
+    };
+  }
+>;
+```
+
+## Utilities
+
+- `ObjectId` is re-exported from `mongodb`
+- `toObjectId()` converts values to `ObjectId`
+- `getValidator(schema)` returns the generated `$jsonSchema` validator
+
+## License
+
+MIT
