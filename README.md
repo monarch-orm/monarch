@@ -57,9 +57,7 @@ const users = await db.collections.users
   .sort({ email: "asc" });
 ```
 
-## Core Concepts
-
-### Schemas
+## Schemas
 
 `createSchema()` defines a collection's shape. If you do not define `_id`, it defaults to `objectId()`. When a schema uses `ObjectId` for `_id`, Monarch makes the input optional for inserts.
 
@@ -127,9 +125,60 @@ Use `$refs` when a local array field stores multiple references to another colle
 contributors: s.posts.$refs.users({ from: "contributorIds", to: "_id" })
 ```
 
+### Schema Groups
+
+You can split schemas by concern or by file, define relations inside each group, then merge them together. This works well when different modules own different parts of your data model.
+
+```ts
+import { createSchema, defineSchemas, mergeSchemas } from "monarch-orm";
+import { objectId, string } from "monarch-orm/types";
+
+const userSchema = createSchema("users", {
+  name: string(),
+  tutorId: objectId().optional(),
+});
+
+const userGroup = defineSchemas({ userSchema }).withRelations((s) => ({
+  users: {
+    tutor: s.users.$one.users({ from: "tutorId", to: "_id" }),
+  },
+}));
+
+const postSchema = createSchema("posts", {
+  title: string(),
+  authorId: objectId(),
+});
+
+const categorySchema = createSchema("categories", {
+  name: string(),
+  parentId: objectId().optional(),
+});
+
+const contentGroup = defineSchemas({ postSchema, categorySchema }).withRelations((s) => ({
+  categories: {
+    parent: s.categories.$one.categories({ from: "parentId", to: "_id" }),
+  },
+}));
+
+const schemas = mergeSchemas(userGroup, contentGroup);
+```
+
+You can also add cross-group relations after merging:
+
+```ts
+const schemasWithCrossGroupRelations = schemas.withRelations((s) => ({
+  users: {
+    posts: s.users.$many.posts({ from: "_id", to: "authorId" }),
+  },
+  posts: {
+    author: s.posts.$one.users({ from: "authorId", to: "_id" }),
+  },
+}));
+```
+
 ### Databases
 
-Pass schemas object into `createDatabase()` to get db with typed collections.
+Pass schemas object into `createDatabase()` to create db with typed collections.
 
 ```ts
 const schemas = defineSchemas({ userSchema, postSchema });
