@@ -1,9 +1,10 @@
 import { detectProjection } from "../collection/projection";
 import type { Projection } from "../collection/types/query-options";
+import { MonarchError } from "../errors";
 import { mergeRelations, type AnyRelation, type RelationsFn, type SchemasRelations } from "../relations/relations";
 import { MonarchObject, object } from "../types";
-import { objectId } from "../types/objectId";
-import { MonarchType, type AnyMonarchType } from "../types/type";
+import { MonarchObjectId, objectId } from "../types/objectId";
+import { MonarchNullable, MonarchOptional, MonarchType, type AnyMonarchType } from "../types/type";
 import type { MergeAll, MergeN1All, Pretty, RequiredObject } from "../utils/type-helpers";
 import type { SchemaIndexes } from "./indexes";
 import type {
@@ -250,8 +251,17 @@ export function createSchema<TName extends string, TTypes extends Record<string,
   name: TName,
   types: TTypes,
 ): Schema<TName, Pretty<WithObjectId<TTypes>>, {}, {}, {}> {
-  let schemaTypes = types as Pretty<WithObjectId<TTypes>>;
-  if (!schemaTypes._id) schemaTypes._id = objectId().optional();
+  let schemaTypes = { ...types } as Pretty<WithObjectId<TTypes>>;
+  if (!schemaTypes._id || schemaTypes._id instanceof MonarchObjectId) {
+    schemaTypes._id = objectId().optional();
+  } else if (MonarchType.isInstanceOf(schemaTypes._id, MonarchNullable)) {
+    throw new MonarchError("schema _id cannot be nullable");
+  } else if (
+    MonarchType.isInstanceOf(schemaTypes._id, MonarchOptional) &&
+    !MonarchType.isInstanceOf(schemaTypes._id, MonarchObjectId)
+  ) {
+    throw new MonarchError("schema _id may only be optional when it is objectId()");
+  }
   return new Schema(name, schemaTypes, {});
 }
 

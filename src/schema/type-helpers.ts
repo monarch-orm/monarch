@@ -9,7 +9,6 @@ import type {
   Document,
   Flatten,
   IndexDirection,
-  ObjectId,
 } from "mongodb";
 import type {
   MonarchDate,
@@ -34,18 +33,19 @@ import type {
   InferTypeInput,
   InferTypeOutput,
 } from "../types/type-helpers";
-import type { IdFirst, Index, IsNever, Merge, Pretty, TrueKeys } from "../utils/type-helpers";
+import type { IdFirst, IsNever, Merge, Pretty, TrueKeys } from "../utils/type-helpers";
 import type { AnySchema, Schema } from "./schema";
 import type { InferVirtualOutput } from "./virtuals";
 
 // Schema types
 
 export type WithObjectId<T> = "_id" extends keyof T ? T : { _id: MonarchObjectId } & T;
-export type WithObjectIdInput<T> =
-  ObjectId extends Index<T, "_id"> ? { _id?: InferTypeInput<MonarchObjectId> } & Omit<T, "_id"> : T;
+export type WithOptionalObjectId<T> = T extends { _id: MonarchObjectId }
+  ? Merge<T, { _id: MonarchOptional<MonarchObjectId> }>
+  : T;
 
 export type InferSchemaInput<T extends AnySchema> = Pretty<
-  WithObjectIdInput<_InferTypeObjectInput<InferSchemaTypes<T>>>
+  _InferTypeObjectInput<WithOptionalObjectId<InferSchemaTypes<T>>>
 >;
 export type _InferSchemaData<T extends AnySchema> = _InferTypeObjectOutput<InferSchemaTypes<T>>;
 export type InferSchemaData<T extends AnySchema> = Pretty<_InferSchemaData<T>>;
