@@ -83,6 +83,27 @@ const postSchema = createSchema("posts", {
 const schemas = defineSchemas({ userSchema, postSchema });
 ```
 
+### `createShape()`
+
+Use `createShape()` when you want to define a reusable shape for schemas or objects.
+
+```ts
+import { createShape, createSchema } from "monarch-orm";
+import { object, string } from "monarch-orm/types";
+
+const addressShape = createShape({
+  street: string(),
+  city: string(),
+});
+
+const userSchema = createSchema("users", {
+  name: string(),
+  address: object(addressShape),
+});
+
+const addressSchema = createSchema("addresses", addressShape);
+```
+
 ### Relations
 
 Use `withRelations()` on a schemas object to define typed relations.
@@ -544,7 +565,7 @@ const userSchema = createSchema("users", {
 
 #### Collection validation
 
-`schema.validation()` defines validation settings for the schema. Validation can also be set on the database, where it acts as a default for all schemas.
+`schema.validation()` enables collection-level document validation using a JSON Schema generated from your Monarch schema. It is not enabled by default. Validation can also be set on the database, where it acts as a default for all schemas.
 
 ```ts
 const userSchema = createSchema("users", {
@@ -586,7 +607,7 @@ const userSchema = createSchema("users", {
 
 ## Types
 
-Monarch ships many ready-made types, but those are not the only possible types. The type system is extensible, and users can create custom types by extending `MonarchType`.
+Monarch provides types for all MongoDB value types.
 
 ### `string()`
 
@@ -624,7 +645,9 @@ const createdAt = date().auto();
 
 ### `objectId()`
 
-Parses MongoDB `ObjectId` values and valid `ObjectId` strings.
+Parses MongoDB `ObjectId` values and valid `ObjectId` strings, and supports `.auto()`.
+
+Note: `.auto()` sets the default value for the type to `new ObjectId()`.
 
 ```ts
 const authorId = objectId();
@@ -701,10 +724,14 @@ const profile = object({
 
 ### `array(type)`
 
-Creates a typed array of values.
+Creates a typed array of values and supports `.minLength()`, `.maxLength()`, `.length()`, and `.nonempty()`.
 
 ```ts
 const tags = array(string());
+```
+
+```ts
+const tags = array(string()).nonempty().maxLength(10);
 ```
 
 ### `tuple([...types])`
@@ -805,7 +832,7 @@ const isVerified2 = defaulted(boolean(), false);
 
 ### `.validate(fn, message)`
 
-Adds validation after the base type has parsed successfully.
+Adds validation after the base type has parsed successfully. The validate function should return `true`; otherwise the provided message is thrown as an error.
 
 ```ts
 const username = string().validate((value) => value !== "admin", "username is reserved");
