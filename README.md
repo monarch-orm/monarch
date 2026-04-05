@@ -20,15 +20,14 @@ npm install monarch-orm
 
 ```ts
 import {
-  boolean,
   createClient,
   createDatabase,
   createSchema,
   defineSchemas,
-  number,
-  string,
 } from "monarch-orm";
+import { boolean, number, string } from "monarch-orm/types";
 
+// Define collection schema.
 const userSchema = createSchema("users", {
   name: string().trim(),
   email: string().lowercase(),
@@ -38,16 +37,20 @@ const userSchema = createSchema("users", {
 
 const schemas = defineSchemas({ userSchema });
 
+// Create and connect the MongoDB client.
 const client = createClient(process.env.MONGODB_URI!);
 await client.connect();
 
+// Create a database instance.
 const db = createDatabase(client.db("app"), schemas);
 
+// Insert one document.
 const user = await db.collections.users.insertOne({
   name: "Alice",
   email: "alice@example.com",
 });
 
+// Query documents.
 const users = await db.collections.users
   .find({ isVerified: false })
   .select({ name: true, email: true })
@@ -61,7 +64,8 @@ const users = await db.collections.users
 `createSchema()` defines a collection's shape. If you do not define `_id`, it defaults to `objectId()`. When a schema uses `ObjectId` for `_id`, Monarch makes the input optional for inserts.
 
 ```ts
-import { array, createSchema, date, object, objectId, string } from "monarch-orm";
+import { createSchema } from "monarch-orm";
+import { array, date, object, objectId, string } from "monarch-orm/types";
 
 const postSchema = createSchema("posts", {
   title: string().trim().nonempty(),
@@ -449,7 +453,8 @@ const userSchema = createSchema("users", {
 `schema.virtuals()` adds computed output fields. Virtuals are not stored in MongoDB, but they are available in query results and can depend on omitted source fields.
 
 ```ts
-import { boolean, createSchema, string, virtual } from "monarch-orm";
+import { createSchema, virtual } from "monarch-orm";
+import { boolean, string } from "monarch-orm/types";
 
 const userSchema = createSchema("users", {
   isAdmin: boolean(),
@@ -519,7 +524,7 @@ const db = createDatabase(client.db("app"), schemas, {
 `schema.onUpdate()` injects update operators into every update query for that schema. This is useful for fields like `updatedAt`.
 
 ```ts
-import { date } from "monarch-orm";
+import { date } from "monarch-orm/types";
 
 const userSchema = createSchema("users", {
   updatedAt: date().optional(),
@@ -869,6 +874,7 @@ type UserWithPosts = InferOutput<
 
 - `ObjectId` is re-exported from `mongodb`
 - `toObjectId()` converts values to `ObjectId`
+- `createClient(uri, options?)` creates a MongoDB client
 - `getValidator(schema)` returns the generated `$jsonSchema` validator
 
 ## License
