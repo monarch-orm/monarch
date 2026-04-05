@@ -531,7 +531,7 @@ describe("Update Operations", async () => {
       const schema = createSchema("users", {
         name: string(),
         age: number(),
-      }).onUpdate({ $set: { age: 100 } });
+      }).onUpdate(() => ({ $set: { age: 100 } }));
       const db = createDatabase(client.db(), defineSchemas({ users: schema }));
 
       const user = await db.collections.users.insertOne({ name: "tom", age: 0 });
@@ -546,7 +546,7 @@ describe("Update Operations", async () => {
       const schema = createSchema("users", {
         name: string(),
         age: number(),
-      }).onUpdate({ $set: { age: 100 } });
+      }).onUpdate(() => ({ $set: { age: 100 } }));
       const db = createDatabase(client.db(), defineSchemas({ users: schema }));
 
       const user = await db.collections.users.insertOne({ name: "tom", age: 0 });
@@ -577,7 +577,7 @@ describe("Update Operations", async () => {
       const schema = createSchema("users", {
         name: string(),
         age: number(),
-      }).onUpdate({ $set: { age: 555 } });
+      }).onUpdate(() => ({ $set: { age: 555 } }));
       const db = createDatabase(client.db(), defineSchemas({ users: schema }));
 
       const user = await db.collections.users.insertOne({ name: "Alice", age: 0 });
@@ -591,7 +591,7 @@ describe("Update Operations", async () => {
       const schema = createSchema("users", {
         name: string(),
         age: number(),
-      }).onUpdate({ $set: { age: 999 } });
+      }).onUpdate(() => ({ $set: { age: 999 } }));
       const db = createDatabase(client.db(), defineSchemas({ users: schema }));
 
       await db.collections.users.insertOne({ name: "Alice", age: 1 });
@@ -607,7 +607,7 @@ describe("Update Operations", async () => {
       const schema = createSchema("users", {
         name: string(),
         age: number(),
-      }).onUpdate({ $set: { age: 555 } });
+      }).onUpdate(() => ({ $set: { age: 555 } }));
       const db = createDatabase(client.db(), defineSchemas({ users: schema }));
 
       const user = await db.collections.users.insertOne({ name: "Alice", age: 0 });

@@ -136,8 +136,8 @@ export class Schema<
    *
    * Useful for fields like `updatedAt`. If a function is provided, it is called for each update.
    */
-  public onUpdate(update: UpdateFilter<this> | (() => UpdateFilter<this>)) {
-    this.update = typeof update === "function" ? update : () => update;
+  public onUpdate(update: () => UpdateFilter<this>) {
+    this.update = update;
     return this;
   }
 
