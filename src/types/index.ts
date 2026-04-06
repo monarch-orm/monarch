@@ -27,5 +27,6 @@ export {
   type Parser,
 } from "./type";
 export { type InferTypeInput, type InferTypeObjectInput } from "./type-helpers";
+export type { BsonType, JSONSchema, JsonType } from "./type.schema";
 export { MonarchTaggedUnion, MonarchUnion, taggedUnion, union } from "./union";
 export { MonarchUUID, uuid } from "./uuid";

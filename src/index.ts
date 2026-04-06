@@ -38,7 +38,7 @@ export type {
   RootFilterOperators,
   UpdateFilter,
 } from "./schema/type-helpers";
-export { getValidator, type SchemaValidation } from "./schema/validation";
+export { getValidator, type JSONSchema, type SchemaValidation } from "./schema/validation";
 export { virtual, type Virtual } from "./schema/virtuals";
 export { type InferInput, type InferOutput } from "./type-helpers";
 export { toObjectId } from "./utils/misc";
