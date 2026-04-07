@@ -1,13 +1,13 @@
 import type { Sort as MongoSort } from "mongodb";
-import { MonarchError } from "../../errors";
-import type { AnyRelation, AnyRelations } from "../../relations/relations";
-import type { Population, PopulationOptions } from "../../relations/type-helpers";
-import { type AnySchema, Schema } from "../../schema/schema";
-import { hashString, mapOneOrArray } from "../../utils/misc";
-import type { Meta } from "../types/expressions";
-import type { Limit, Lookup, PipelineStage, Skip, Sort } from "../types/pipeline-stage";
-import type { Projection } from "../types/query-options";
+import { MonarchError } from "../errors";
+import type { AnyRelation, AnyRelations } from "../relations/relations";
+import type { Population, PopulationOptions } from "../relations/type-helpers";
+import { type AnySchema, Schema } from "../schema/schema";
+import { hashString, mapOneOrArray } from "../utils/misc";
 import { addExtraInputsToProjection, makePopulationProjection, makeProjection } from "./projection";
+import type { Meta } from "./types/expressions";
+import type { Limit, Lookup, PipelineStage, Skip, Sort } from "./types/pipeline-stage";
+import type { Projection } from "./types/query-options";
 
 type Populations = Record<
   string,
@@ -65,10 +65,14 @@ export function addPopulations(
 
     // get population projection or fallback to schema omit projection
     const projection =
-      makePopulationProjection(_options) ?? makeProjection("omit", relation.target.schema.options?.omit ?? {});
+      makePopulationProjection(_options) ?? makeProjection("omit", Schema.options(relation.target.schema)?.omit ?? {});
 
     // ensure required fields are in projection
-    const extras = addExtraInputsToProjection(projection, relation.target.schema.options?.virtuals, _options.populate);
+    const extras = addExtraInputsToProjection(
+      projection,
+      Schema.options(relation.target.schema)?.virtuals,
+      _options.populate,
+    );
 
     // create pipeline for this poulation
     const populationPipeline: Lookup<any>["$lookup"]["pipeline"] = [];
@@ -121,7 +125,7 @@ export function expandPopulations(opts: {
   schema: AnySchema;
   doc: any;
 }) {
-  const populatedDoc = Schema.decode(opts.schema, opts.doc, opts.projection, opts.extras);
+  const populatedDoc = Schema.output(opts.schema, opts.doc, opts.projection, opts.extras);
   for (const [key, population] of Object.entries(opts.populations)) {
     populatedDoc[key] = mapOneOrArray(opts.doc[population.fieldVariable], (doc) => {
       if (population.populations) {
@@ -133,7 +137,7 @@ export function expandPopulations(opts: {
           doc,
         });
       }
-      return Schema.decode(population.relation.target.schema, doc, population.projection, population.extras);
+      return Schema.output(population.relation.target.schema, doc, population.projection, population.extras);
     });
     delete populatedDoc[population.fieldVariable];
   }

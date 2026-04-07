@@ -1,6 +1,7 @@
 import { Binary } from "mongodb";
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
+import type { JSONSchema } from "./type.schema";
 
 /**
  * Binary type.
@@ -17,11 +18,15 @@ export class MonarchBinary extends MonarchType<Buffer | Binary, Binary> {
     super((input) => {
       if (input instanceof Binary) return input;
       if (Buffer.isBuffer(input)) return new Binary(input);
-      throw new MonarchParseError(`expected 'Buffer' or 'Binary' received '${typeof input}'`);
+      throw MonarchParseError.create({ message: `expected 'Buffer' or 'Binary' received '${typeof input}'` });
     });
   }
 
   protected copy() {
     return new MonarchBinary();
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return { bsonType: "binData" };
   }
 }

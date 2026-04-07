@@ -9,14 +9,14 @@ describe("literal", () => {
     });
 
     // @ts-expect-error
-    expect(() => Schema.encode(schema, {})).toThrowError(
+    expect(() => Schema.input(schema, {})).toThrowError(
       "unknown value 'undefined', literal may only specify known values",
     );
     // @ts-expect-error
-    expect(() => Schema.encode(schema, { role: "user" })).toThrowError(
+    expect(() => Schema.input(schema, { role: "user" })).toThrowError(
       "unknown value 'user', literal may only specify known values",
     );
-    const data = Schema.encode(schema, { role: "admin" });
+    const data = Schema.input(schema, { role: "admin" });
     expect(data).toStrictEqual({ role: "admin" });
   });
 });

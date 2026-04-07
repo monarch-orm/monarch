@@ -9,44 +9,44 @@ describe("array", () => {
     });
 
     // @ts-expect-error
-    expect(() => Schema.encode(schema, {})).toThrowError("expected 'array' received 'undefined'");
+    expect(() => Schema.input(schema, {})).toThrowError("expected 'array' received 'undefined'");
     // empty array is ok
-    expect(() => Schema.encode(schema, { items: [] })).not.toThrowError();
+    expect(() => Schema.input(schema, { items: [] })).not.toThrowError();
     // @ts-expect-error
-    expect(() => Schema.encode(schema, { items: [0, "1"] })).toThrowError(
-      "items[1]: expected 'number' received 'string'",
+    expect(() => Schema.input(schema, { items: [0, "1"] })).toThrowError(
+      "items.1: expected 'number' received 'string'",
     );
-    const data = Schema.encode(schema, { items: [0, 1] });
+    const data = Schema.input(schema, { items: [0, 1] });
     expect(data).toStrictEqual({ items: [0, 1] });
   });
 
-  test("min - validates minimum array length", () => {
+  test("minLength - validates minimum array length", () => {
     const schema = createSchema("test", {
-      items: array(string()).min(2),
+      items: array(string()).minLength(2),
     });
 
-    const data = Schema.encode(schema, { items: ["a", "b"] });
+    const data = Schema.input(schema, { items: ["a", "b"] });
     expect(data).toStrictEqual({ items: ["a", "b"] });
 
-    const data2 = Schema.encode(schema, { items: ["a", "b", "c"] });
+    const data2 = Schema.input(schema, { items: ["a", "b", "c"] });
     expect(data2).toStrictEqual({ items: ["a", "b", "c"] });
 
-    expect(() => Schema.encode(schema, { items: ["a"] })).toThrowError("array must have at least 2 elements");
-    expect(() => Schema.encode(schema, { items: [] })).toThrowError("array must have at least 2 elements");
+    expect(() => Schema.input(schema, { items: ["a"] })).toThrowError("array must have at least 2 elements");
+    expect(() => Schema.input(schema, { items: [] })).toThrowError("array must have at least 2 elements");
   });
 
-  test("max - validates maximum array length", () => {
+  test("maxLength - validates maximum array length", () => {
     const schema = createSchema("test", {
-      items: array(string()).max(3),
+      items: array(string()).maxLength(3),
     });
 
-    const data = Schema.encode(schema, { items: ["a", "b", "c"] });
+    const data = Schema.input(schema, { items: ["a", "b", "c"] });
     expect(data).toStrictEqual({ items: ["a", "b", "c"] });
 
-    const data2 = Schema.encode(schema, { items: ["a"] });
+    const data2 = Schema.input(schema, { items: ["a"] });
     expect(data2).toStrictEqual({ items: ["a"] });
 
-    expect(() => Schema.encode(schema, { items: ["a", "b", "c", "d"] })).toThrowError(
+    expect(() => Schema.input(schema, { items: ["a", "b", "c", "d"] })).toThrowError(
       "array must have at most 3 elements",
     );
   });
@@ -56,11 +56,11 @@ describe("array", () => {
       coordinates: array(number()).length(2),
     });
 
-    const data = Schema.encode(schema, { coordinates: [10.5, 20.3] });
+    const data = Schema.input(schema, { coordinates: [10.5, 20.3] });
     expect(data).toStrictEqual({ coordinates: [10.5, 20.3] });
 
-    expect(() => Schema.encode(schema, { coordinates: [10.5] })).toThrowError("array must have exactly 2 elements");
-    expect(() => Schema.encode(schema, { coordinates: [10.5, 20.3, 30.1] })).toThrowError(
+    expect(() => Schema.input(schema, { coordinates: [10.5] })).toThrowError("array must have exactly 2 elements");
+    expect(() => Schema.input(schema, { coordinates: [10.5, 20.3, 30.1] })).toThrowError(
       "array must have exactly 2 elements",
     );
   });
@@ -70,39 +70,47 @@ describe("array", () => {
       items: array(string()).nonempty(),
     });
 
-    const data = Schema.encode(schema, { items: ["a"] });
+    const data = Schema.input(schema, { items: ["a"] });
     expect(data).toStrictEqual({ items: ["a"] });
 
-    expect(() => Schema.encode(schema, { items: [] })).toThrowError("array must not be empty");
+    expect(() => Schema.input(schema, { items: [] })).toThrowError("array must not be empty");
   });
 
   test("array methods can be chained", () => {
     const schema = createSchema("test", {
-      items: array(string()).min(2).max(5),
+      items: array(string()).minLength(2).maxLength(5),
     });
 
-    const data = Schema.encode(schema, { items: ["a", "b", "c"] });
+    const data = Schema.input(schema, { items: ["a", "b", "c"] });
     expect(data).toStrictEqual({ items: ["a", "b", "c"] });
 
-    expect(() => Schema.encode(schema, { items: ["a"] })).toThrowError("array must have at least 2 elements");
-    expect(() => Schema.encode(schema, { items: ["a", "b", "c", "d", "e", "f"] })).toThrowError(
+    expect(() => Schema.input(schema, { items: ["a"] })).toThrowError("array must have at least 2 elements");
+    expect(() => Schema.input(schema, { items: ["a", "b", "c", "d", "e", "f"] })).toThrowError(
       "array must have at most 5 elements",
     );
   });
 
   test("array methods work with nullable and optional", () => {
     const schema = createSchema("test", {
-      items: array(string()).min(1).nullable(),
-      optionalItems: array(number()).max(3).optional(),
+      items: array(string()).minLength(1).nullable(),
+      optionalItems: array(number()).maxLength(3).optional(),
     });
 
-    const data = Schema.encode(schema, { items: ["a"], optionalItems: [1, 2] });
+    const data = Schema.input(schema, { items: ["a"], optionalItems: [1, 2] });
     expect(data).toStrictEqual({ items: ["a"], optionalItems: [1, 2] });
 
-    const nullData = Schema.encode(schema, { items: null });
+    const nullData = Schema.input(schema, { items: null });
     expect(nullData).toStrictEqual({ items: null });
 
-    const undefinedData = Schema.encode(schema, { items: ["a"] });
+    const undefinedData = Schema.input(schema, { items: ["a"] });
     expect(undefinedData).toStrictEqual({ items: ["a"] });
+  });
+
+  test("rejects optional array item type", () => {
+    expect(() =>
+      createSchema("test", {
+        items: array(number().optional()),
+      }),
+    ).toThrowError("array item type cannot be optional");
   });
 });

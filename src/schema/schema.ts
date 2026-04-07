@@ -1,19 +1,29 @@
+import { detectProjection } from "../collection/projection";
 import type { Projection } from "../collection/types/query-options";
-import { detectProjection } from "../collection/utils/projection";
-import { MonarchParseError } from "../errors";
+import { MonarchError } from "../errors";
 import { mergeRelations, type AnyRelation, type RelationsFn, type SchemasRelations } from "../relations/relations";
-import { objectId } from "../types/objectId";
-import { MonarchType, type AnyMonarchType } from "../types/type";
-import type { MergeAll, MergeN1All, Pretty, WithOptionalId } from "../utils/type-helpers";
+import { MonarchObject, object } from "../types";
+import { MonarchObjectId, objectId } from "../types/objectId";
+import { MonarchNullable, MonarchOptional, MonarchType, type AnyMonarchType } from "../types/type";
+import type { MergeAll, MergeN1All, Pretty, RequiredObject } from "../utils/type-helpers";
 import type { SchemaIndexes } from "./indexes";
-import type { InferSchemaData, InferSchemaInput, InferSchemaOutput, InferSchemaTypes } from "./type-helpers";
+import type {
+  InferSchemaData,
+  InferSchemaInput,
+  InferSchemaOutput,
+  InferSchemaTypes,
+  UpdateFilter,
+  WithObjectId,
+} from "./type-helpers";
+import { updateParser } from "./update";
+import type { SchemaValidation } from "./validation";
 import type { AnyVirtual, SchemaVirtuals, Virtual } from "./virtuals";
 
 type SchemaOmit<TTypes extends Record<string, AnyMonarchType>> = {
-  [K in keyof WithOptionalId<TTypes>]?: true;
+  [K in keyof TTypes]?: true;
 };
 
-export type AnySchema = Schema<any, any, any, any>;
+export type AnySchema = Schema<any, any, any, any, any>;
 
 /**
  * Defines the structure and behavior of a MongoDB collection.
@@ -22,27 +32,32 @@ export type AnySchema = Schema<any, any, any, any>;
 export class Schema<
   TName extends string,
   TTypes extends Record<string, AnyMonarchType>,
-  TOmit extends SchemaOmit<TTypes> = {},
-  TVirtuals extends Record<string, AnyVirtual> = {},
+  TOmit extends SchemaOmit<TTypes>,
+  TVirtuals extends Record<string, AnyVirtual>,
+  TRenames extends Record<string, string>,
 > {
+  private type: MonarchObject<TTypes>;
+  private update?: () => UpdateFilter<any>;
+
   /**
    * Creates a Schema instance.
    *
    * @param name - Collection name
-   * @param _types - Field type definitions
+   * @param types - Field type definitions
    * @param options - Schema options including omit, virtuals, and indexes
    */
   constructor(
     public name: TName,
-    private _types: TTypes,
-    public options: {
+    private types: TTypes,
+    private options: {
       omit?: SchemaOmit<TTypes>;
-      virtuals?: SchemaVirtuals<TTypes, TVirtuals>;
       indexes?: SchemaIndexes<TTypes>;
+      validation?: SchemaValidation;
+      virtuals?: SchemaVirtuals<TTypes, TVirtuals>;
+      renames?: TRenames;
     },
   ) {
-    // @ts-ignore
-    if (!_types._id) this._types._id = objectId().optional();
+    this.type = object(types);
   }
 
   /**
@@ -51,8 +66,8 @@ export class Schema<
    * @param omit - Object specifying which fields to omit
    * @returns Schema instance with omit configuration
    */
-  omit<TOmit extends SchemaOmit<TTypes>>(omit: TOmit) {
-    const schema = this as unknown as Schema<TName, TTypes, TOmit, TVirtuals>;
+  public omit<TOmit extends SchemaOmit<TTypes>>(omit: TOmit) {
+    const schema = this as unknown as Schema<TName, TTypes, TOmit, TVirtuals, TRenames>;
     schema.options.omit = omit;
     return schema;
   }
@@ -63,11 +78,23 @@ export class Schema<
    * @param virtuals - Object defining virtual fields
    * @returns Schema instance with virtual fields configured
    */
-  virtuals<TVirtuals extends Record<string, Virtual<Pretty<TTypes>, any, any>>>(
+  public virtuals<TVirtuals extends Record<string, Virtual<Pretty<TTypes>, any, any>>>(
     virtuals: SchemaVirtuals<TTypes, TVirtuals>,
   ) {
-    const schema = this as unknown as Schema<TName, TTypes, TOmit, TVirtuals>;
+    const schema = this as unknown as Schema<TName, TTypes, TOmit, TVirtuals, TRenames>;
     schema.options.virtuals = virtuals;
+    return schema;
+  }
+
+  /**
+   * Adds renamed fields to the schema.
+   *
+   * @param renames - Object defining renamed fields
+   * @returns Schema instance with renamed fields configured
+   */
+  public rename<const TRenames extends { [K in "_id" | keyof TTypes]?: string }>(renames: TRenames) {
+    const schema = this as unknown as Schema<TName, TTypes, TOmit, TVirtuals, RequiredObject<TRenames>>;
+    schema.options.renames = renames as unknown as RequiredObject<TRenames>;
     return schema;
   }
 
@@ -89,8 +116,28 @@ export class Schema<
    *   fullname: createIndex({ firstname: 1, surname: 1 }, { unique: true }),
    * }));
    */
-  indexes(indexes: SchemaIndexes<TTypes>) {
+  public indexes(indexes: SchemaIndexes<TTypes>) {
     this.options.indexes = indexes;
+    return this;
+  }
+
+  /**
+   * Sets MongoDB document validation for this schema.
+   *
+   * This is applied when the collection is initialized.
+   */
+  public validation(validation: SchemaValidation) {
+    this.options.validation = validation;
+    return this;
+  }
+
+  /**
+   * Sets values to include in every update operation.
+   *
+   * Useful for fields like `updatedAt`. If a function is provided, it is called for each update.
+   */
+  public onUpdate(update: () => UpdateFilter<this>) {
+    this.update = update;
     return this;
   }
 
@@ -101,46 +148,57 @@ export class Schema<
    * @returns Field type definitions
    */
   public static types<T extends AnySchema>(schema: T): InferSchemaTypes<T> {
-    return schema._types;
+    return schema.types;
+  }
+
+  /**
+   * Retrieves the schema options from a schema.
+   *
+   * @param schema - Schema instance
+   * @returns Schema options including omit, virtuals, and indexes
+   */
+  public static options<T extends AnySchema>(schema: T) {
+    return schema.options;
   }
 
   /**
    * Parses and validates input data according to schema type definitions.
    *
+   * Runs schema parsing, transforms, defaults, and validations.
+   *
    * @param schema - Schema instance
-   * @param input - Input data to encode
-   * @returns Encoded data ready for database storage
+   * @param input - Input data to parse
+   * @returns Parsed data ready for database storage
    */
-  public static encode<T extends AnySchema>(schema: T, input: InferSchemaInput<T>) {
-    const data = {} as InferSchemaData<T>;
-    // parse fields
-    const types = Schema.types(schema);
-    for (const [key, type] of Object.entries(types)) {
-      try {
-        const parser = MonarchType.parser(type as AnyMonarchType);
-        const parsed = parser(input[key as keyof InferSchemaInput<T>]);
-        if (parsed === undefined) continue;
-        data[key as keyof typeof data] = parsed;
-      } catch (error) {
-        if (error instanceof MonarchParseError) {
-          throw new MonarchParseError({ path: key, error });
-        }
-        throw error;
-      }
-    }
-    return data;
+  public static input<T extends AnySchema>(schema: T, input: InferSchemaInput<T>) {
+    const parser = MonarchType.parser(schema.type);
+    return parser(input) as InferSchemaData<T>;
+  }
+
+  /**
+   * Parses and validates update data for dot-path update operations.
+   *
+   * Validates update input and merges schema-level `onUpdate()` values.
+   *
+   * @param schema - Schema instance
+   * @param update - Update data with dot-path keys and their new values
+   * @param upsert - Upsert parses $setOnInsert if true
+   * @returns Parsed update data
+   */
+  public static updateInput<T extends AnySchema>(schema: T, update: UpdateFilter<T>, upsert: boolean) {
+    return updateParser(schema.type, schema.update, update, upsert);
   }
 
   /**
    * Transforms database data to output format with virtual fields and projections.
    *
    * @param schema - Schema instance
-   * @param data - Database data to decode
+   * @param data - Database data
    * @param projection - Field projection configuration
    * @param forceOmit - Fields to force omit from output
-   * @returns Decoded output data
+   * @returns Output data
    */
-  public static decode<T extends AnySchema>(
+  public static output<T extends AnySchema>(
     schema: T,
     data: InferSchemaData<T>,
     projection: Projection<InferSchemaOutput<T>>,
@@ -163,24 +221,22 @@ export class Schema<
         delete output[key as keyof InferSchemaOutput<T>];
       }
     }
-    return output;
-  }
-
-  /**
-   * Get field updates for all top-level schema fields that have onUpdate configured.
-   *
-   * NOTE: Only top-level schema fields are processed. Nested fields within objects or arrays are not included.
-   */
-  public static getFieldUpdates<T extends AnySchema>(schema: T) {
-    const updates = {} as Partial<InferSchemaOutput<T>>;
-    // omit fields
-    for (const [key, type] of Object.entries(Schema.types(schema))) {
-      const updater = MonarchType.updater(type as AnyMonarchType);
-      if (updater) {
-        updates[key as keyof InferSchemaOutput<T>] = updater();
+    // rename projected fields
+    if (schema.options.renames) {
+      for (const field in schema.options.renames) {
+        const newField = schema.options.renames[field];
+        if (field in output) {
+          // add the new field only if it does not conflict with an existing output field
+          if (!(newField in output)) {
+            // @ts-ignore
+            output[newField] = output[field];
+          }
+          // @ts-ignore
+          delete output[field]; // always delete the renamed field
+        }
       }
     }
-    return updates;
+    return output;
   }
 }
 
@@ -194,8 +250,29 @@ export class Schema<
 export function createSchema<TName extends string, TTypes extends Record<string, AnyMonarchType>>(
   name: TName,
   types: TTypes,
-): Schema<TName, TTypes, {}, {}> {
-  return new Schema(name, types, {});
+): Schema<TName, Pretty<WithObjectId<TTypes>>, {}, {}, {}> {
+  let schemaTypes = { ...types } as Pretty<WithObjectId<TTypes>>;
+  if (!schemaTypes._id || schemaTypes._id instanceof MonarchObjectId) {
+    schemaTypes._id = objectId().optional();
+  } else if (MonarchType.isInstanceOf(schemaTypes._id, MonarchNullable)) {
+    throw new MonarchError("schema _id cannot be nullable");
+  } else if (
+    MonarchType.isInstanceOf(schemaTypes._id, MonarchOptional) &&
+    !MonarchType.isInstanceOf(schemaTypes._id, MonarchObjectId)
+  ) {
+    throw new MonarchError("schema _id may only be optional when it is objectId()");
+  }
+  return new Schema(name, schemaTypes, {});
+}
+
+/**
+ * Creates an object shape for a MongoDB schema or object type.
+ *
+ * @param types - Object defining field types
+ * @returns Types object
+ */
+export function createShape<TTypes extends Record<string, AnyMonarchType>>(types: TTypes): TTypes {
+  return types;
 }
 
 export class Schemas<

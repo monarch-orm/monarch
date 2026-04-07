@@ -1,5 +1,24 @@
 # monarch-orm
 
+## 0.10.0
+
+### Minor Changes
+
+- 661154d: Add `.auto()` method for `date()`, `uuid()` and `objectId()` types to set a default value
+- cbb395e: Add BSON types `double()`, `int32()`, `regex()` and `uuid()`
+- 661154d: Add explicit initialize method and option on database to control when collection initialization happens
+- 44e7e52: Throw error when an optional type is used for `array()` or `tuple()` item
+- cbb395e: Remove `MonarchType.transform`, `MonarchType.onUpdate` and remove `type`, `pipe`, `dateString`, `createdAt`, `updatedAt` types
+- cbb395e: Add `onUpdate` method to schemas
+- 661154d: `$setOnInsert` validates full document
+- 742f147: Replace `createRelations` with `schema.withRelations` and support merging multiple relations per schema
+- 8c0370e: Add custom implementations for `Filter`, `UpdateFilter` and `DistinctFilter` types
+- 742f147: Support splitting schemas by adding `defineSchemas` and `mergeSchema` functions which requires a `Schemas` class as argument to `createDatabase`
+- f6d67be: Add document schema validation
+- 8c0370e: Add `createShape` to reuse type objects
+- cbb395e: Rename `Schema.encode/Schema.decode` to `Schema.input/Schema.output`
+- 8bec3f8: Add `Schema.rename()` method to rename fields in output
+
 ## 0.9.0
 
 ### Minor Changes

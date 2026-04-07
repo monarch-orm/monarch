@@ -1,6 +1,6 @@
-import type { DeleteOptions, DeleteResult, Filter, Collection as MongoCollection } from "mongodb";
+import type { DeleteOptions, DeleteResult, Collection as MongoCollection, Filter as MongoFilter } from "mongodb";
 import type { AnySchema } from "../../schema/schema";
-import type { InferSchemaData } from "../../schema/type-helpers";
+import type { Filter, InferSchemaData } from "../../schema/type-helpers";
 import { Query } from "./base";
 
 /**
@@ -8,13 +8,13 @@ import { Query } from "./base";
  */
 export class DeleteOneQuery<TSchema extends AnySchema> extends Query<TSchema, DeleteResult> {
   constructor(
-    protected _schema: TSchema,
-    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
-    protected _readyPromise: Promise<void>,
-    private _filter: Filter<InferSchemaData<TSchema>>,
+    schema: TSchema,
+    collection: MongoCollection<InferSchemaData<TSchema>>,
+    readyPromise: Promise<void>,
+    private _filter: Filter<TSchema>,
     private _options: DeleteOptions = {},
   ) {
-    super(_schema, _collection, _readyPromise);
+    super(schema, collection, readyPromise);
   }
 
   /**
@@ -29,8 +29,7 @@ export class DeleteOneQuery<TSchema extends AnySchema> extends Query<TSchema, De
   }
 
   protected async exec(): Promise<DeleteResult> {
-    await this._readyPromise;
-    const res = await this._collection.deleteOne(this._filter, this._options);
+    const res = await this.collection.deleteOne(this._filter as MongoFilter<InferSchemaData<TSchema>>, this._options);
     return res;
   }
 }

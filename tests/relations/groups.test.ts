@@ -138,4 +138,78 @@ describe("schema groups", async () => {
       expect(child?.parent?.name).toBe("Root");
     });
   });
+
+  describe("mergeSchemas relation collisions", () => {
+    it("merges distinct relation keys for the same schema", async () => {
+      const UsersSchema = createSchema("users", {
+        name: string(),
+        tutorId: objectId().optional(),
+        mentorId: objectId().optional(),
+      });
+
+      const groupA = defineSchemas({ UsersSchema }).withRelations((s) => ({
+        users: {
+          tutor: s.users.$one.users({ from: "tutorId", to: "_id" }),
+        },
+      }));
+
+      const groupB = defineSchemas({ UsersSchema }).withRelations((s) => ({
+        users: {
+          mentor: s.users.$one.users({ from: "mentorId", to: "_id" }),
+        },
+      }));
+
+      const merged = mergeSchemas(groupA, groupB);
+      const db = createDatabase(client.db(), merged);
+
+      const tutor = await db.collections.users.insertOne({ name: "Tutor" });
+      const mentor = await db.collections.users.insertOne({ name: "Mentor" });
+      await db.collections.users.insertOne({
+        name: "Student",
+        tutorId: tutor._id,
+        mentorId: mentor._id,
+      });
+
+      const student = await db.collections.users.findOne({ name: "Student" }).populate({
+        tutor: true,
+        mentor: true,
+      });
+      expect(student?.tutor?.name).toBe("Tutor");
+      expect(student?.mentor?.name).toBe("Mentor");
+    });
+
+    it("last merged relation key wins on conflict", async () => {
+      const UsersSchema = createSchema("users", {
+        name: string(),
+        tutorId: objectId().optional(),
+        mentorId: objectId().optional(),
+      });
+
+      const groupA = defineSchemas({ UsersSchema }).withRelations((s) => ({
+        users: {
+          person: s.users.$one.users({ from: "tutorId", to: "_id" }),
+        },
+      }));
+
+      const groupB = defineSchemas({ UsersSchema }).withRelations((s) => ({
+        users: {
+          person: s.users.$one.users({ from: "mentorId", to: "_id" }),
+        },
+      }));
+
+      const merged = mergeSchemas(groupA, groupB);
+      const db = createDatabase(client.db(), merged);
+
+      const tutor = await db.collections.users.insertOne({ name: "Tutor" });
+      const mentor = await db.collections.users.insertOne({ name: "Mentor" });
+      await db.collections.users.insertOne({
+        name: "Student",
+        tutorId: tutor._id,
+        mentorId: mentor._id,
+      });
+
+      const student = await db.collections.users.findOne({ name: "Student" }).populate({ person: true });
+      expect(student?.person?.name).toBe("Mentor");
+    });
+  });
 });

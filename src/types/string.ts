@@ -1,5 +1,6 @@
 import { MonarchParseError } from "../errors";
 import { MonarchType } from "./type";
+import { jsonSchemaParser, type JSONSchema } from "./type.schema";
 
 /**
  * String type.
@@ -11,16 +12,20 @@ export const string = () => new MonarchString();
 /**
  * Type for string fields.
  */
-export class MonarchString extends MonarchType<string, string> {
+export class MonarchString extends MonarchType<string> {
   constructor() {
     super((input) => {
       if (typeof input === "string") return input;
-      throw new MonarchParseError(`expected 'string' received '${typeof input}'`);
+      throw MonarchParseError.create({ message: `expected 'string' received '${typeof input}'` });
     });
   }
 
   protected copy() {
     return new MonarchString();
+  }
+
+  protected jsonSchema(): JSONSchema {
+    return { bsonType: "string" };
   }
 
   /**
@@ -57,12 +62,17 @@ export class MonarchString extends MonarchType<string, string> {
    * @returns MonarchString with length validation
    */
   public minLength(length: number) {
-    return this.parse((input) => {
-      if (input.length < length) {
-        throw new MonarchParseError(`string must be at least ${length} characters long`);
-      }
-      return input;
-    });
+    return this.parse(
+      jsonSchemaParser(
+        (input) => {
+          if (input.length < length) {
+            throw MonarchParseError.create({ message: `string must have a minimum length of ${length}` });
+          }
+          return input;
+        },
+        { minLength: length },
+      ),
+    );
   }
 
   /**
@@ -72,12 +82,17 @@ export class MonarchString extends MonarchType<string, string> {
    * @returns MonarchString with length validation
    */
   public maxLength(length: number) {
-    return this.parse((input) => {
-      if (input.length > length) {
-        throw new MonarchParseError(`string must be at most ${length} characters long`);
-      }
-      return input;
-    });
+    return this.parse(
+      jsonSchemaParser(
+        (input) => {
+          if (input.length > length) {
+            throw MonarchParseError.create({ message: `string must have a maximum length of ${length}` });
+          }
+          return input;
+        },
+        { maxLength: length },
+      ),
+    );
   }
 
   /**
@@ -87,12 +102,17 @@ export class MonarchString extends MonarchType<string, string> {
    * @returns MonarchString with length validation
    */
   public length(length: number) {
-    return this.parse((input) => {
-      if (input.length !== length) {
-        throw new MonarchParseError(`string must be exactly ${length} characters long`);
-      }
-      return input;
-    });
+    return this.parse(
+      jsonSchemaParser(
+        (input) => {
+          if (input.length !== length) {
+            throw MonarchParseError.create({ message: `string must have a length of ${length}` });
+          }
+          return input;
+        },
+        { minLength: length, maxLength: length },
+      ),
+    );
   }
 
   /**
@@ -102,12 +122,17 @@ export class MonarchString extends MonarchType<string, string> {
    * @returns MonarchString with pattern validation
    */
   public pattern(regex: RegExp) {
-    return this.parse((input) => {
-      if (!regex.test(input)) {
-        throw new MonarchParseError(`string must match pattern ${regex}`);
-      }
-      return input;
-    });
+    return this.parse(
+      jsonSchemaParser(
+        (input) => {
+          if (!regex.test(input)) {
+            throw MonarchParseError.create({ message: `string must match pattern ${regex}` });
+          }
+          return input;
+        },
+        { pattern: regex.source },
+      ),
+    );
   }
 
   /**
@@ -116,26 +141,16 @@ export class MonarchString extends MonarchType<string, string> {
    * @returns MonarchString with non-empty validation
    */
   public nonempty() {
-    return this.parse((input) => {
-      if (input.length === 0) {
-        throw new MonarchParseError("string must not be empty");
-      }
-      return input;
-    });
-  }
-
-  /**
-   * Validates string includes a substring.
-   *
-   * @param searchString - Substring to search for
-   * @returns MonarchString with inclusion validation
-   */
-  public includes(searchString: string) {
-    return this.parse((input) => {
-      if (!input.includes(searchString)) {
-        throw new MonarchParseError(`string must include "${searchString}"`);
-      }
-      return input;
-    });
+    return this.parse(
+      jsonSchemaParser(
+        (input) => {
+          if (input.length === 0) {
+            throw MonarchParseError.create({ message: "string must not be empty" });
+          }
+          return input;
+        },
+        { minLength: 1 },
+      ),
+    );
   }
 }

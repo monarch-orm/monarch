@@ -3,7 +3,6 @@
 // Original source: https://github.com/Automattic/mongoose/blob/master/types/expressions.d.ts
 
 import type { BSON } from "mongodb";
-import type { WithRequiredId } from "../../utils/type-helpers";
 
 // The following types and interfaces are derived from Mongoose's aggregate pipeline stages
 // with modifications to fit our project's needs.
@@ -50,14 +49,14 @@ interface RootQuerySelector<T> {
     $diacriticSensitive?: boolean;
   };
   /** @see https://www.mongodb.com/docs/manual/reference/operator/query/where/#op._S_where */
-  $where?: string | ((this: WithRequiredId<T>) => boolean);
+  $where?: string | ((this: T) => boolean);
   /** @see https://www.mongodb.com/docs/manual/reference/operator/query/comment/#op._S_comment */
   $comment?: string;
 }
 
 export type FilterQuery<T> = {
-  // [P in keyof WithRequiredId<T>]?: WithRequiredId<T>[P] | undefined;
-  [P in keyof WithRequiredId<T>]?: Condition<WithRequiredId<T>[P]> | undefined;
+  // [P in keyof T]?: T[P] | undefined;
+  [P in keyof T]?: Condition<T[P]> | undefined;
 } & RootQuerySelector<T>;
 
 export interface AnyObject {

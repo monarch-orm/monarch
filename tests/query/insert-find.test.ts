@@ -20,11 +20,23 @@ describe("Insert and Find Operations", async () => {
     userId: objectId(),
   });
 
+  const ExplicitObjectIdSchema = createSchema("explicitObjectIds", {
+    _id: objectId(),
+    name: string(),
+  });
+
+  const ExplicitStringIdSchema = createSchema("explicitStringIds", {
+    _id: string(),
+    name: string(),
+  });
+
   const { collections } = createDatabase(
     client.db(),
     defineSchemas({
-      users: UserSchema,
-      todos: TodoSchema,
+      UserSchema,
+      TodoSchema,
+      ExplicitObjectIdSchema,
+      ExplicitStringIdSchema,
     }),
   );
 
@@ -35,6 +47,8 @@ describe("Insert and Find Operations", async () => {
   afterEach(async () => {
     await collections.users.deleteMany({});
     await collections.todos.deleteMany({});
+    await collections.explicitObjectIds.deleteMany({});
+    await collections.explicitStringIds.deleteMany({});
   });
 
   afterAll(async () => {
@@ -70,15 +84,95 @@ describe("Insert and Find Operations", async () => {
       expect(newUser._id).toStrictEqual(id);
     });
 
-    it("supports promise resolution without exec", async () => {
-      const newUser = await collections.users.insertOne(mockUsers[0]);
-      expect(newUser).toMatchObject(mockUsers[0]);
-    });
-
     it("rejects invalid ObjectId string", async () => {
       await expect(async () => {
         await collections.users.insertOne({ _id: "not_an_object_id", ...mockUsers[0] });
       }).rejects.toThrowError("expected 'ObjectId'");
+    });
+
+    describe("explicit ObjectId _id", () => {
+      it("allows omitting _id", async () => {
+        const inserted = await collections.explicitObjectIds.insertOne({
+          name: "Alice",
+        });
+
+        expect(inserted._id).toBeInstanceOf(ObjectId);
+        expect(inserted.name).toBe("Alice");
+
+        const retrieved = await collections.explicitObjectIds.findById(inserted._id);
+        expect(retrieved).toStrictEqual(inserted);
+      });
+
+      it("accepts _id provided as ObjectId", async () => {
+        const id = new ObjectId();
+
+        const inserted = await collections.explicitObjectIds.insertOne({
+          _id: id,
+          name: "Alice",
+        });
+
+        expect(inserted._id).toStrictEqual(id);
+        expect(inserted.name).toBe("Alice");
+
+        const retrieved = await collections.explicitObjectIds.findOne({ _id: id });
+        expect(retrieved).toStrictEqual(inserted);
+      });
+
+      it("accepts _id provided as string", async () => {
+        const id = new ObjectId();
+
+        const inserted = await collections.explicitObjectIds.insertOne({
+          _id: id.toString(),
+          name: "Alice",
+        });
+
+        expect(inserted._id).toStrictEqual(id);
+        expect(inserted.name).toBe("Alice");
+
+        const retrieved = await collections.explicitObjectIds.findById(id.toString());
+        expect(retrieved).toStrictEqual(inserted);
+      });
+    });
+
+    describe("explicit nullable ObjectId _id", () => {
+      it("rejects nullable _id schema definitions", () => {
+        expect(() =>
+          createSchema("explicitNullableObjectIds", {
+            _id: objectId().nullable(),
+            name: string(),
+          }),
+        ).toThrowError("schema _id cannot be nullable");
+      });
+    });
+
+    describe("explicit non-ObjectId _id", () => {
+      it("rejects optional non-ObjectId _id schema definitions", () => {
+        expect(() =>
+          createSchema("explicitOptionalStringIds", {
+            _id: string().optional(),
+            name: string(),
+          }),
+        ).toThrowError("schema _id may only be optional when it is objectId()");
+      });
+
+      it("requires _id when omitted", async () => {
+        await expect(async () => {
+          // @ts-expect-error
+          await collections.explicitStringIds.insertOne({
+            name: "Alice",
+          });
+        }).rejects.toThrowError("expected 'string'");
+      });
+
+      it("accepts _id when provided", async () => {
+        const inserted = await collections.explicitStringIds.insertOne({
+          _id: "alice-1",
+          name: "Alice",
+        });
+
+        expect(inserted._id).toBe("alice-1");
+        expect(inserted.name).toBe("Alice");
+      });
     });
 
     it("inserts empty document with default values", async () => {
@@ -99,16 +193,17 @@ describe("Insert and Find Operations", async () => {
       expect(user.email).toBe("test@example.com");
     });
 
-    it("strips extra fields not in schema", async () => {
-      const user = await collections.users.insertOne({
-        name: "Extra",
-        email: "extra@example.com",
-        age: 40,
-        isVerified: true,
-        extraField: "This should be ignored",
-      } as any);
-      expect(user).not.toBe(null);
-      expect(user).not.toHaveProperty("extraField");
+    it("rejects extra fields not in schema", async () => {
+      await expect(async () => {
+        const user = await collections.users.insertOne({
+          name: "Extra",
+          email: "extra@example.com",
+          age: 40,
+          isVerified: true,
+          // @ts-expect-error
+          extraField: "This should error",
+        });
+      }).rejects.toThrowError();
     });
 
     it("inserts many documents", async () => {

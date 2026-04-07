@@ -1,5 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createDatabase, createSchema, defineSchemas, virtual } from "../../src";
+import { getValidator } from "../../src/schema/validation";
 import { boolean, number, string } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
@@ -165,6 +166,129 @@ describe("Schema", async () => {
     });
   });
 
+  it("renames fields in output", async () => {
+    const schema = createSchema("users", {
+      name: string(),
+      email: string(),
+      isAdmin: boolean(),
+    }).rename({
+      name: "fullName",
+      email: "emailAddress",
+    });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
+
+    const res = await db.collections.users.insertOne({
+      name: "tom cruise",
+      email: "tom@example.com",
+      isAdmin: true,
+    });
+
+    expect(res).toStrictEqual({
+      _id: res._id,
+      fullName: "tom cruise",
+      emailAddress: "tom@example.com",
+      isAdmin: true,
+    });
+
+    const doc = await db.collections.users.findOne({ _id: res._id });
+    expect(doc).toStrictEqual({
+      _id: res._id,
+      fullName: "tom cruise",
+      emailAddress: "tom@example.com",
+      isAdmin: true,
+    });
+  });
+
+  it("supports renaming _id in output", async () => {
+    const schema = createSchema("users", {
+      name: string(),
+    }).rename({
+      _id: "id",
+    });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
+
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+    });
+
+    expect(res).toStrictEqual({
+      id: res.id,
+      name: "tom",
+    });
+
+    const doc = await db.collections.users.findOne({ name: "tom" });
+    expect(doc).toStrictEqual({
+      id: res.id,
+      name: "tom",
+    });
+  });
+
+  it("keeps existing output field when a rename target exists", async () => {
+    const schema = createSchema("users", {
+      name: string(),
+      alias: number(),
+    }).rename({
+      name: "alias",
+    });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
+
+    const res = await db.collections.users.insertOne({
+      name: "tom",
+      alias: 1,
+    });
+
+    expect(res).toStrictEqual({
+      _id: res._id,
+      alias: 1,
+    });
+
+    const doc = await db.collections.users.findOne({ _id: res._id });
+    expect(doc).toStrictEqual({
+      _id: res._id,
+      alias: 1,
+    });
+  });
+
+  it("keep virtual field when a conflicting rename targets exists", async () => {
+    const schema = createSchema("users", {
+      firstName: string(),
+      nickname: string(),
+      isAdmin: boolean(),
+    })
+      .rename({
+        nickname: "role",
+      })
+      .virtuals({
+        role: virtual("isAdmin", ({ isAdmin }) => (isAdmin ? "admin" : "user")),
+      });
+    const schemas = defineSchemas({ users: schema });
+    const db = createDatabase(client.db(), schemas);
+
+    const res = await db.collections.users.insertOne({
+      firstName: "tom",
+      nickname: "captain",
+      isAdmin: true,
+    });
+
+    expect(res).toStrictEqual({
+      _id: res._id,
+      firstName: "tom",
+      isAdmin: true,
+      role: "admin",
+    });
+
+    const doc = await db.collections.users.findOne({ _id: res._id });
+    expect(doc).toStrictEqual({
+      _id: res._id,
+      firstName: "tom",
+      isAdmin: true,
+      role: "admin",
+    });
+  });
+
   it("creates index", async () => {
     const schema = createSchema("users", {
       firstname: string(),
@@ -209,6 +333,76 @@ describe("Schema", async () => {
         age: 0,
       });
     }).rejects.toThrowError("E11000 duplicate key error");
+  });
+
+  it("builds mongodb validator json schema", () => {
+    const schema = createSchema("users", {
+      name: string(),
+      age: number().optional(),
+      nickname: string().nullable(),
+    });
+
+    const validator = getValidator(schema);
+    expect(validator).toStrictEqual({
+      $jsonSchema: {
+        bsonType: "object",
+        additionalProperties: false,
+        properties: {
+          _id: { bsonType: "objectId" },
+          name: { bsonType: "string" },
+          age: { type: "number" },
+          nickname: { bsonType: ["string", "null"] },
+        },
+        required: ["name", "nickname"],
+      },
+    });
+  });
+
+  it("enforces schema validation at database level", async () => {
+    const schema = createSchema("users", {
+      name: string(),
+      age: number().optional(),
+      nickname: string().nullable(),
+    }).validation({
+      validationLevel: "strict",
+      validationAction: "error",
+    });
+
+    const db = createDatabase(client.db(), defineSchemas({ users: schema }));
+    await db.isReady;
+
+    const rawCollection = client.db().collection("users");
+
+    await expect(
+      rawCollection.insertOne({
+        name: "tom",
+        nickname: "tc",
+      }),
+    ).resolves.toMatchObject({
+      acknowledged: true,
+    });
+
+    await expect(
+      rawCollection.insertOne({
+        name: "tom",
+        age: "not-a-number",
+        nickname: "tc",
+      }),
+    ).rejects.toThrowError("Document failed validation");
+
+    await expect(
+      rawCollection.insertOne({
+        name: "tom",
+      }),
+    ).rejects.toThrowError("Document failed validation");
+
+    await expect(
+      rawCollection.insertOne({
+        name: "tom",
+        nickname: "tc",
+        extra: true,
+      }),
+    ).rejects.toThrowError("Document failed validation");
   });
 
   it("supports custom _id type with string", async () => {

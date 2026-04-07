@@ -8,10 +8,10 @@ import type { PipelineStage } from "../types/pipeline-stage";
  */
 export abstract class Pipeline<TSchema extends AnySchema, TOutput> {
   constructor(
-    protected _schema: TSchema,
-    protected _collection: MongoCollection<InferSchemaData<TSchema>>,
-    protected _readyPromise: Promise<void>,
-    protected _pipeline: PipelineStage<InferSchemaData<TSchema>>[] = [],
+    protected schema: TSchema,
+    protected collection: MongoCollection<InferSchemaData<TSchema>>,
+    protected readyPromise: Promise<void>,
+    protected pipeline: PipelineStage<InferSchemaData<TSchema>>[] = [],
   ) {}
 
   /**
@@ -21,26 +21,29 @@ export abstract class Pipeline<TSchema extends AnySchema, TOutput> {
    * @returns Pipeline instance
    */
   public addStage(stage: PipelineStage<InferSchemaData<TSchema>>): this {
-    this._pipeline.push(stage);
+    this.pipeline.push(stage);
     return this;
   }
 
-  protected abstract exec(): Promise<TOutput>;
+  protected abstract exec(): Promise<TOutput[]>;
 
-  public then<TResult1 = TOutput, TResult2 = never>(
-    onfulfilled?: ((value: TOutput) => TResult1 | PromiseLike<TResult1>) | undefined | null,
+  public async then<TResult1 = TOutput[], TResult2 = never>(
+    onfulfilled?: ((value: TOutput[]) => TResult1 | PromiseLike<TResult1>) | undefined | null,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null,
   ): Promise<TResult1 | TResult2> {
+    await this.readyPromise;
     return this.exec().then(onfulfilled, onrejected);
   }
 
-  public catch<TResult = never>(
+  public async catch<TResult = never>(
     onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null,
-  ): Promise<TOutput | TResult> {
+  ): Promise<TOutput[] | TResult> {
+    await this.readyPromise;
     return this.exec().catch(onrejected);
   }
 
-  public finally(onfinally?: (() => void) | undefined | null): Promise<TOutput> {
+  public async finally(onfinally?: (() => void) | undefined | null): Promise<TOutput[]> {
+    await this.readyPromise;
     return this.exec().finally(onfinally);
   }
 }
