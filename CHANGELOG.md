@@ -1,5 +1,19 @@
 # monarch-orm
 
+## 0.11.0
+
+### Minor Changes
+
+- f09d62c: Relations now use typed field references instead of plain strings for `from` and `to` fields.
+
+  Relations also support default population options via `.options()`, which apply whenever a relation is populated with `true` and can be overridden per query.
+
+- fee15c4: The `many` relation now supports all field type combinations: single→single, single→array, array→single, and array→array.
+
+  The `refs` relation has been removed. Use `many` with an array `from` field instead.
+
+- 5fc2c49: Bumped minimum required MongoDB driver version to `>= 7.0.0`.
+
 ## 0.10.0
 
 ### Minor Changes
