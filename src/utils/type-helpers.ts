@@ -23,3 +23,4 @@ export type KnownObjectKeys<T> = { [K in keyof T as KnownKey<K>]: T[K] };
 export type RequiredObject<T> = { [K in keyof T as undefined extends T[K] ? never : K]: Exclude<T[K], undefined> };
 
 export type IdFirst<T> = "_id" extends keyof T ? { _id: T["_id"] } & Omit<T, "_id"> : T;
+export type OptionalIdFirst<T> = "_id" extends keyof T ? { _id?: T["_id"] } & Omit<T, "_id"> : T;

@@ -33,7 +33,7 @@ import type {
   InferTypeInput,
   InferTypeOutput,
 } from "../types/type-helpers";
-import type { IdFirst, IsNever, Merge, Pretty, TrueKeys } from "../utils/type-helpers";
+import type { IdFirst, IsNever, Merge, OptionalIdFirst, Pretty, TrueKeys } from "../utils/type-helpers";
 import type { AnySchema, Schema } from "./schema";
 import type { InferVirtualOutput } from "./virtuals";
 
@@ -45,7 +45,7 @@ export type WithOptionalObjectId<T> = T extends { _id: MonarchObjectId }
   : T;
 
 export type InferSchemaInput<T extends AnySchema> = Pretty<
-  _InferTypeObjectInput<WithOptionalObjectId<InferSchemaTypes<T>>>
+  OptionalIdFirst<_InferTypeObjectInput<WithOptionalObjectId<InferSchemaTypes<T>>>>
 >;
 export type _InferSchemaData<T extends AnySchema> = _InferTypeObjectOutput<InferSchemaTypes<T>>;
 export type InferSchemaData<T extends AnySchema> = Pretty<_InferSchemaData<T>>;
