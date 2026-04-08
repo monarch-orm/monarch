@@ -25,9 +25,9 @@ describe("schema groups", async () => {
     tutorId: objectId().optional(),
   });
 
-  const userGroup = defineSchemas({ UserSchema }).withRelations((s) => ({
+  const userGroup = defineSchemas({ UserSchema }).withRelations((r) => ({
     users: {
-      tutor: s.users.$one.users({ from: "tutorId", to: "_id" }),
+      tutor: r.one.users({ from: r.users.tutorId, to: r.users._id }),
     },
   }));
 
@@ -42,9 +42,9 @@ describe("schema groups", async () => {
     parentId: objectId().optional(),
   });
 
-  const contentGroup = defineSchemas({ PostSchema, CategorySchema }).withRelations((s) => ({
+  const contentGroup = defineSchemas({ PostSchema, CategorySchema }).withRelations((r) => ({
     categories: {
-      parent: s.categories.$one.categories({ from: "parentId", to: "_id" }),
+      parent: r.one.categories({ from: r.categories.parentId, to: r.categories._id }),
     },
   }));
 
@@ -52,12 +52,12 @@ describe("schema groups", async () => {
   const mergedGroups = mergeSchemas(userGroup, contentGroup);
 
   // Merged: with cross-group relations added after merge
-  const withCrossGroupRelations = mergedGroups.withRelations((s) => ({
+  const withCrossGroupRelations = mergedGroups.withRelations((r) => ({
     users: {
-      posts: s.users.$many.posts({ from: "_id", to: "authorId" }),
+      posts: r.many.posts({ from: r.users._id, to: r.posts.authorId }),
     },
     posts: {
-      author: s.posts.$one.users({ from: "authorId", to: "_id" }),
+      author: r.one.users({ from: r.posts.authorId, to: r.users._id }),
     },
   }));
 
@@ -147,15 +147,15 @@ describe("schema groups", async () => {
         mentorId: objectId().optional(),
       });
 
-      const groupA = defineSchemas({ UsersSchema }).withRelations((s) => ({
+      const groupA = defineSchemas({ UsersSchema }).withRelations((r) => ({
         users: {
-          tutor: s.users.$one.users({ from: "tutorId", to: "_id" }),
+          tutor: r.one.users({ from: r.users.tutorId, to: r.users._id }),
         },
       }));
 
-      const groupB = defineSchemas({ UsersSchema }).withRelations((s) => ({
+      const groupB = defineSchemas({ UsersSchema }).withRelations((r) => ({
         users: {
-          mentor: s.users.$one.users({ from: "mentorId", to: "_id" }),
+          mentor: r.one.users({ from: r.users.mentorId, to: r.users._id }),
         },
       }));
 
@@ -185,15 +185,15 @@ describe("schema groups", async () => {
         mentorId: objectId().optional(),
       });
 
-      const groupA = defineSchemas({ UsersSchema }).withRelations((s) => ({
+      const groupA = defineSchemas({ UsersSchema }).withRelations((r) => ({
         users: {
-          person: s.users.$one.users({ from: "tutorId", to: "_id" }),
+          person: r.one.users({ from: r.users.tutorId, to: r.users._id }),
         },
       }));
 
-      const groupB = defineSchemas({ UsersSchema }).withRelations((s) => ({
+      const groupB = defineSchemas({ UsersSchema }).withRelations((r) => ({
         users: {
-          person: s.users.$one.users({ from: "mentorId", to: "_id" }),
+          person: r.one.users({ from: r.users.mentorId, to: r.users._id }),
         },
       }));
 

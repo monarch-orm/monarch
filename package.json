@@ -9,37 +9,37 @@
   "exports": {
     ".": {
       "require": {
-        "types": "./dist/index.d.cts",
+        "types": "./dist/index.d.ts",
         "default": "./dist/index.cjs"
       },
       "import": {
-        "types": "./dist/index.d.mts",
+        "types": "./dist/index.d.ts",
         "default": "./dist/index.mjs"
       }
     },
     "./types": {
       "require": {
-        "types": "./dist/types/index.d.cts",
+        "types": "./dist/types/index.d.ts",
         "default": "./dist/types/index.cjs"
       },
       "import": {
-        "types": "./dist/types/index.d.mts",
+        "types": "./dist/types/index.d.ts",
         "default": "./dist/types/index.mjs"
       }
     },
     "./operators": {
       "require": {
-        "types": "./dist/operators/index.d.cts",
+        "types": "./dist/operators/index.d.ts",
         "default": "./dist/operators/index.cjs"
       },
       "import": {
-        "types": "./dist/operators/index.d.mts",
+        "types": "./dist/operators/index.d.ts",
         "default": "./dist/operators/index.mjs"
       }
     }
   },
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown && tsc",
     "release": "pnpm run build && changeset publish",
     "check": "tsc && pnpm run format",
     "format": "prettier . --check",
@@ -74,11 +74,11 @@
   },
   "homepage": "https://github.com/monarch-orm/monarch#readme",
   "peerDependencies": {
-    "mongodb": ">= 6.0.0"
+    "mongodb": ">= 7.0.0"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
-    "@types/node": "^20.19.27",
+    "@types/node": "^25.5.2",
     "@vitest/coverage-v8": "^4.0.16",
     "mongodb-memory-server": "^11.0.1",
     "prettier": "^3.7.4",

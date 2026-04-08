@@ -1,5 +1,5 @@
 import type { FindOptions, Collection as MongoCollection, Filter as MongoFilter } from "mongodb";
-import type { AnyRelations } from "../../relations/relations";
+import type { AnyRelation } from "../../relations/relations";
 import type { InferRelationObjectPopulation, Population } from "../../relations/type-helpers";
 import { type AnySchema, Schema } from "../../schema/schema";
 import type { Filter, InferSchemaData, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
@@ -15,19 +15,19 @@ import { Query, type QueryOutput } from "./base";
  */
 export class FindOneQuery<
   TSchema extends AnySchema,
-  TDbRelations extends Record<string, AnyRelations>,
+  TRelations extends Record<string, Record<string, AnyRelation>>,
   TPopulate extends Record<string, any> = {},
   TOutput = InferSchemaOutput<TSchema>,
   TOmit extends ["omit" | "select", keyof any] = ["omit", InferSchemaOmit<TSchema>],
 > extends Query<TSchema, QueryOutput<TOutput, TOmit, TPopulate> | null> {
   private _projection: Projection<InferSchemaOutput<TSchema>>;
-  private _population: Population<TDbRelations, TSchema["name"]> = {};
+  private _population: Population<TRelations, TSchema["name"]> = {};
 
   constructor(
     schema: TSchema,
     collection: MongoCollection<InferSchemaData<TSchema>>,
     readyPromise: Promise<void>,
-    private _relations: TDbRelations,
+    private _relations: TRelations,
     private _filter: Filter<TSchema>,
     private _options: FindOptions = {},
   ) {
@@ -54,7 +54,7 @@ export class FindOneQuery<
    */
   public omit<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
     this._projection = makeProjection("omit", projection);
-    return this as FindOneQuery<TSchema, TDbRelations, TPopulate, TOutput, ["omit", TrueKeys<TProjection>]>;
+    return this as FindOneQuery<TSchema, TRelations, TPopulate, TOutput, ["omit", TrueKeys<TProjection>]>;
   }
 
   /**
@@ -65,7 +65,7 @@ export class FindOneQuery<
    */
   public select<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
     this._projection = makeProjection("select", projection);
-    return this as FindOneQuery<TSchema, TDbRelations, TPopulate, TOutput, ["select", TrueKeys<TProjection>]>;
+    return this as FindOneQuery<TSchema, TRelations, TPopulate, TOutput, ["select", TrueKeys<TProjection>]>;
   }
 
   /**
@@ -74,12 +74,12 @@ export class FindOneQuery<
    * @param population - Relation population config
    * @returns FindOneQuery instance
    */
-  public populate<TPopulation extends Population<TDbRelations, TSchema["name"]>>(population: TPopulation) {
+  public populate<TPopulation extends Population<TRelations, TSchema["name"]>>(population: TPopulation) {
     this._population = population;
     return this as FindOneQuery<
       TSchema,
-      TDbRelations,
-      InferRelationObjectPopulation<TDbRelations, TSchema["name"], TPopulation>,
+      TRelations,
+      InferRelationObjectPopulation<TRelations, TSchema["name"], TPopulation>,
       TOutput,
       TOmit
     >;

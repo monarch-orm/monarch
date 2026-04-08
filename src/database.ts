@@ -94,7 +94,7 @@ export class Database<TSchemas extends Schemas<any, any>> {
    *
    * @param options - Init options
    */
-  public async initialize(options?: InitOptions<keyof TSchemas["schemas"] & string>) {
+  public async initialize(options?: InitOptions<keyof TSchemas["schemas"] & string>): Promise<void> {
     const promises: Promise<void>[] = [];
     const collections = Object.values(this.collections).map((c: Collection<any, any>): CollectionInit => {
       const resolver = createAsyncResolver();
@@ -102,7 +102,7 @@ export class Database<TSchemas extends Schemas<any, any>> {
       return { schema: c.schema, defaultValidation: this.options?.validation, resolver };
     });
     initializeCollections(this.db, collections, options);
-    return Promise.all(promises);
+    return Promise.all(promises).then<void>(() => undefined);
   }
 
   /**
@@ -126,7 +126,7 @@ export class Database<TSchemas extends Schemas<any, any>> {
    * @returns Array of collection keys
    */
   public listCollections() {
-    return Object.keys(this.collections) as (keyof this["collections"])[];
+    return Object.keys(this.collections) as Extract<keyof this["collections"], string>[];
   }
 }
 
