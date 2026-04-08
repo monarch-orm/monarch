@@ -277,7 +277,7 @@ export function createShape<TTypes extends Record<string, AnyMonarchType>>(types
 
 export class Schemas<
   TSchemas extends Record<string, AnySchema>,
-  TRelations extends Record<string, Record<string, AnyRelation> | undefined> = {},
+  TRelations extends Record<string, Record<string, AnyRelation>> = {},
 > {
   constructor(
     public schemas: TSchemas,
@@ -286,7 +286,7 @@ export class Schemas<
     this.withRelations = this.withRelations.bind(this);
   }
 
-  public withRelations<T extends SchemasRelations<TSchemas>>(fn: RelationsFn<TSchemas, T>) {
+  public withRelations<T extends SchemasRelations<TSchemas>>(fn: RelationsFn<TSchemas, TRelations, T>) {
     const mergedRelations = mergeRelations(this.schemas, this.relations, fn);
     return new Schemas(this.schemas, mergedRelations);
   }

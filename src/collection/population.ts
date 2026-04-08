@@ -1,8 +1,8 @@
 import type { Sort as MongoSort } from "mongodb";
 import { MonarchError } from "../errors";
-import type { AnyRelation, AnyRelations } from "../relations/relations";
+import { Relation, type AnyRelation } from "../relations/relations";
 import type { Population, PopulationOptions } from "../relations/type-helpers";
-import { type AnySchema, Schema } from "../schema/schema";
+import { Schema, type AnySchema } from "../schema/schema";
 import { hashString, mapOneOrArray } from "../utils/misc";
 import { addExtraInputsToProjection, makePopulationProjection, makeProjection } from "./projection";
 import type { Meta } from "./types/expressions";
@@ -27,10 +27,10 @@ function createPopulationVarGenerator() {
   return (relation: AnyRelation): string => {
     const key = [
       relation.relation,
-      relation.schema.schema.name,
-      relation.schema.field,
-      relation.target.schema.name,
-      relation.target.field,
+      relation.schemaField.schema.name,
+      relation.schemaField.field,
+      relation.targetField.schema.name,
+      relation.targetField.field,
     ].join("_");
 
     const base = `mn_${hashString(key)}`;
@@ -43,7 +43,7 @@ function createPopulationVarGenerator() {
 export function addPopulations(
   pipeline: PipelineStage<any>[],
   opts: {
-    relations: Record<string, AnyRelations>;
+    relations: Record<string, Record<string, AnyRelation>>;
     population: Population<any, any>;
     schema: AnySchema;
     nextVar?: (relation: AnyRelation) => string;
@@ -61,16 +61,18 @@ export function addPopulations(
       throw new MonarchError(`No relations found for schema '${opts.schema.name}'`);
     }
 
-    const _options = options === true ? {} : (options as PopulationOptions<any, any, any>);
+    const _options =
+      options === true ? (Relation.options(relation) ?? {}) : (options as PopulationOptions<any, any, any>);
 
     // get population projection or fallback to schema omit projection
     const projection =
-      makePopulationProjection(_options) ?? makeProjection("omit", Schema.options(relation.target.schema)?.omit ?? {});
+      makePopulationProjection(_options) ??
+      makeProjection("omit", Schema.options(relation.targetField.schema)?.omit ?? {});
 
     // ensure required fields are in projection
     const extras = addExtraInputsToProjection(
       projection,
-      Schema.options(relation.target.schema)?.virtuals,
+      Schema.options(relation.targetField.schema)?.virtuals,
       _options.populate,
     );
 
@@ -88,7 +90,7 @@ export function addPopulations(
       ? addPopulations(populationPipeline, {
           population: _options.populate,
           relations: opts.relations,
-          schema: relation.target.schema,
+          schema: relation.targetField.schema,
           nextVar,
         })
       : undefined;
@@ -133,11 +135,11 @@ export function expandPopulations(opts: {
           populations: population.populations,
           projection: population.projection,
           extras: population.extras,
-          schema: population.relation.target.schema,
+          schema: population.relation.targetField.schema,
           doc,
         });
       }
-      return Schema.output(population.relation.target.schema, doc, population.projection, population.extras);
+      return Schema.output(population.relation.targetField.schema, doc, population.projection, population.extras);
     });
     delete populatedDoc[population.fieldVariable];
   }
@@ -156,15 +158,15 @@ function addPopulationPipeline(
   },
 ): { fieldVariable: string } {
   const { relation } = opts;
-  const collectionName = relation.target.schema.name;
+  const collectionName = relation.targetField.schema.name;
   const fieldVariable = opts.nextVar(relation);
 
   if (relation.relation === "refs") {
     pipeline.push({
       $lookup: {
         from: collectionName,
-        localField: relation.schema.field,
-        foreignField: relation.target.field,
+        localField: relation.schemaField.field,
+        foreignField: relation.targetField.field,
         as: fieldVariable,
         pipeline: opts.populationPipeline,
       },
@@ -187,7 +189,7 @@ function addPopulationPipeline(
       $lookup: {
         from: collectionName,
         let: {
-          [fieldVariable]: `$${relation.schema.field}`,
+          [fieldVariable]: `$${relation.schemaField.field}`,
         },
         pipeline: [
           {
@@ -195,7 +197,7 @@ function addPopulationPipeline(
               $expr: {
                 $and: [
                   { $ne: [`$$${fieldVariable}`, null] },
-                  { $eq: [`$${relation.target.field}`, `$$${fieldVariable}`] },
+                  { $eq: [`$${relation.targetField.field}`, `$$${fieldVariable}`] },
                 ],
               },
             },
@@ -212,13 +214,13 @@ function addPopulationPipeline(
       $lookup: {
         from: collectionName,
         let: {
-          [fieldVariable]: `$${relation.schema.field}`,
+          [fieldVariable]: `$${relation.schemaField.field}`,
         },
         pipeline: [
           {
             $match: {
               $expr: {
-                $eq: [`$${relation.target.field}`, `$$${fieldVariable}`],
+                $eq: [`$${relation.targetField.field}`, `$$${fieldVariable}`],
               },
             },
           },

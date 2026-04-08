@@ -39,23 +39,23 @@ describe("many relation tests", async () => {
     });
 
     const schemas = defineSchemas({ UserSchema, PostSchema, BookSchema });
-    const relations = schemas.withRelations((s) => ({
+    const relations = schemas.withRelations((r) => ({
       users: {
-        tutor: s.users.$one.users({ from: "tutor", to: "_id" }),
-        posts: s.users.$many.posts({ from: "_id", to: "author" }),
-        books: s.users.$many.books({ from: "_id", to: "author" }),
+        tutor: r.$one.users({ from: r.users.tutor, to: r.users._id }),
+        posts: r.$many.posts({ from: r.users._id, to: r.posts.author }),
+        books: r.$many.books({ from: r.users._id, to: r.books.author }),
       },
       posts: {
-        author: s.posts.$one.users({ from: "author", to: "_id" }),
+        author: r.$one.users({ from: r.posts.author, to: r.users._id }),
       },
       books: {
-        author: s.books.$one.users({ from: "author", to: "_id" }),
+        author: r.$one.users({ from: r.books.author, to: r.users._id }),
       },
     }));
     return createDatabase(client.db(), relations);
   };
 
-  it("should populate many relation (posts)", async () => {
+  it("should populate a many relation across collections", async () => {
     const { collections } = setupSchemasAndCollections();
 
     const user = await collections.users.insertOne({
@@ -95,7 +95,7 @@ describe("many relation tests", async () => {
     expect(populatedUsers[1].tutor).toStrictEqual(user);
   });
 
-  it("should handle multiple many relations with same field", async () => {
+  it("should populate multiple many relations to different collections", async () => {
     const { collections } = setupSchemasAndCollections();
 
     const user = await collections.users.insertOne({
@@ -123,7 +123,7 @@ describe("many relation tests", async () => {
     expect(populatedUser?.books?.[0]?.title).toBe("Book 1");
   });
 
-  it("should handle deep nested populations with many relations", async () => {
+  it("should support deep nested population across many and one relations", async () => {
     const PostSchemaWithEditor = createSchema("posts", {
       title: string(),
       contents: string(),
@@ -143,14 +143,14 @@ describe("many relation tests", async () => {
     });
 
     const schemas = defineSchemas({ UserSchemaForEditor, PostSchemaWithEditor, BookSchemaDeep });
-    const relations = schemas.withRelations((s) => ({
+    const relations = schemas.withRelations((r) => ({
       users: {
-        posts: s.users.$many.posts({ from: "_id", to: "author" }),
-        books: s.users.$many.books({ from: "_id", to: "author" }),
+        posts: r.$many.posts({ from: r.users._id, to: r.posts.author }),
+        books: r.$many.books({ from: r.users._id, to: r.books.author }),
       },
       posts: {
-        author: s.posts.$one.users({ from: "author", to: "_id" }),
-        editor: s.posts.$one.users({ from: "editor", to: "_id" }),
+        author: r.$one.users({ from: r.posts.author, to: r.users._id }),
+        editor: r.$one.users({ from: r.posts.editor, to: r.users._id }),
       },
     }));
     const db = createDatabase(client.db(), relations);

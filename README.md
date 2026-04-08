@@ -111,13 +111,13 @@ Use `withRelations()` on a schemas object to define typed relations.
 ```ts
 const schemas = defineSchemas({ userSchema, postSchema });
 
-const schemasWithRelations = schemas.withRelations((s) => ({
+const schemasWithRelations = schemas.withRelations((r) => ({
   users: {
-    posts: s.users.$many.posts({ from: "_id", to: "authorId" }),
+    posts: r.$many.posts({ from: r.users._id, to: r.posts.authorId }),
   },
   posts: {
-    author: s.posts.$one.users({ from: "authorId", to: "_id" }),
-    contributors: s.posts.$refs.users({ from: "contributorIds", to: "_id" }),
+    author: r.$one.users({ from: r.posts.authorId, to: r.users._id }),
+    contributors: r.$refs.users({ from: r.posts.contributorIds, to: r.users._id }),
   },
 }));
 ```
@@ -127,7 +127,7 @@ const schemasWithRelations = schemas.withRelations((s) => ({
 Use `$one` when a local field points to a single document in another collection.
 
 ```ts
-author: s.posts.$one.users({ from: "authorId", to: "_id" })
+author: r.$one.users({ from: r.posts.authorId, to: r.users._id })
 ```
 
 #### Many relations
@@ -135,7 +135,7 @@ author: s.posts.$one.users({ from: "authorId", to: "_id" })
 Use `$many` when one document relates to many documents in another collection by matching a local field against a foreign field.
 
 ```ts
-posts: s.users.$many.posts({ from: "_id", to: "authorId" })
+posts: r.$many.posts({ from: r.users._id, to: r.posts.authorId })
 ```
 
 #### Refs relations
@@ -143,7 +143,40 @@ posts: s.users.$many.posts({ from: "_id", to: "authorId" })
 Use `$refs` when a local array field stores multiple references to another collection.
 
 ```ts
-contributors: s.posts.$refs.users({ from: "contributorIds", to: "_id" })
+contributors: r.$refs.users({ from: r.posts.contributorIds, to: r.users._id })
+```
+
+#### Default relation options
+
+Call `.options()` on any relation to set default population behavior. These defaults apply whenever the relation is populated with `true`. They can always be overridden by passing explicit options at query time.
+
+```ts
+const schemasWithRelations = schemas.withRelations((r) => ({
+  users: {
+    posts: r.$many.posts({ from: r.users._id, to: r.posts.authorId }).options({
+      sort: { createdAt: -1 },
+      limit: 10,
+      select: { title: true, createdAt: true },
+    }),
+  },
+  posts: {
+    author: r.$one.users({ from: r.posts.authorId, to: r.users._id }).options({
+      omit: { passwordHash: true },
+    }),
+  },
+}));
+```
+
+With these defaults in place, populating with `true` applies them automatically:
+
+```ts
+// applies sort, limit, and select from the relation definition
+const users = await db.collections.users.find().populate({ posts: true });
+
+// override the defaults for this query
+const users2 = await db.collections.users.find().populate({
+  posts: { sort: { title: 1 }, limit: 5 },
+});
 ```
 
 ### Schema Groups
@@ -159,9 +192,9 @@ const userSchema = createSchema("users", {
   tutorId: objectId().optional(),
 });
 
-const userGroup = defineSchemas({ userSchema }).withRelations((s) => ({
+const userGroup = defineSchemas({ userSchema }).withRelations((r) => ({
   users: {
-    tutor: s.users.$one.users({ from: "tutorId", to: "_id" }),
+    tutor: r.$one.users({ from: r.users.tutorId, to: r.users._id }),
   },
 }));
 
@@ -175,9 +208,9 @@ const categorySchema = createSchema("categories", {
   parentId: objectId().optional(),
 });
 
-const contentGroup = defineSchemas({ postSchema, categorySchema }).withRelations((s) => ({
+const contentGroup = defineSchemas({ postSchema, categorySchema }).withRelations((r) => ({
   categories: {
-    parent: s.categories.$one.categories({ from: "parentId", to: "_id" }),
+    parent: r.$one.categories({ from: r.categories.parentId, to: r.categories._id }),
   },
 }));
 
@@ -187,12 +220,12 @@ const schemas = mergeSchemas(userGroup, contentGroup);
 You can also add cross-group relations after merging:
 
 ```ts
-const schemasWithCrossGroupRelations = schemas.withRelations((s) => ({
+const schemasWithCrossGroupRelations = schemas.withRelations((r) => ({
   users: {
-    posts: s.users.$many.posts({ from: "_id", to: "authorId" }),
+    posts: r.$many.posts({ from: r.users._id, to: r.posts.authorId }),
   },
   posts: {
-    author: s.posts.$one.users({ from: "authorId", to: "_id" }),
+    author: r.$one.users({ from: r.posts.authorId, to: r.users._id }),
   },
 }));
 ```

@@ -40,16 +40,16 @@ describe("refs relation tests", async () => {
       });
 
     const schemas = defineSchemas({ UserSchema, PostSchema });
-    const relations = schemas.withRelations((s) => ({
+    const relations = schemas.withRelations((r) => ({
       posts: {
-        author: s.posts.$one.users({ from: "author", to: "_id" }),
-        contributors: s.posts.$refs.users({ from: "contributors", to: "_id" }),
+        author: r.$one.users({ from: r.posts.author, to: r.users._id }),
+        contributors: r.$refs.users({ from: r.posts.contributors, to: r.users._id }),
       },
     }));
     return createDatabase(client.db(), relations);
   };
 
-  it("should populate refs relation (contributors)", async () => {
+  it("should populate a refs relation", async () => {
     const { collections } = setupSchemasAndCollections();
 
     const user = await collections.users.insertOne({
@@ -79,7 +79,7 @@ describe("refs relation tests", async () => {
     expect(populatedPost?.contributors[0]).toStrictEqual(user2);
   });
 
-  it("should populate refs relation with multiple contributors", async () => {
+  it("should populate a refs relation alongside a one relation", async () => {
     const { collections } = setupSchemasAndCollections();
 
     const user1 = await collections.users.insertOne({

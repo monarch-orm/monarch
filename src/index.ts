@@ -23,6 +23,13 @@ export { ObjectId } from "mongodb";
 export { Collection } from "./collection/collection";
 export { createClient, createDatabase, Database, type DatabaseOptions } from "./database";
 export { MonarchError, MonarchParseError } from "./errors";
+export {
+  mergeRelations,
+  Relation,
+  RelationField,
+  type RelationsFn,
+  type SchemasRelations,
+} from "./relations/relations";
 export { createSchema, createShape, defineSchemas, mergeSchemas, Schema, Schemas } from "./schema/schema";
 export type {
   Condition,

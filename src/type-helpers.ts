@@ -1,7 +1,7 @@
 import { Collection } from "./collection/collection";
 import type { BoolProjection, WithProjection } from "./collection/types/query-options";
 import type { Database } from "./database";
-import { type AnyRelations } from "./relations/relations";
+import { type AnyRelation } from "./relations/relations";
 import type { InferRelationObjectPopulation, Population, PopulationBaseOptions } from "./relations/type-helpers";
 import type { AnySchema } from "./schema/schema";
 import type { InferSchemaInput, InferSchemaOmit, InferSchemaOutput } from "./schema/type-helpers";
@@ -9,7 +9,7 @@ import type { IdFirst, Merge, Pretty } from "./utils/type-helpers";
 
 export type DbCollections<
   TSchemas extends Record<string, AnySchema>,
-  TRelations extends Record<string, AnyRelations>,
+  TRelations extends Record<string, Record<string, AnyRelation>>,
 > = {
   [K in keyof TSchemas]: Collection<TSchemas[K], TRelations>;
 } & {};

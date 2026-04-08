@@ -9,7 +9,7 @@ import {
   ObjectId,
   type WithoutId,
 } from "mongodb";
-import type { AnyRelations } from "../relations/relations";
+import type { AnyRelation } from "../relations/relations";
 import { type AnySchema, Schema } from "../schema/schema";
 import type { DistinctFilter, Filter, InferSchemaData, InferSchemaInput, UpdateFilter } from "../schema/type-helpers";
 import { MonarchObjectId } from "../types/objectId";
@@ -35,7 +35,7 @@ import { UpdateOneQuery } from "./query/update-one";
  * Collection interface for MongoDB operations.
  *
  */
-export class Collection<TSchema extends AnySchema, TDbRelations extends Record<string, AnyRelations>> {
+export class Collection<TSchema extends AnySchema, TRelations extends Record<string, Record<string, AnyRelation>>> {
   protected collection: MongoCollection<InferSchemaData<TSchema>>;
 
   /**
@@ -48,7 +48,7 @@ export class Collection<TSchema extends AnySchema, TDbRelations extends Record<s
   constructor(
     db: Db,
     protected readyPromise: Promise<void>,
-    protected relations: TDbRelations,
+    protected relations: TRelations,
     public readonly schema: TSchema,
   ) {
     this.collection = db.collection<InferSchemaData<TSchema>>(this.schema.name);

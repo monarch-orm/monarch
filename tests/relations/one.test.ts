@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { createDatabase, createSchema, defineSchemas } from "../../src";
-import { array, boolean, date, objectId, string } from "../../src/types";
+import { array, boolean, date, number, objectId, string, union } from "../../src/types";
 import { createMockDatabase } from "../mock";
 
 describe("one relation tests", async () => {
@@ -21,6 +21,7 @@ describe("one relation tests", async () => {
 
   const setupSchemasAndCollections = () => {
     const UserSchema = createSchema("users", {
+      uid: union(objectId().optional(), number()),
       name: string(),
       isAdmin: boolean(),
       createdAt: date(),
@@ -36,20 +37,20 @@ describe("one relation tests", async () => {
     });
 
     const schemas = defineSchemas({ UserSchema, PostSchema });
-    const relations = schemas.withRelations((s) => ({
+    const relations = schemas.withRelations((r) => ({
       users: {
-        tutor: s.users.$one.users({ from: "tutor", to: "_id" }),
+        tutor: r.$one.users({ from: r.users.tutor, to: r.users._id }),
       },
       posts: {
-        author: s.posts.$one.users({ from: "author", to: "_id" }),
-        editor: s.posts.$one.users({ from: "editor", to: "_id" }),
-        contributors: s.posts.$refs.users({ from: "contributors", to: "_id" }),
+        author: r.$one.users({ from: r.posts.author, to: r.users._id }),
+        editor: r.$one.users({ from: r.posts.editor, to: r.users._id }),
+        contributors: r.$refs.users({ from: r.posts.contributors, to: r.users._id }),
       },
     }));
     return createDatabase(client.db(), relations);
   };
 
-  it("should populate one relation (tutor)", async () => {
+  it("should populate a self-referencing one relation", async () => {
     const { collections } = setupSchemasAndCollections();
 
     const user = await collections.users.insertOne({
@@ -71,7 +72,7 @@ describe("one relation tests", async () => {
     });
   });
 
-  it("should populate one relation (author)", async () => {
+  it("should populate a one relation across collections", async () => {
     const { collections } = setupSchemasAndCollections();
 
     const user = await collections.users.insertOne({
@@ -108,13 +109,13 @@ describe("one relation tests", async () => {
     });
 
     const schemas = defineSchemas({ UserSchemaWithRefs, PostSchemaWithRefs });
-    const relations = schemas.withRelations((s) => ({
+    const relations = schemas.withRelations((r) => ({
       users: {
-        tutor: s.users.$one.users({ from: "tutor", to: "_id" }),
-        posts: s.users.$many.posts({ from: "_id", to: "author" }),
+        tutor: r.$one.users({ from: r.users.tutor, to: r.users._id }),
+        posts: r.$many.posts({ from: r.users._id, to: r.posts.author }),
       },
       posts: {
-        author: s.posts.$one.users({ from: "author", to: "_id" }),
+        author: r.$one.users({ from: r.posts.author, to: r.users._id }),
       },
     }));
     const db = createDatabase(client.db(), relations);
