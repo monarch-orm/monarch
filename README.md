@@ -6,7 +6,7 @@ Type-safe MongoDB collections, schema parsing, relations, and query helpers for 
 
 - **Strongly Typed:** Infer schema inputs and outputs for queries and collection methods.
 - **Flexible Schemas:** Use transforms, defaults, validation, virtuals, renames, and default omit rules.
-- **Typed Relations:** Define one, many, and refs relations with typed population support.
+- **Typed Relations:** Define one and many relations with typed population support.
 - **Familiar MongoDB Access:** Use typed query methods, operators, aggregation, and raw collection access.
 - **Collection Initialization:** Automatically initialize collections with indexes and JSON Schema validation, or do it manually.
 
@@ -113,37 +113,76 @@ const schemas = defineSchemas({ userSchema, postSchema });
 
 const schemasWithRelations = schemas.withRelations((r) => ({
   users: {
-    posts: r.$many.posts({ from: r.users._id, to: r.posts.authorId }),
+    posts: r.many.posts({ from: r.users._id, to: r.posts.authorId }),
   },
   posts: {
-    author: r.$one.users({ from: r.posts.authorId, to: r.users._id }),
-    contributors: r.$refs.users({ from: r.posts.contributorIds, to: r.users._id }),
+    author: r.one.users({ from: r.posts.authorId, to: r.users._id }),
+    contributors: r.many.users({ from: r.posts.contributorIds, to: r.users._id }),
   },
 }));
 ```
 
 #### One relations
 
-Use `$one` when a local field points to a single document in another collection.
+Use `one` when a single local field points to a single document in another collection.
 
 ```ts
-author: r.$one.users({ from: r.posts.authorId, to: r.users._id })
+const userSchema = createSchema("users", { name: string() });
+const postSchema = createSchema("posts", {
+  title: string(),
+  authorId: objectId(),
+});
+
+const schemas = defineSchemas({ userSchema, postSchema });
+
+schemas.withRelations((r) => ({
+  posts: {
+    author: r.one.users({ from: r.posts.authorId, to: r.users._id }),
+  },
+}));
 ```
 
 #### Many relations
 
-Use `$many` when one document relates to many documents in another collection by matching a local field against a foreign field.
+Use `many` when one document relates to many documents in another collection. The `from` and `to` fields can each be a single value or an array, so you can model different relation patterns:
+
+- **single → single** — a foreign key on the target side (`user._id` → `post.authorId`)
+- **single → array** — the target embeds a list of references (`post._id` → `tag.postIds`)
+- **array → single** — the source embeds a list of references (`post.tagIds` → `tag._id`)
+- **array → array** — match documents that share any element between two arrays (`post.tagIds` → `event.tagIds`)
 
 ```ts
-posts: r.$many.posts({ from: r.users._id, to: r.posts.authorId })
-```
+const userSchema = createSchema("users", { name: string() });
+const postSchema = createSchema("posts", {
+  title: string(),
+  authorId: objectId(),
+  tagIds: array(objectId()).default([]),
+});
+const tagSchema = createSchema("tags", {
+  name: string(),
+  postIds: array(objectId()).default([]),
+});
+const eventSchema = createSchema("events", {
+  name: string(),
+  tagIds: array(objectId()).default([]),
+});
 
-#### Refs relations
+const schemas = defineSchemas({ userSchema, postSchema, tagSchema, eventSchema });
 
-Use `$refs` when a local array field stores multiple references to another collection.
-
-```ts
-contributors: r.$refs.users({ from: r.posts.contributorIds, to: r.users._id })
+schemas.withRelations((r) => ({
+  users: {
+    // single → single: all posts where post.authorId equals user._id
+    posts: r.many.posts({ from: r.users._id, to: r.posts.authorId }),
+  },
+  posts: {
+    // single → array: all tags where post._id appears in tag.postIds
+    taggedBy: r.many.tags({ from: r.posts._id, to: r.tags.postIds }),
+    // array → single: all tags where tag._id appears in post.tagIds
+    tags: r.many.tags({ from: r.posts.tagIds, to: r.tags._id }),
+    // array → array: all events where event.tagIds shares any value with post.tagIds
+    relatedEvents: r.many.events({ from: r.posts.tagIds, to: r.events.tagIds }),
+  },
+}));
 ```
 
 #### Default relation options
@@ -153,14 +192,14 @@ Call `.options()` on any relation to set default population behavior. These defa
 ```ts
 const schemasWithRelations = schemas.withRelations((r) => ({
   users: {
-    posts: r.$many.posts({ from: r.users._id, to: r.posts.authorId }).options({
+    posts: r.many.posts({ from: r.users._id, to: r.posts.authorId }).options({
       sort: { createdAt: -1 },
       limit: 10,
       select: { title: true, createdAt: true },
     }),
   },
   posts: {
-    author: r.$one.users({ from: r.posts.authorId, to: r.users._id }).options({
+    author: r.one.users({ from: r.posts.authorId, to: r.users._id }).options({
       omit: { passwordHash: true },
     }),
   },
@@ -194,7 +233,7 @@ const userSchema = createSchema("users", {
 
 const userGroup = defineSchemas({ userSchema }).withRelations((r) => ({
   users: {
-    tutor: r.$one.users({ from: r.users.tutorId, to: r.users._id }),
+    tutor: r.one.users({ from: r.users.tutorId, to: r.users._id }),
   },
 }));
 
@@ -210,7 +249,7 @@ const categorySchema = createSchema("categories", {
 
 const contentGroup = defineSchemas({ postSchema, categorySchema }).withRelations((r) => ({
   categories: {
-    parent: r.$one.categories({ from: r.categories.parentId, to: r.categories._id }),
+    parent: r.one.categories({ from: r.categories.parentId, to: r.categories._id }),
   },
 }));
 
@@ -222,10 +261,10 @@ You can also add cross-group relations after merging:
 ```ts
 const schemasWithCrossGroupRelations = schemas.withRelations((r) => ({
   users: {
-    posts: r.$many.posts({ from: r.users._id, to: r.posts.authorId }),
+    posts: r.many.posts({ from: r.users._id, to: r.posts.authorId }),
   },
   posts: {
-    author: r.$one.users({ from: r.posts.authorId, to: r.users._id }),
+    author: r.one.users({ from: r.posts.authorId, to: r.users._id }),
   },
 }));
 ```

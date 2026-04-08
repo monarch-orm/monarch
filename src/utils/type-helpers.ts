@@ -14,6 +14,7 @@ export type MergeN1All<T extends any[]> = T extends [...infer Head, infer Tail]
 export type Index<T, K> = K extends keyof T ? T[K] : never;
 export type IsNever<T> = [T] extends [never] ? true : false;
 export type ExtractIfArray<T> = T extends (infer U)[] ? U : T;
+export type OrArray<T> = T | T[];
 export type TrueKeys<T> = keyof {
   [K in keyof T as T[K] extends true ? K : never]: T[K];
 };

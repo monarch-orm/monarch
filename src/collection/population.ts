@@ -161,7 +161,7 @@ function addPopulationPipeline(
   const collectionName = relation.targetField.schema.name;
   const fieldVariable = opts.nextVar(relation);
 
-  if (relation.relation === "refs") {
+  if (relation.relation === "many") {
     pipeline.push({
       $lookup: {
         from: collectionName,
@@ -184,58 +184,23 @@ function addPopulationPipeline(
     });
   }
 
-  if (relation.relation === "many") {
-    pipeline.push({
-      $lookup: {
-        from: collectionName,
-        let: {
-          [fieldVariable]: `$${relation.schemaField.field}`,
-        },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $and: [
-                  { $ne: [`$$${fieldVariable}`, null] },
-                  { $eq: [`$${relation.targetField.field}`, `$$${fieldVariable}`] },
-                ],
-              },
-            },
-          },
-          ...(opts.populationPipeline ?? []),
-        ],
-        as: fieldVariable,
-      },
-    });
-  }
-
   if (relation.relation === "one") {
     pipeline.push({
       $lookup: {
         from: collectionName,
-        let: {
-          [fieldVariable]: `$${relation.schemaField.field}`,
-        },
-        pipeline: [
-          {
-            $match: {
-              $expr: {
-                $eq: [`$${relation.targetField.field}`, `$$${fieldVariable}`],
-              },
-            },
-          },
-          ...(opts.populationPipeline ?? []),
-        ],
+        localField: relation.schemaField.field,
+        foreignField: relation.targetField.field,
         as: fieldVariable,
+        pipeline: opts.populationPipeline,
       },
     });
-    // Unwind the populated field if it's a single relation
+    // Unwind the single result, or null if no match
     pipeline.push({
       $set: {
         [fieldVariable]: {
           $cond: {
-            if: { $gt: [{ $size: `$${fieldVariable}` }, 0] }, // Skip population if value is null
-            then: { $arrayElemAt: [`$${fieldVariable}`, 0] }, // Unwind the first populated result
+            if: { $gt: [{ $size: `$${fieldVariable}` }, 0] },
+            then: { $arrayElemAt: [`$${fieldVariable}`, 0] },
             else: null,
           },
         },

@@ -42,11 +42,11 @@ describe("Population Options", async () => {
     const schemas = defineSchemas({ UserSchema, PostSchema });
     const relations = schemas.withRelations((r) => ({
       users: {
-        posts: r.$many.posts({ from: r.users._id, to: r.posts.author }),
+        posts: r.many.posts({ from: r.users._id, to: r.posts.author }),
       },
       posts: {
-        author: r.$one.users({ from: r.posts.author, to: r.users._id }),
-        contributors: r.$refs.users({ from: r.posts.contributors, to: r.users._id }),
+        author: r.one.users({ from: r.posts.author, to: r.users._id }),
+        contributors: r.many.users({ from: r.posts.contributors, to: r.users._id }),
       },
     }));
     return createDatabase(client.db(), relations);
@@ -201,15 +201,15 @@ describe("Population Options", async () => {
       contributors: array(objectId()).optional().default([]),
     });
 
-    describe("$one", () => {
+    describe("one", () => {
       it("should apply default select when populating with true", async () => {
         const schemas = defineSchemas({ UserSchema, PostSchema });
         const relations = schemas.withRelations((r) => ({
           users: {
-            posts: r.$many.posts({ from: r.users._id, to: r.posts.author }),
+            posts: r.many.posts({ from: r.users._id, to: r.posts.author }),
           },
           posts: {
-            author: r.$one.users({ from: r.posts.author, to: r.users._id }).options({ select: { name: true } }),
+            author: r.one.users({ from: r.posts.author, to: r.users._id }).options({ select: { name: true } }),
           },
         }));
         const { collections } = createDatabase(client.db(), relations);
@@ -227,10 +227,10 @@ describe("Population Options", async () => {
         const schemas = defineSchemas({ UserSchema, PostSchema });
         const relations = schemas.withRelations((r) => ({
           users: {
-            posts: r.$many.posts({ from: r.users._id, to: r.posts.author }),
+            posts: r.many.posts({ from: r.users._id, to: r.posts.author }),
           },
           posts: {
-            author: r.$one.users({ from: r.posts.author, to: r.users._id }).options({ omit: { isAdmin: true } }),
+            author: r.one.users({ from: r.posts.author, to: r.users._id }).options({ omit: { isAdmin: true } }),
           },
         }));
         const { collections } = createDatabase(client.db(), relations);
@@ -245,15 +245,15 @@ describe("Population Options", async () => {
       });
     });
 
-    describe("$many", () => {
+    describe("many", () => {
       it("should apply default select when populating with true", async () => {
         const schemas = defineSchemas({ UserSchema, PostSchema });
         const relations = schemas.withRelations((r) => ({
           users: {
-            posts: r.$many.posts({ from: r.users._id, to: r.posts.author }).options({ select: { title: true } }),
+            posts: r.many.posts({ from: r.users._id, to: r.posts.author }).options({ select: { title: true } }),
           },
           posts: {
-            author: r.$one.users({ from: r.posts.author, to: r.users._id }),
+            author: r.one.users({ from: r.posts.author, to: r.users._id }),
           },
         }));
         const { collections } = createDatabase(client.db(), relations);
@@ -272,10 +272,10 @@ describe("Population Options", async () => {
         const schemas = defineSchemas({ UserSchema, PostSchema });
         const relations = schemas.withRelations((r) => ({
           users: {
-            posts: r.$many.posts({ from: r.users._id, to: r.posts.author }).options({ omit: { contents: true } }),
+            posts: r.many.posts({ from: r.users._id, to: r.posts.author }).options({ omit: { contents: true } }),
           },
           posts: {
-            author: r.$one.users({ from: r.posts.author, to: r.users._id }),
+            author: r.one.users({ from: r.posts.author, to: r.users._id }),
           },
         }));
         const { collections } = createDatabase(client.db(), relations);
@@ -294,10 +294,10 @@ describe("Population Options", async () => {
         const schemas = defineSchemas({ UserSchema, PostSchema });
         const relations = schemas.withRelations((r) => ({
           users: {
-            posts: r.$many.posts({ from: r.users._id, to: r.posts.author }).options({ sort: { title: -1 }, limit: 2 }),
+            posts: r.many.posts({ from: r.users._id, to: r.posts.author }).options({ sort: { title: -1 }, limit: 2 }),
           },
           posts: {
-            author: r.$one.users({ from: r.posts.author, to: r.users._id }),
+            author: r.one.users({ from: r.posts.author, to: r.users._id }),
           },
         }));
         const { collections } = createDatabase(client.db(), relations);
@@ -316,13 +316,12 @@ describe("Population Options", async () => {
       });
     });
 
-    describe("$refs", () => {
+    describe("many (array → single)", () => {
       it("should apply default select when populating with true", async () => {
         const schemas = defineSchemas({ UserSchema, PostSchema });
         const relations = schemas.withRelations((r) => ({
           posts: {
-            contributors: r.$refs
-              .users({ from: r.posts.contributors, to: r.users._id })
+            contributors: r.many.users({ from: r.posts.contributors, to: r.users._id })
               .options({ select: { name: true } }),
           },
         }));
@@ -346,8 +345,7 @@ describe("Population Options", async () => {
         const schemas = defineSchemas({ UserSchema, PostSchema });
         const relations = schemas.withRelations((r) => ({
           posts: {
-            contributors: r.$refs
-              .users({ from: r.posts.contributors, to: r.users._id })
+            contributors: r.many.users({ from: r.posts.contributors, to: r.users._id })
               .options({ sort: { name: 1 }, limit: 2 }),
           },
         }));
@@ -376,12 +374,12 @@ describe("Population Options", async () => {
         const schemas = defineSchemas({ UserSchema, PostSchema });
         const baseRelations = schemas.withRelations((r) => ({
           posts: {
-            author: r.$one.users({ from: r.posts.author, to: r.users._id }),
+            author: r.one.users({ from: r.posts.author, to: r.users._id }),
           },
         }));
         const relations = baseRelations.withRelations((r) => ({
           users: {
-            posts: r.$many.posts({ from: r.users._id, to: r.posts.author }).options({
+            posts: r.many.posts({ from: r.users._id, to: r.posts.author }).options({
               populate: { author: true },
             }),
           },
@@ -406,12 +404,12 @@ describe("Population Options", async () => {
         const schemas = defineSchemas({ UserSchema, PostSchema });
         const baseRelations = schemas.withRelations((r) => ({
           posts: {
-            author: r.$one.users({ from: r.posts.author, to: r.users._id }),
+            author: r.one.users({ from: r.posts.author, to: r.users._id }),
           },
         }));
         const relations = baseRelations.withRelations((r) => ({
           users: {
-            posts: r.$many.posts({ from: r.users._id, to: r.posts.author }).options({
+            posts: r.many.posts({ from: r.users._id, to: r.posts.author }).options({
               populate: { author: true },
             }),
           },

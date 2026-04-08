@@ -27,7 +27,7 @@ describe("schema groups", async () => {
 
   const userGroup = defineSchemas({ UserSchema }).withRelations((r) => ({
     users: {
-      tutor: r.$one.users({ from: r.users.tutorId, to: r.users._id }),
+      tutor: r.one.users({ from: r.users.tutorId, to: r.users._id }),
     },
   }));
 
@@ -44,7 +44,7 @@ describe("schema groups", async () => {
 
   const contentGroup = defineSchemas({ PostSchema, CategorySchema }).withRelations((r) => ({
     categories: {
-      parent: r.$one.categories({ from: r.categories.parentId, to: r.categories._id }),
+      parent: r.one.categories({ from: r.categories.parentId, to: r.categories._id }),
     },
   }));
 
@@ -54,10 +54,10 @@ describe("schema groups", async () => {
   // Merged: with cross-group relations added after merge
   const withCrossGroupRelations = mergedGroups.withRelations((r) => ({
     users: {
-      posts: r.$many.posts({ from: r.users._id, to: r.posts.authorId }),
+      posts: r.many.posts({ from: r.users._id, to: r.posts.authorId }),
     },
     posts: {
-      author: r.$one.users({ from: r.posts.authorId, to: r.users._id }),
+      author: r.one.users({ from: r.posts.authorId, to: r.users._id }),
     },
   }));
 
@@ -149,13 +149,13 @@ describe("schema groups", async () => {
 
       const groupA = defineSchemas({ UsersSchema }).withRelations((r) => ({
         users: {
-          tutor: r.$one.users({ from: r.users.tutorId, to: r.users._id }),
+          tutor: r.one.users({ from: r.users.tutorId, to: r.users._id }),
         },
       }));
 
       const groupB = defineSchemas({ UsersSchema }).withRelations((r) => ({
         users: {
-          mentor: r.$one.users({ from: r.users.mentorId, to: r.users._id }),
+          mentor: r.one.users({ from: r.users.mentorId, to: r.users._id }),
         },
       }));
 
@@ -187,13 +187,13 @@ describe("schema groups", async () => {
 
       const groupA = defineSchemas({ UsersSchema }).withRelations((r) => ({
         users: {
-          person: r.$one.users({ from: r.users.tutorId, to: r.users._id }),
+          person: r.one.users({ from: r.users.tutorId, to: r.users._id }),
         },
       }));
 
       const groupB = defineSchemas({ UsersSchema }).withRelations((r) => ({
         users: {
-          person: r.$one.users({ from: r.users.mentorId, to: r.users._id }),
+          person: r.one.users({ from: r.users.mentorId, to: r.users._id }),
         },
       }));
 

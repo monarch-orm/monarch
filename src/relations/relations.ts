@@ -1,7 +1,7 @@
 import type { ObjectId } from "mongodb";
 import { type AnySchema } from "../schema/schema";
 import type { InferSchemaData, InferSchemaInput } from "../schema/type-helpers";
-import type { ExtractIfArray, Index, Merge, MergeN1 } from "../utils/type-helpers";
+import type { ExtractIfArray, Index, Merge, MergeN1, OrArray } from "../utils/type-helpers";
 import type { PopulationOptions, RelationPopulationOptions } from "./type-helpers";
 
 export type AnyRelation = Relation<any, any, any, any>;
@@ -11,7 +11,7 @@ export type AnyRelation = Relation<any, any, any, any>;
  *
  */
 export class Relation<
-  TRelation extends "one" | "many" | "refs",
+  TRelation extends "one" | "many",
   TFields extends {
     from: AnyRelationField;
     to: AnyRelationField;
@@ -61,12 +61,12 @@ export function mergeRelations<
 >(schemas: TSchemas, relations: TRelations, fn: RelationsFn<TSchemas, TRelations, T>) {
   const input = new Proxy({} as RelationsBuilder<TSchemas, TRelations>, {
     get: (_target, relationKey: string) => {
-      if (relationKey === "$one" || relationKey === "$many" || relationKey === "$refs") {
+      if (relationKey === "one" || relationKey === "many") {
         // relation fns
         return new Proxy({} as Record<string, RelationFn<any, any, any>>, {
           get: (_target, _targetSchema: string) => {
             return (fields: Parameters<RelationFn<any, any, any>>[0]): AnyRelation => {
-              return new Relation(relationKey.slice(1) as "one" | "many" | "refs", fields.from, fields.to, undefined);
+              return new Relation(relationKey, fields.from, fields.to, undefined);
             };
           },
         });
@@ -105,11 +105,9 @@ type RelationsBuilder<
 > = Merge<
   {
     /** Defines a one-to-one relationship. */
-    $one: SchemaOne<TSchemas, TRelations>;
+    one: SchemaOne<TSchemas, TRelations>;
     /** Defines a one-to-many relationship. */
-    $many: SchemaMany<TSchemas, TRelations>;
-    /** Defines an array of one-to-one relationships. */
-    $refs: SchemaRefs<TSchemas, TRelations>;
+    many: SchemaMany<TSchemas, TRelations>;
   },
   {
     [K in keyof TSchemas]: SchemaFields<TSchemas[K]>;
@@ -138,12 +136,6 @@ type SchemaMany<
 > = {
   [TargetK in keyof TSchemas]: Many<TSchemas[TargetK], TRelations>;
 };
-type SchemaRefs<
-  TSchemas extends Record<string, AnySchema>,
-  TRelations extends Record<string, Record<string, AnyRelation>>,
-> = {
-  [TargetK in keyof TSchemas]: Refs<TSchemas[TargetK], TRelations>;
-};
 
 type One<TTarget extends AnySchema, TRelations extends Record<string, Record<string, AnyRelation>>> = RelationFn<
   "one",
@@ -155,27 +147,25 @@ type Many<TTarget extends AnySchema, TRelations extends Record<string, Record<st
   TTarget,
   TRelations
 >;
-type Refs<TTarget extends AnySchema, TRelations extends Record<string, Record<string, AnyRelation>>> = RelationFn<
-  "refs",
-  TTarget,
-  TRelations
->;
 
 type RelationFn<
-  TRelation extends "one" | "many" | "refs",
+  TRelation extends "one" | "many",
   TTarget extends AnySchema,
   TRelations extends Record<string, Record<string, AnyRelation>>,
 > = <
   TSchemaField extends RelationField<
     any,
-    // refs only accept array fields
-    TRelation extends "refs" ? (string | number | ObjectId)[] : string | number | ObjectId,
+    // one does not accept array fields
+    TRelation extends "many" ? OrArray<string | number | ObjectId> : string | number | ObjectId,
     AnySchema
   >,
   TTargetField extends RelationField<
     any,
     // target field type must match schema field type
-    ExtractIfArray<NonNullable<Index<InferSchemaData<TSchemaField["schema"]>, TSchemaField["field"]>>>,
+    // one does not accept array fields
+    TRelation extends "many"
+      ? OrArray<ExtractIfArray<NonNullable<Index<InferSchemaData<TSchemaField["schema"]>, TSchemaField["field"]>>>>
+      : ExtractIfArray<NonNullable<Index<InferSchemaData<TSchemaField["schema"]>, TSchemaField["field"]>>>,
     TTarget
   >,
 >(fields: {

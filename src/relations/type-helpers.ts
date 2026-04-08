@@ -30,7 +30,7 @@ export type PopulationOptions<
 };
 export type RelationPopulationOptions<
   TRelations extends Record<string, Record<string, AnyRelation>>,
-  TRelation extends "one" | "many" | "refs",
+  TRelation extends "one" | "many",
   TTargetField extends AnyRelationField,
 > = TRelation extends "one"
   ? PopulationBaseOptions<
@@ -44,13 +44,7 @@ export type RelationPopulationOptions<
         TRelations,
         TTargetField["schema"]["name"]
       >
-    : TRelation extends "refs"
-      ? PopulationOptions<
-          ExtractIfArray<InferRelationPopulation<TRelations, TRelation, TTargetField, true>>,
-          TRelations,
-          TTargetField["schema"]["name"]
-        >
-      : never;
+    : never;
 export type Population<
   TRelations extends Record<string, Record<string, AnyRelation>>,
   TName extends keyof TRelations,
@@ -83,7 +77,7 @@ type WithNestedPopulate<
 
 export type InferRelationPopulation<
   TRelations extends Record<string, Record<string, AnyRelation>>,
-  TRelation extends "one" | "many" | "refs",
+  TRelation extends "one" | "many",
   TTargetField extends AnyRelationField,
   TPopulationOptions extends PopulationOptions<any, any, any> | true | undefined,
 > = TRelation extends "one"
@@ -108,18 +102,7 @@ export type InferRelationPopulation<
         TTargetField["schema"]["name"],
         TPopulationOptions
       >[]
-    : TRelation extends "refs"
-      ? WithNestedPopulate<
-          WithRelationPopulation<
-            InferSchemaOutput<TTargetField["schema"]>,
-            TPopulationOptions,
-            InferSchemaOmit<TTargetField["schema"]>
-          >,
-          TRelations,
-          TTargetField["schema"]["name"],
-          TPopulationOptions
-        >[]
-      : never;
+    : never;
 
 export type InferRelationObjectPopulation<
   TRelations extends Record<string, Record<string, AnyRelation>>,

@@ -39,12 +39,12 @@ describe("one relation tests", async () => {
     const schemas = defineSchemas({ UserSchema, PostSchema });
     const relations = schemas.withRelations((r) => ({
       users: {
-        tutor: r.$one.users({ from: r.users.tutor, to: r.users._id }),
+        tutor: r.one.users({ from: r.users.tutor, to: r.users._id }),
       },
       posts: {
-        author: r.$one.users({ from: r.posts.author, to: r.users._id }),
-        editor: r.$one.users({ from: r.posts.editor, to: r.users._id }),
-        contributors: r.$refs.users({ from: r.posts.contributors, to: r.users._id }),
+        author: r.one.users({ from: r.posts.author, to: r.users._id }),
+        editor: r.one.users({ from: r.posts.editor, to: r.users._id }),
+        contributors: r.many.users({ from: r.posts.contributors, to: r.users._id }),
       },
     }));
     return createDatabase(client.db(), relations);
@@ -111,11 +111,11 @@ describe("one relation tests", async () => {
     const schemas = defineSchemas({ UserSchemaWithRefs, PostSchemaWithRefs });
     const relations = schemas.withRelations((r) => ({
       users: {
-        tutor: r.$one.users({ from: r.users.tutor, to: r.users._id }),
-        posts: r.$many.posts({ from: r.users._id, to: r.posts.author }),
+        tutor: r.one.users({ from: r.users.tutor, to: r.users._id }),
+        posts: r.many.posts({ from: r.users._id, to: r.posts.author }),
       },
       posts: {
-        author: r.$one.users({ from: r.posts.author, to: r.users._id }),
+        author: r.one.users({ from: r.posts.author, to: r.users._id }),
       },
     }));
     const db = createDatabase(client.db(), relations);
