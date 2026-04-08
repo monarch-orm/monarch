@@ -321,7 +321,8 @@ describe("Population Options", async () => {
         const schemas = defineSchemas({ UserSchema, PostSchema });
         const relations = schemas.withRelations((r) => ({
           posts: {
-            contributors: r.many.users({ from: r.posts.contributors, to: r.users._id })
+            contributors: r.many
+              .users({ from: r.posts.contributors, to: r.users._id })
               .options({ select: { name: true } }),
           },
         }));
@@ -345,7 +346,8 @@ describe("Population Options", async () => {
         const schemas = defineSchemas({ UserSchema, PostSchema });
         const relations = schemas.withRelations((r) => ({
           posts: {
-            contributors: r.many.users({ from: r.posts.contributors, to: r.users._id })
+            contributors: r.many
+              .users({ from: r.posts.contributors, to: r.users._id })
               .options({ sort: { name: 1 }, limit: 2 }),
           },
         }));
