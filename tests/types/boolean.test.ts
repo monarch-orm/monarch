@@ -21,11 +21,11 @@ describe("boolean", () => {
     });
 
     // @ts-expect-error
-    expect(() => Schema.input(schema, { isActive: "true" })).toThrowError("expected 'boolean' received 'string'");
+    expect(() => Schema.input(schema, { isActive: "true" })).toThrow("expected 'boolean' received 'string'");
     // @ts-expect-error
-    expect(() => Schema.input(schema, { isActive: 1 })).toThrowError("expected 'boolean' received 'number'");
+    expect(() => Schema.input(schema, { isActive: 1 })).toThrow("expected 'boolean' received 'number'");
     // @ts-expect-error
-    expect(() => Schema.input(schema, { isActive: {} })).toThrowError("expected 'boolean' received 'object'");
+    expect(() => Schema.input(schema, { isActive: {} })).toThrow("expected 'boolean' received 'object'");
   });
 
   test("works with nullable and optional", () => {

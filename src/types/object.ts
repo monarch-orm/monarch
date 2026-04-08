@@ -23,22 +23,18 @@ export class MonarchObject<T extends Record<string, AnyMonarchType>> extends Mon
       if (typeof input === "object" && input !== null) {
         for (const key of Object.keys(input)) {
           if (!(key in types)) {
-            throw MonarchParseError.create({ message: `unknown field '${key}', object may only specify known fields` });
+            throw MonarchParseError.create(`unknown field '${key}', object may only specify known fields`);
           }
         }
         const parsed = {} as InferTypeObjectOutput<T>;
         for (const [key, type] of Object.entries(types) as [keyof T & string, T[keyof T]][]) {
-          try {
-            const parser = MonarchType.parser(type);
-            const result = parser(input[key as keyof typeof input] as InferTypeInput<T[keyof T]>);
-            if (result !== undefined) parsed[key as keyof typeof parsed] = result;
-          } catch (error) {
-            throw MonarchParseError.fromCause({ path: key, cause: error });
-          }
+          const parser = MonarchType.parser(type, key);
+          const result = parser(input[key as keyof typeof input] as InferTypeInput<T[keyof T]>);
+          if (result !== undefined) parsed[key as keyof typeof parsed] = result;
         }
         return parsed;
       }
-      throw MonarchParseError.create({ message: `expected 'object' received '${typeof input}'` });
+      throw MonarchParseError.create(`expected 'object' received '${typeof input}'`);
     });
   }
 
@@ -56,7 +52,7 @@ export class MonarchObject<T extends Record<string, AnyMonarchType>> extends Mon
         throw MonarchParseError.fromCause({ path: key, cause: error });
       }
     }
-    throw MonarchParseError.create({ message: `unknown field '${key}'` });
+    throw MonarchParseError.create(`unknown field '${key}'`);
   }
 
   protected jsonSchema(): JSONSchema {

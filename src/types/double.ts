@@ -18,7 +18,7 @@ export class MonarchDouble extends MonarchType<Double | number, number> {
     super((input) => {
       if (input instanceof Double) return input.value;
       if (typeof input === "number") return input;
-      throw MonarchParseError.create({ message: `expected 'Double' or 'number' received '${typeof input}'` });
+      throw MonarchParseError.create(`expected 'Double' or 'number' received '${typeof input}'`);
     });
   }
 

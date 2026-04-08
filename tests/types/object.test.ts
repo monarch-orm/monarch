@@ -13,23 +13,23 @@ describe("object", () => {
     });
 
     // @ts-expect-error
-    expect(() => Schema.input(schema, {})).toThrowError("expected 'object' received 'undefined'");
+    expect(() => Schema.input(schema, {})).toThrow("expected 'object' received 'undefined'");
     expect(() =>
       // @ts-expect-error
       Schema.input(schema, { permissions: { canUpdate: "yes" } }),
-    ).toThrowError("permissions.canUpdate: expected 'boolean' received 'string'");
+    ).toThrow("permissions.canUpdate: expected 'boolean' received 'string'");
     // fields are validates in the order they are registered in type
     expect(() =>
       // @ts-expect-error
       Schema.input(schema, { permissions: { role: false } }),
-    ).toThrowError("permissions.canUpdate: expected 'boolean' received 'undefined'");
+    ).toThrow("permissions.canUpdate: expected 'boolean' received 'undefined'");
     // unknwon fields are rejected
     expect(() =>
       Schema.input(schema, {
         // @ts-expect-error
         permissions: { canUpdate: true, role: "admin", canCreate: true },
       }),
-    ).toThrowError("unknown field 'canCreate', object may only specify known fields");
+    ).toThrow("unknown field 'canCreate', object may only specify known fields");
     const data = Schema.input(schema, {
       permissions: { canUpdate: true, role: "moderator" },
     });
@@ -55,7 +55,7 @@ describe("object", () => {
         // @ts-expect-error
         user: { name: "John", profile: { age: "thirty", tags: [] } },
       }),
-    ).toThrowError("user.profile.age: expected 'number' received 'string'");
+    ).toThrow("user.profile.age: expected 'number' received 'string'");
 
     // nested array element error
     expect(() =>
@@ -63,7 +63,7 @@ describe("object", () => {
         // @ts-expect-error
         user: { name: "John", profile: { age: 30, tags: ["valid", 123] } },
       }),
-    ).toThrowError("user.profile.tags.1: expected 'string' received 'number'");
+    ).toThrow("user.profile.tags.1: expected 'string' received 'number'");
 
     // valid data
     const data = Schema.input(schema, {

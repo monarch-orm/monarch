@@ -41,7 +41,7 @@
   "scripts": {
     "build": "tsdown && tsc",
     "release": "pnpm run build && changeset publish",
-    "check": "tsc && pnpm run format",
+    "check": "tsc --noEmit && pnpm run format",
     "format": "prettier . --check",
     "format:fix": "prettier . --write",
     "watch": "vitest",

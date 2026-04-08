@@ -1,4 +1,4 @@
-import type { StrictUpdateFilter } from "mongodb";
+import { type StrictUpdateFilter } from "mongodb";
 import { MonarchParseError } from "../errors";
 import {
   MonarchArray,
@@ -37,9 +37,9 @@ export function updateParser<T extends AnyMonarchType>(
   const input: StrictUpdateFilter<any> = {};
 
   // Field update operators: parse value through field's type
-  if (update.$set) input.$set = parseFieldsOperator(schemaType, update.$set, updates, setOnInsertSkipSet);
-  if (update.$min) input.$min = parseFieldsOperator(schemaType, update.$min, updates);
-  if (update.$max) input.$max = parseFieldsOperator(schemaType, update.$max, updates);
+  if (update.$set) input.$set = parseFieldsOperator("$set", schemaType, update.$set, updates, setOnInsertSkipSet);
+  if (update.$min) input.$min = parseFieldsOperator("$min", schemaType, update.$min, updates);
+  if (update.$max) input.$max = parseFieldsOperator("$max", schemaType, update.$max, updates);
 
   // Array update operators: require array field, parse element value (supports $each modifier)
   if (update.$push) input.$push = parseArrayOperator("$push", schemaType, update.$push, updates);
@@ -88,21 +88,26 @@ export function updateParser<T extends AnyMonarchType>(
 }
 
 function parseFieldsOperator(
+  op: "$set" | "$min" | "$max",
   schemaType: AnyMonarchType,
   fields: Record<string, unknown>,
   schemaUpdates?: Map<string, { op: string; value: any }>,
   setOnInsertSkipSet?: Set<string>,
 ) {
-  const parsed: Record<string, any> = {};
-  for (const [path, value] of Object.entries(fields)) {
-    if (value === undefined) continue;
-    const pathType = MonarchType.index(schemaType, path.split("."), -1);
-    const parser = MonarchType.parser(pathType);
-    parsed[path] = parser(value);
-    if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
-    setOnInsertSkipSet?.add(path);
+  try {
+    const parsed: Record<string, any> = {};
+    for (const [path, value] of Object.entries(fields)) {
+      if (value === undefined) continue;
+      const pathType = MonarchType.index(schemaType, path.split("."), -1);
+      const parser = MonarchType.parser(pathType, path);
+      parsed[path] = parser(value);
+      if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+      setOnInsertSkipSet?.add(path);
+    }
+    return parsed;
+  } catch (error) {
+    throw MonarchParseError.fromCause({ path: op, cause: error });
   }
-  return parsed;
 }
 
 function parseArrayOperator(
@@ -111,24 +116,28 @@ function parseArrayOperator(
   fields: Record<string, unknown>,
   schemaUpdates?: Map<string, { op: string; value: any }>,
 ) {
-  const parsed: Record<string, any> = {};
-  for (const [path, value] of Object.entries(fields)) {
-    if (value === undefined) continue;
-    const pathType = MonarchType.index(schemaType, path.split("."), -1);
-    if (!MonarchType.isInstanceOf(pathType, MonarchArray)) {
-      throw MonarchParseError.create({ path, message: `operator '${op}' requires an array field` });
+  try {
+    const parsed: Record<string, any> = {};
+    for (const [path, value] of Object.entries(fields)) {
+      if (value === undefined) continue;
+      const pathType = MonarchType.index(schemaType, path.split("."), -1);
+      if (!MonarchType.isInstanceOf(pathType, MonarchArray)) {
+        throw MonarchParseError.fromCause({ path, cause: MonarchParseError.create(`operator '${op}' requires an array field`) });
+      }
+      const elementType = MonarchArray.type(pathType);
+      const parser = MonarchType.parser(elementType, path);
+      if (typeof value === "object" && value !== null && "$each" in value) {
+        const ops = value as { $each: unknown[]; [k: string]: unknown };
+        parsed[path] = { ...ops, $each: ops.$each.map(parser) };
+      } else {
+        parsed[path] = parser(value);
+      }
+      if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
     }
-    const elementType = MonarchArray.type(pathType);
-    const parser = MonarchType.parser(elementType);
-    if (typeof value === "object" && value !== null && "$each" in value) {
-      const ops = value as { $each: unknown[]; [k: string]: unknown };
-      parsed[path] = { ...ops, $each: ops.$each.map(parser) };
-    } else {
-      parsed[path] = parser(value);
-    }
-    if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+    return parsed;
+  } catch (error) {
+    throw MonarchParseError.fromCause({ path: op, cause: error });
   }
-  return parsed;
 }
 
 function parseArrayAllOperator(
@@ -136,19 +145,23 @@ function parseArrayAllOperator(
   fields: Record<string, unknown[]>,
   schemaUpdates?: Map<string, { op: string; value: any }>,
 ) {
-  const parsed: Record<string, any> = {};
-  for (const [path, value] of Object.entries(fields)) {
-    if (value === undefined) continue;
-    const pathType = MonarchType.index(schemaType, path.split("."), -1);
-    if (!MonarchType.isInstanceOf(pathType, MonarchArray)) {
-      throw MonarchParseError.create({ path, message: `operator '$pullAll' requires an array field` });
+  try {
+    const parsed: Record<string, any> = {};
+    for (const [path, value] of Object.entries(fields)) {
+      if (value === undefined) continue;
+      const pathType = MonarchType.index(schemaType, path.split("."), -1);
+      if (!MonarchType.isInstanceOf(pathType, MonarchArray)) {
+        throw MonarchParseError.fromCause({ path, cause: MonarchParseError.create(`operator '$pullAll' requires an array field`) });
+      }
+      const elementType = MonarchArray.type(pathType);
+      const parser = MonarchType.parser(elementType, path);
+      parsed[path] = value.map(parser);
+      if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
     }
-    const elementType = MonarchArray.type(pathType);
-    const parser = MonarchType.parser(elementType);
-    parsed[path] = value.map(parser);
-    if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+    return parsed;
+  } catch (error) {
+    throw MonarchParseError.fromCause({ path: "$pullAll", cause: error });
   }
-  return parsed;
 }
 
 function parseArrayPassThroughOperator(
@@ -157,17 +170,21 @@ function parseArrayPassThroughOperator(
   fields: Record<string, unknown>,
   schemaUpdates?: Map<string, { op: string; value: any }>,
 ) {
-  const parsed: Record<string, any> = {};
-  for (const [path, value] of Object.entries(fields)) {
-    if (value === undefined) continue;
-    const pathType = MonarchType.index(schemaType, path.split("."), -1);
-    if (!MonarchType.isInstanceOf(pathType, MonarchArray)) {
-      throw MonarchParseError.create({ path, message: `operator '${op}' requires an array field` });
+  try {
+    const parsed: Record<string, any> = {};
+    for (const [path, value] of Object.entries(fields)) {
+      if (value === undefined) continue;
+      const pathType = MonarchType.index(schemaType, path.split("."), -1);
+      if (!MonarchType.isInstanceOf(pathType, MonarchArray)) {
+        throw MonarchParseError.fromCause({ path, cause: MonarchParseError.create(`operator '${op}' requires an array field`) });
+      }
+      parsed[path] = value;
+      if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
     }
-    parsed[path] = value;
-    if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+    return parsed;
+  } catch (error) {
+    throw MonarchParseError.fromCause({ path: op, cause: error });
   }
-  return parsed;
 }
 
 function parseNumericPassThroughOperator(
@@ -176,24 +193,28 @@ function parseNumericPassThroughOperator(
   fields: Record<string, any>,
   schemaUpdates?: Map<string, { op: string; value: any }>,
 ) {
-  const parsed: Record<string, any> = {};
-  for (const [path, value] of Object.entries(fields)) {
-    if (value === undefined) continue;
-    const pathType = MonarchType.index(schemaType, path.split("."), -1);
-    if (
-      !MonarchType.isInstanceOf(pathType, MonarchNumber) &&
-      !MonarchType.isInstanceOf(pathType, MonarchInt32) &&
-      !MonarchType.isInstanceOf(pathType, MonarchDouble) &&
-      !MonarchType.isInstanceOf(pathType, MonarchLong) &&
-      !MonarchType.isInstanceOf(pathType, MonarchDecimal128)
-    ) {
-      throw MonarchParseError.create({ path, message: `operator '${op}' requires a numeric field` });
+  try {
+    const parsed: Record<string, any> = {};
+    for (const [path, value] of Object.entries(fields)) {
+      if (value === undefined) continue;
+      const pathType = MonarchType.index(schemaType, path.split("."), -1);
+      if (
+        !MonarchType.isInstanceOf(pathType, MonarchNumber) &&
+        !MonarchType.isInstanceOf(pathType, MonarchInt32) &&
+        !MonarchType.isInstanceOf(pathType, MonarchDouble) &&
+        !MonarchType.isInstanceOf(pathType, MonarchLong) &&
+        !MonarchType.isInstanceOf(pathType, MonarchDecimal128)
+      ) {
+        throw MonarchParseError.fromCause({ path, cause: MonarchParseError.create(`operator '${op}' requires a numeric field`) });
+      }
+      const parser = MonarchType.parser(pathType, path);
+      parsed[path] = parser(value);
+      if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
     }
-    const parser = MonarchType.parser(pathType);
-    parsed[path] = parser(value);
-    if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+    return parsed;
+  } catch (error) {
+    throw MonarchParseError.fromCause({ path: op, cause: error });
   }
-  return parsed;
 }
 
 function parseUnsetOperator(
@@ -202,18 +223,22 @@ function parseUnsetOperator(
   schemaUpdates?: Map<string, { op: string; value: any }>,
   setOnInsertSkipSet?: Set<string>,
 ) {
-  const parsed: Record<string, any> = {};
-  for (const [path, value] of Object.entries(fields)) {
-    if (value === undefined) continue;
-    const pathType = MonarchType.index(schemaType, path.split("."), -1);
-    if (!MonarchType.isInstanceOf(pathType, MonarchOptional)) {
-      throw MonarchParseError.create({ path, message: `operator '$unset' requires an optional field` });
+  try {
+    const parsed: Record<string, any> = {};
+    for (const [path, value] of Object.entries(fields)) {
+      if (value === undefined) continue;
+      const pathType = MonarchType.index(schemaType, path.split("."), -1);
+      if (!MonarchType.isInstanceOf(pathType, MonarchOptional)) {
+        throw MonarchParseError.fromCause({ path, cause: MonarchParseError.create(`operator '$unset' requires an optional field`) });
+      }
+      parsed[path] = value;
+      if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+      setOnInsertSkipSet?.add(path);
     }
-    parsed[path] = value;
-    if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
-    setOnInsertSkipSet?.add(path);
+    return parsed;
+  } catch (error) {
+    throw MonarchParseError.fromCause({ path: "$unset", cause: error });
   }
-  return parsed;
 }
 
 function parseDateOperator(
@@ -221,20 +246,27 @@ function parseDateOperator(
   fields: Record<string, true | { $type: "date" | "timestamp" }>,
   schemaUpdates?: Map<string, { op: string; value: any }>,
 ) {
-  const parsed: Record<string, any> = {};
-  for (const [path, value] of Object.entries(fields)) {
-    if (value === undefined) continue;
-    const pathType = MonarchType.index(schemaType, path.split("."), -1);
-    if (!MonarchType.isInstanceOf(pathType, MonarchDate)) {
-      throw MonarchParseError.create({ path, message: `operator '$currentDate' requires a date field` });
+  try {
+    const parsed: Record<string, any> = {};
+    for (const [path, value] of Object.entries(fields)) {
+      if (value === undefined) continue;
+      const pathType = MonarchType.index(schemaType, path.split("."), -1);
+      if (!MonarchType.isInstanceOf(pathType, MonarchDate)) {
+        throw MonarchParseError.fromCause({
+          path,
+          cause: MonarchParseError.create(`operator '$currentDate' requires a date field`),
+        });
+      }
+      if (typeof value === "object" && value !== null && value.$type === "timestamp") {
+        throw MonarchParseError.fromCause({ path, cause: MonarchParseError.create(`date type does not support $type 'timestamp'`) });
+      }
+      parsed[path] = value;
+      if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
     }
-    if (typeof value === "object" && value !== null && value.$type === "timestamp") {
-      throw MonarchParseError.create({ path, message: `date type does not support $type 'timestamp'` });
-    }
-    parsed[path] = value;
-    if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+    return parsed;
+  } catch (error) {
+    throw MonarchParseError.fromCause({ path: "$currentDate", cause: error });
   }
-  return parsed;
 }
 
 function parseBitOperator(
@@ -242,21 +274,25 @@ function parseBitOperator(
   fields: Record<string, unknown>,
   schemaUpdates?: Map<string, { op: string; value: any }>,
 ) {
-  const parsed: Record<string, any> = {};
-  for (const [path, value] of Object.entries(fields)) {
-    if (value === undefined) continue;
-    const pathType = MonarchType.index(schemaType, path.split("."), -1);
-    if (
-      !MonarchType.isInstanceOf(pathType, MonarchNumber) &&
-      !MonarchType.isInstanceOf(pathType, MonarchInt32) &&
-      !MonarchType.isInstanceOf(pathType, MonarchLong)
-    ) {
-      throw MonarchParseError.create({ path, message: `operator '$bit' requires an integer field` });
+  try {
+    const parsed: Record<string, any> = {};
+    for (const [path, value] of Object.entries(fields)) {
+      if (value === undefined) continue;
+      const pathType = MonarchType.index(schemaType, path.split("."), -1);
+      if (
+        !MonarchType.isInstanceOf(pathType, MonarchNumber) &&
+        !MonarchType.isInstanceOf(pathType, MonarchInt32) &&
+        !MonarchType.isInstanceOf(pathType, MonarchLong)
+      ) {
+        throw MonarchParseError.fromCause({ path, cause: MonarchParseError.create(`operator '$bit' requires an integer field`) });
+      }
+      parsed[path] = value;
+      if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
     }
-    parsed[path] = value;
-    if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+    return parsed;
+  } catch (error) {
+    throw MonarchParseError.fromCause({ path: "$bit", cause: error });
   }
-  return parsed;
 }
 
 function parseRenameOperator(
@@ -265,29 +301,27 @@ function parseRenameOperator(
   schemaUpdates?: Map<string, { op: string; value: any }>,
   setOnInsertSkipSet?: Set<string>,
 ) {
-  const parsed: Record<string, any> = {};
-  for (const [path, value] of Object.entries(fields)) {
-    if (value === undefined) continue;
-    const sourceType = MonarchType.index(schemaType, path.split("."), -1);
-    if (!MonarchType.isInstanceOf(sourceType, MonarchOptional)) {
-      throw MonarchParseError.create({
-        path,
-        message: `operator '$rename' requires an optional field`,
-      });
+  try {
+    const parsed: Record<string, any> = {};
+    for (const [path, value] of Object.entries(fields)) {
+      if (value === undefined) continue;
+      const sourceType = MonarchType.index(schemaType, path.split("."), -1);
+      if (!MonarchType.isInstanceOf(sourceType, MonarchOptional)) {
+        throw MonarchParseError.fromCause({ path, cause: MonarchParseError.create(`operator '$rename' requires an optional field`) });
+      }
+      const sourceInner = MonarchOptional.type(sourceType);
+      const destType = MonarchType.index(schemaType, value.split("."), -1);
+      if (!MonarchType.isInstanceOf(destType, sourceInner.constructor as new (...args: any[]) => AnyMonarchType)) {
+        throw MonarchParseError.fromCause({ path, cause: MonarchParseError.create(`operator '$rename' destination field '${value}' is not compatible with source field '${path}'`) });
+      }
+      parsed[path] = value;
+      if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+      setOnInsertSkipSet?.add(path);
     }
-    const sourceInner = MonarchOptional.type(sourceType);
-    const destType = MonarchType.index(schemaType, value.split("."), -1);
-    if (!MonarchType.isInstanceOf(destType, sourceInner.constructor as new (...args: any[]) => AnyMonarchType)) {
-      throw MonarchParseError.create({
-        path,
-        message: `operator '$rename' destination field '${value}' is not compatible with source field '${path}'`,
-      });
-    }
-    parsed[path] = value;
-    if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
-    setOnInsertSkipSet?.add(path);
+    return parsed;
+  } catch (error) {
+    throw MonarchParseError.fromCause({ path: "$rename", cause: error });
   }
-  return parsed;
 }
 
 function removeUpdateConflict(updatePath: string, schemaUpdates: Map<string, { op: string; value: any }>) {
@@ -311,7 +345,7 @@ function parseSetOnInsertOperator(
     const parser = MonarchType.parser(schemaType);
     return flattenObject(parser(fields), setOnInsertSkipSet);
   } catch (error) {
-    throw MonarchParseError.create({ message: `$setOnInsert: ${error}` });
+    throw MonarchParseError.fromCause({ path: "$setOnInsert", cause: error });
   }
 }
 

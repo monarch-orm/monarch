@@ -24,7 +24,7 @@ export class MonarchInt32 extends MonarchType<Int32 | number> {
           throw MonarchParseError.fromCause({ cause: error });
         }
       }
-      throw MonarchParseError.create({ message: `expected 'Int32' or 'number' received '${typeof input}'` });
+      throw MonarchParseError.create(`expected 'Int32' or 'number' received '${typeof input}'`);
     });
   }
 

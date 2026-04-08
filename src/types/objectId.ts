@@ -17,7 +17,7 @@ export class MonarchObjectId extends MonarchType<ObjectId | string, ObjectId> {
   constructor() {
     super((input) => {
       if (ObjectId.isValid(input)) return new ObjectId(input);
-      throw MonarchParseError.create({ message: `expected 'ObjectId' received '${typeof input}' ${input}` });
+      throw MonarchParseError.create(`expected 'ObjectId' received '${typeof input}' ${input}`);
     });
   }
 

@@ -24,7 +24,7 @@ export class MonarchDecimal128 extends MonarchType<Decimal128 | string, Decimal1
           throw MonarchParseError.fromCause({ cause: error });
         }
       }
-      throw MonarchParseError.create({ message: `expected 'Decimal128' or 'string' received '${typeof input}'` });
+      throw MonarchParseError.create(`expected 'Decimal128' or 'string' received '${typeof input}'`);
     });
   }
 

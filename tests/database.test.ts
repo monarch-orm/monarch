@@ -41,7 +41,7 @@ describe("Database options", async () => {
         age: "not-a-number",
         nickname: "tc",
       }),
-    ).rejects.toThrowError("Document failed validation");
+    ).rejects.toThrow("Document failed validation");
   });
 
   it("supports initialize false after a prior initialize call", async () => {
@@ -70,7 +70,7 @@ describe("Database options", async () => {
         age: "not-a-number",
         nickname: "tc",
       }),
-    ).rejects.toThrowError("Document failed validation");
+    ).rejects.toThrow("Document failed validation");
   });
 
   it("initialize validation false skips applying validators", async () => {
@@ -131,7 +131,7 @@ describe("Database options", async () => {
     expect(existingNames.has("posts")).toBe(false);
 
     const usersRaw = client.db().collection("users");
-    await expect(usersRaw.insertOne({})).rejects.toThrowError("Document failed validation");
+    await expect(usersRaw.insertOne({})).rejects.toThrow("Document failed validation");
 
     // posts collection wasn't initialized, so it is created lazily by MongoDB without schema validator.
     const postsRaw = client.db().collection("posts");
@@ -178,6 +178,6 @@ describe("Database options", async () => {
     });
     await secondDb.initialize();
 
-    await expect(rawCollection.insertOne({})).rejects.toThrowError("Document failed validation");
+    await expect(rawCollection.insertOne({})).rejects.toThrow("Document failed validation");
   });
 });

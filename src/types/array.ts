@@ -22,17 +22,13 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
 
     super((input) => {
       if (!Array.isArray(input)) {
-        throw MonarchParseError.create({ message: `expected 'array' received '${typeof input}'` });
+        throw MonarchParseError.create(`expected 'array' received '${typeof input}'`);
       }
 
-      const parser = MonarchType.parser(type);
       const parsed = new Array<InferTypeOutput<T>>(input.length);
       for (const [index, value] of input.entries()) {
-        try {
-          parsed[index] = parser(value);
-        } catch (error) {
-          throw MonarchParseError.fromCause({ path: index, cause: error });
-        }
+        const parser = MonarchType.parser(type, index);
+        parsed[index] = parser(value);
       }
       return parsed;
     });
@@ -52,7 +48,7 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
         throw MonarchParseError.fromCause({ path: index, cause: error });
       }
     }
-    throw MonarchParseError.create({ message: `expected a numeric index or positional operator` });
+    throw MonarchParseError.create(`expected a numeric index or positional operator`);
   }
 
   protected jsonSchema(): JSONSchema {
@@ -77,7 +73,7 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
       jsonSchemaParser(
         (input) => {
           if (input.length < length) {
-            throw MonarchParseError.create({ message: `array must have at least ${length} elements` });
+            throw MonarchParseError.create(`array must have at least ${length} elements`);
           }
           return input;
         },
@@ -97,7 +93,7 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
       jsonSchemaParser(
         (input) => {
           if (input.length > length) {
-            throw MonarchParseError.create({ message: `array must have at most ${length} elements` });
+            throw MonarchParseError.create(`array must have at most ${length} elements`);
           }
           return input;
         },
@@ -117,7 +113,7 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
       jsonSchemaParser(
         (input) => {
           if (input.length !== length) {
-            throw MonarchParseError.create({ message: `array must have exactly ${length} elements` });
+            throw MonarchParseError.create(`array must have exactly ${length} elements`);
           }
           return input;
         },
@@ -136,7 +132,7 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
       jsonSchemaParser(
         (input) => {
           if (input.length === 0) {
-            throw MonarchParseError.create({ message: "array must not be empty" });
+            throw MonarchParseError.create("array must not be empty");
           }
           return input;
         },

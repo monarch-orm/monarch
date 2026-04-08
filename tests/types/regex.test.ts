@@ -39,13 +39,11 @@ describe("regex", () => {
   test("rejects non-regex input types", () => {
     const schema = createSchema("test", { value: regex() });
     // @ts-expect-error
-    expect(() => Schema.input(schema, { value: "pattern" })).toThrowError(
+    expect(() => Schema.input(schema, { value: "pattern" })).toThrow(
       "expected 'BSONRegExp' or 'RegExp' received 'string'",
     );
     // @ts-expect-error
-    expect(() => Schema.input(schema, { value: 123 })).toThrowError(
-      "expected 'BSONRegExp' or 'RegExp' received 'number'",
-    );
+    expect(() => Schema.input(schema, { value: 123 })).toThrow("expected 'BSONRegExp' or 'RegExp' received 'number'");
   });
 
   test("works with nullable and optional", () => {

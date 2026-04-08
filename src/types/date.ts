@@ -16,7 +16,7 @@ export class MonarchDate extends MonarchType<Date> {
   constructor() {
     super((input) => {
       if (input instanceof Date) return input;
-      throw MonarchParseError.create({ message: `expected 'Date' received '${typeof input}'` });
+      throw MonarchParseError.create(`expected 'Date' received '${typeof input}'`);
     });
   }
 
@@ -37,7 +37,7 @@ export class MonarchDate extends MonarchType<Date> {
   public after(targetDate: Date) {
     return this.parse((input) => {
       if (input <= targetDate) {
-        throw MonarchParseError.create({ message: `date must be after ${targetDate.toISOString()}` });
+        throw MonarchParseError.create(`date must be after ${targetDate.toISOString()}`);
       }
       return input;
     });
@@ -52,7 +52,7 @@ export class MonarchDate extends MonarchType<Date> {
   public before(targetDate: Date) {
     return this.parse((input) => {
       if (input >= targetDate) {
-        throw MonarchParseError.create({ message: `date must be before ${targetDate.toISOString()}` });
+        throw MonarchParseError.create(`date must be before ${targetDate.toISOString()}`);
       }
       return input;
     });

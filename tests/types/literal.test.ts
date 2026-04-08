@@ -9,11 +9,9 @@ describe("literal", () => {
     });
 
     // @ts-expect-error
-    expect(() => Schema.input(schema, {})).toThrowError(
-      "unknown value 'undefined', literal may only specify known values",
-    );
+    expect(() => Schema.input(schema, {})).toThrow("unknown value 'undefined', literal may only specify known values");
     // @ts-expect-error
-    expect(() => Schema.input(schema, { role: "user" })).toThrowError(
+    expect(() => Schema.input(schema, { role: "user" })).toThrow(
       "unknown value 'user', literal may only specify known values",
     );
     const data = Schema.input(schema, { role: "admin" });

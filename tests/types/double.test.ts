@@ -20,13 +20,9 @@ describe("double", () => {
   test("rejects non-number input types", () => {
     const schema = createSchema("test", { value: double() });
     // @ts-expect-error
-    expect(() => Schema.input(schema, { value: "3.14" })).toThrowError(
-      "expected 'Double' or 'number' received 'string'",
-    );
+    expect(() => Schema.input(schema, { value: "3.14" })).toThrow("expected 'Double' or 'number' received 'string'");
     // @ts-expect-error
-    expect(() => Schema.input(schema, { value: true })).toThrowError(
-      "expected 'Double' or 'number' received 'boolean'",
-    );
+    expect(() => Schema.input(schema, { value: true })).toThrow("expected 'Double' or 'number' received 'boolean'");
   });
 
   test("works with nullable and optional", () => {

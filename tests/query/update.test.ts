@@ -69,7 +69,7 @@ describe("Update Operations", async () => {
           // @ts-expect-error
           .findOneAndUpdate({ email: "anon@gmail.com" }, { $set: { age: "invalid" } })
           .options({ returnDocument: "after" }),
-      ).rejects.toThrow();
+      ).rejects.toThrow("$set.age: expected 'number' received 'string'");
     });
 
     it("supports omit projection", async () => {
@@ -178,7 +178,7 @@ describe("Update Operations", async () => {
       await expect(
         // @ts-expect-error
         collections.users.updateOne({ email: "anon@gmail.com" }, { $set: { age: "invalid" } }),
-      ).rejects.toThrow();
+      ).rejects.toThrow("$set.age: expected 'number' received 'string'");
     });
   });
 
@@ -303,7 +303,7 @@ describe("Update Operations", async () => {
         const doc = await db.collections.numeric.insertOne({ name: "a", count: 0 });
         // @ts-expect-error
         await expect(db.collections.numeric.updateOne({ _id: doc._id }, { $push: { count: 1 } })).rejects.toThrow(
-          "requires an array field",
+          "$push.count: operator '$push' requires an array field",
         );
       });
 
@@ -311,7 +311,7 @@ describe("Update Operations", async () => {
         const doc = await db.collections.numeric.insertOne({ name: "a", count: 0 });
         // @ts-expect-error
         await expect(db.collections.numeric.updateOne({ _id: doc._id }, { $addToSet: { count: 1 } })).rejects.toThrow(
-          "requires an array field",
+          "$addToSet.count: operator '$addToSet' requires an array field",
         );
       });
     });
@@ -357,7 +357,7 @@ describe("Update Operations", async () => {
         await expect(
           // @ts-expect-error
           db.collections.numeric.updateOne({ _id: doc._id }, { $pull: { count: 1 } }),
-        ).rejects.toThrow("requires an array field");
+        ).rejects.toThrow("$pull.count: operator '$pull' requires an array field");
       });
 
       it("$pullAll rejects non-array field", async () => {
@@ -365,14 +365,14 @@ describe("Update Operations", async () => {
         await expect(
           // @ts-expect-error
           db.collections.numeric.updateOne({ _id: doc._id }, { $pullAll: { count: [1] } }),
-        ).rejects.toThrow("requires an array field");
+        ).rejects.toThrow("$pullAll.count: operator '$pullAll' requires an array field");
       });
 
       it("$pop rejects non-array field", async () => {
         const doc = await db.collections.numeric.insertOne({ name: "a", count: 0 });
         // @ts-expect-error
         await expect(db.collections.numeric.updateOne({ _id: doc._id }, { $pop: { count: 1 } })).rejects.toThrow(
-          "requires an array field",
+          "$pop.count: operator '$pop' requires an array field",
         );
       });
     });
@@ -390,7 +390,7 @@ describe("Update Operations", async () => {
         await expect(
           // @ts-expect-error
           db.collections.arrays.updateOne({ _id: doc._id }, { $bit: { tags: { and: 1 } } }),
-        ).rejects.toThrow("requires an integer field");
+        ).rejects.toThrow("$bit.tags: operator '$bit' requires an integer field");
       });
     });
 
@@ -413,7 +413,7 @@ describe("Update Operations", async () => {
         const doc = await db.collections.arrays.insertOne({ name: "a", tags: [], nums: [] });
         // @ts-expect-error
         await expect(db.collections.arrays.updateOne({ _id: doc._id }, { $inc: { tags: 1 } })).rejects.toThrow(
-          "requires a numeric field",
+          "$inc.tags: operator '$inc' requires a numeric field",
         );
       });
 
@@ -421,7 +421,7 @@ describe("Update Operations", async () => {
         const doc = await db.collections.arrays.insertOne({ name: "a", tags: [], nums: [] });
         // @ts-expect-error
         await expect(db.collections.arrays.updateOne({ _id: doc._id }, { $mul: { tags: 1 } })).rejects.toThrow(
-          "requires a numeric field",
+          "$mul.tags: operator '$mul' requires a numeric field",
         );
       });
     });
@@ -468,7 +468,7 @@ describe("Update Operations", async () => {
         const doc = await db.collections.optionals.insertOne({ name: "a" });
         // @ts-expect-error
         await expect(db.collections.optionals.updateOne({ _id: doc._id }, { $unset: { name: "" } })).rejects.toThrow(
-          "requires an optional field",
+          "$unset.name: operator '$unset' requires an optional field",
         );
       });
     });
@@ -488,14 +488,14 @@ describe("Update Operations", async () => {
         await expect(
           // @ts-expect-error
           db.collections.optionals.updateOne({ _id: doc._id }, { $currentDate: { name: true } }),
-        ).rejects.toThrow("requires a date field");
+        ).rejects.toThrow("$currentDate.name: operator '$currentDate' requires a date field");
       });
 
       it("rejects $type timestamp", async () => {
         const doc = await db.collections.optionals.insertOne({ name: "a" });
         await expect(
           db.collections.optionals.updateOne({ _id: doc._id }, { $currentDate: { lastSeen: { $type: "timestamp" } } }),
-        ).rejects.toThrow("does not support $type 'timestamp'");
+        ).rejects.toThrow("$currentDate.lastSeen: date type does not support $type 'timestamp'");
       });
     });
 
@@ -513,7 +513,7 @@ describe("Update Operations", async () => {
         await expect(
           // @ts-expect-error
           db.collections.optionals.updateOne({ _id: doc._id }, { $rename: { name: "alias" } }),
-        ).rejects.toThrow("requires an optional field");
+        ).rejects.toThrow("$rename.name: operator '$rename' requires an optional field");
       });
 
       it("rejects incompatible destination type", async () => {
@@ -521,7 +521,9 @@ describe("Update Operations", async () => {
         await expect(
           // @ts-expect-error
           db.collections.optionals.updateOne({ _id: doc._id }, { $rename: { nickname: "lastSeen" } }),
-        ).rejects.toThrow("is not compatible");
+        ).rejects.toThrow(
+          "$rename.nickname: operator '$rename' destination field 'lastSeen' is not compatible with source field 'nickname'",
+        );
       });
     });
   });
@@ -667,7 +669,7 @@ describe("Update Operations", async () => {
       await expect(
         // @ts-expect-error
         db.collections.mixed.updateOne({ _id: doc._id }, { $unset: { data: "" } }),
-      ).rejects.toThrow("requires an optional field");
+      ).rejects.toThrow("$unset.data: operator '$unset' requires an optional field");
     });
 
     it("$rename optional mixed field to another optional mixed field", async () => {
@@ -683,20 +685,20 @@ describe("Update Operations", async () => {
       await expect(
         // @ts-expect-error
         db.collections.mixed.updateOne({ _id: doc._id }, { $rename: { data: "info" } }),
-      ).rejects.toThrow("requires an optional field");
+      ).rejects.toThrow("$rename.data: operator '$rename' requires an optional field");
     });
 
     it("$inc on a mixed field throws at runtime (runtime checks for numeric type)", async () => {
       const doc = await db.collections.mixed.insertOne({ label: "a", data: 5 });
       await expect(db.collections.mixed.updateOne({ _id: doc._id }, { $inc: { data: 1 } })).rejects.toThrow(
-        "requires a numeric field",
+        "$inc.data: operator '$inc' requires a numeric field",
       );
     });
 
     it("$push on a mixed field throws at runtime (runtime checks for array type)", async () => {
       const doc = await db.collections.mixed.insertOne({ label: "a", data: [] });
       await expect(db.collections.mixed.updateOne({ _id: doc._id }, { $push: { data: "item" } })).rejects.toThrow(
-        "requires an array field",
+        "$push.data: operator '$push' requires an array field",
       );
     });
   });
@@ -835,7 +837,7 @@ describe("Update Operations", async () => {
           // @ts-expect-error
           .findOneAndUpdate({ name: "ghost" }, { $set: { name: "alice" }, $setOnInsert: { count: 1 } })
           .options({ upsert: true }),
-      ).rejects.toThrow();
+      ).rejects.toThrow("$setOnInsert.name: expected 'string' received 'undefined'");
     });
   });
 });

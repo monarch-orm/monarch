@@ -30,22 +30,16 @@ export class MonarchTuple<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
     super((input) => {
       if (Array.isArray(input)) {
         if (input.length !== types.length) {
-          throw MonarchParseError.create({
-            message: `expected 'array' with ${types.length} elements received ${input.length} elements`,
-          });
+          throw MonarchParseError.create(`expected 'array' with ${types.length} elements received ${input.length} elements`);
         }
         const parsed = [] as InferTypeTupleOutput<T>;
         for (const [index, type] of types.entries()) {
-          try {
-            const parser = MonarchType.parser(type);
-            parsed[index] = parser(input[index]);
-          } catch (error) {
-            throw MonarchParseError.fromCause({ path: index, cause: error });
-          }
+          const parser = MonarchType.parser(type, index);
+          parsed[index] = parser(input[index]);
         }
         return parsed;
       }
-      throw MonarchParseError.create({ message: `expected 'array' received '${typeof input}'` });
+      throw MonarchParseError.create(`expected 'array' received '${typeof input}'`);
     });
   }
 
@@ -65,7 +59,7 @@ export class MonarchTuple<T extends [AnyMonarchType, ...AnyMonarchType[]]> exten
         throw MonarchParseError.fromCause({ path: index, cause: error });
       }
     }
-    throw MonarchParseError.create({ message: `expected a valid tuple index` });
+    throw MonarchParseError.create(`expected a valid tuple index`);
   }
 
   protected jsonSchema(): JSONSchema {

@@ -16,7 +16,7 @@ export class MonarchNumber extends MonarchType<number> {
   constructor() {
     super((input) => {
       if (typeof input === "number") return input;
-      throw MonarchParseError.create({ message: `expected 'number' received '${typeof input}'` });
+      throw MonarchParseError.create(`expected 'number' received '${typeof input}'`);
     });
   }
 
@@ -39,7 +39,7 @@ export class MonarchNumber extends MonarchType<number> {
       jsonSchemaParser(
         (input) => {
           if (input < value) {
-            throw MonarchParseError.create({ message: `number must be greater than or equal to ${value}` });
+            throw MonarchParseError.create(`number must be greater than or equal to ${value}`);
           }
           return input;
         },
@@ -59,7 +59,7 @@ export class MonarchNumber extends MonarchType<number> {
       jsonSchemaParser(
         (input) => {
           if (input > value) {
-            throw MonarchParseError.create({ message: `number must be less than or equal to ${value}` });
+            throw MonarchParseError.create(`number must be less than or equal to ${value}`);
           }
           return input;
         },
@@ -78,7 +78,7 @@ export class MonarchNumber extends MonarchType<number> {
       jsonSchemaParser(
         (input) => {
           if (!Number.isInteger(input)) {
-            throw MonarchParseError.create({ message: "number must be an integer" });
+            throw MonarchParseError.create("number must be an integer");
           }
           return input;
         },

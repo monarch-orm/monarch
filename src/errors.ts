@@ -21,9 +21,8 @@ export class MonarchParseError extends MonarchError {
     this.path = path;
   }
 
-  static create({ path, message }: { path?: string | number; message: string }): MonarchParseError {
-    if (!path) return new MonarchParseError(message, []);
-    return new MonarchParseError(`${path}: ${message}`, [path]);
+  static create(message: string): MonarchParseError {
+    return new MonarchParseError(message, []);
   }
 
   static fromCause({ path, cause }: { path?: string | number; cause: unknown }): MonarchParseError {

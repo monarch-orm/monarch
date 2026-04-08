@@ -22,9 +22,9 @@ describe("int32", () => {
   test("rejects non-integer input types", () => {
     const schema = createSchema("test", { value: int32() });
     // @ts-expect-error
-    expect(() => Schema.input(schema, { value: "123" })).toThrowError("expected 'Int32' or 'number' received 'string'");
+    expect(() => Schema.input(schema, { value: "123" })).toThrow("expected 'Int32' or 'number' received 'string'");
     // @ts-expect-error
-    expect(() => Schema.input(schema, { value: true })).toThrowError("expected 'Int32' or 'number' received 'boolean'");
+    expect(() => Schema.input(schema, { value: true })).toThrow("expected 'Int32' or 'number' received 'boolean'");
   });
 
   test("works with nullable and optional", () => {

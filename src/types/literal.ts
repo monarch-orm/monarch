@@ -18,7 +18,7 @@ export class MonarchLiteral<T> extends MonarchType<T> {
     super((input) => {
       const _values = new Set(values);
       if (_values.has(input)) return input;
-      throw MonarchParseError.create({ message: `unknown value '${input}', literal may only specify known values` });
+      throw MonarchParseError.create(`unknown value '${input}', literal may only specify known values`);
     });
   }
 

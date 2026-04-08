@@ -80,8 +80,18 @@ export abstract class MonarchType<TInput, TOutput extends TInput = TInput> {
    * @param type - Monarch type
    * @returns Parser function
    */
-  public static parser<T extends AnyMonarchType>(type: T): Parser<InferTypeInput<T>, InferTypeOutput<T>> {
-    return type.parser;
+  public static parser<T extends AnyMonarchType>(
+    type: T,
+    path?: string | number,
+  ): Parser<InferTypeInput<T>, InferTypeOutput<T>> {
+    if (path === undefined) return type.parser;
+    return (input) => {
+      try {
+        return type.parser(input);
+      } catch (error) {
+        throw MonarchParseError.fromCause({ path, cause: error });
+      }
+    };
   }
 
   /**
@@ -101,7 +111,7 @@ export abstract class MonarchType<TInput, TOutput extends TInput = TInput> {
    */
   protected index(path: string[], depth: number): AnyMonarchType {
     if (depth === path.length - 1) return this;
-    throw MonarchParseError.create({ message: `path '${path[depth + 1]}' does not exist on type` });
+    throw MonarchParseError.create(`path '${path[depth + 1]}' does not exist on type`);
   }
 
   /**
@@ -217,7 +227,7 @@ export abstract class MonarchType<TInput, TOutput extends TInput = TInput> {
     const copy = MonarchType.copy(this);
     copy.parser = pipeParser(copy.parser, (input) => {
       const valid = fn(input);
-      if (!valid) throw MonarchParseError.create({ message });
+      if (!valid) throw MonarchParseError.create(message);
       return input;
     });
     return copy;
@@ -329,7 +339,7 @@ export class MonarchOptional<T extends AnyMonarchType> extends MonarchType<
 
   protected index(path: string[], depth: number): AnyMonarchType {
     if (depth === path.length - 1) return this;
-    throw MonarchParseError.create({ message: `updates must replace the entire optional value` });
+    throw MonarchParseError.create(`updates must replace the entire optional value`);
   }
 
   protected jsonSchema(): JSONSchema {

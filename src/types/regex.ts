@@ -21,7 +21,7 @@ export class MonarchRegex extends MonarchType<BSONRegExp | RegExp, RegExp> {
         new BSONRegExp(input.source, input.flags); // validate BSON-compatible flags
         return input;
       }
-      throw MonarchParseError.create({ message: `expected 'BSONRegExp' or 'RegExp' received '${typeof input}'` });
+      throw MonarchParseError.create(`expected 'BSONRegExp' or 'RegExp' received '${typeof input}'`);
     });
   }
 
