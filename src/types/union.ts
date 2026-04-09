@@ -86,7 +86,9 @@ export class MonarchTaggedUnion<T extends Record<string, AnyMonarchType>> extend
         if (Object.keys(input).length > 2) {
           for (const key of Object.keys(input)) {
             if (key !== "tag" && key !== "value") {
-              throw MonarchParseError.create(`unknown field '${key}', tagged union may only specify 'tag' and 'value' fields`);
+              throw MonarchParseError.create(
+                `unknown field '${key}', tagged union may only specify 'tag' and 'value' fields`,
+              );
             }
           }
         }
