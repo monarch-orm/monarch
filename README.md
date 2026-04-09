@@ -83,27 +83,6 @@ const postSchema = createSchema("posts", {
 const schemas = defineSchemas({ userSchema, postSchema });
 ```
 
-### `createShape()`
-
-Use `createShape()` when you want to define a reusable shape for schemas or objects.
-
-```ts
-import { createShape, createSchema } from "monarch-orm";
-import { object, string } from "monarch-orm/types";
-
-const addressShape = createShape({
-  street: string(),
-  city: string(),
-});
-
-const userSchema = createSchema("users", {
-  name: string(),
-  address: object(addressShape),
-});
-
-const addressSchema = createSchema("addresses", addressShape);
-```
-
 ### Relations
 
 Use `withRelations()` on a schemas object to define typed relations.
@@ -792,6 +771,25 @@ const profile = object({
   bio: string(),
   website: string(),
 });
+```
+
+Use `.shape` to reuse an object's fields in another object or schema.
+
+```ts
+import { createSchema } from "monarch-orm";
+import { object, string } from "monarch-orm/types";
+
+const address = object({
+  street: string(),
+  city: string(),
+});
+
+const user = object({
+  name: string(),
+  address,
+});
+
+const addressSchema = createSchema("addresses", address.shape);
 ```
 
 ### `array(type)`

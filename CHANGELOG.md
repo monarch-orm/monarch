@@ -29,7 +29,6 @@
 - 8c0370e: Add custom implementations for `Filter`, `UpdateFilter` and `DistinctFilter` types
 - 742f147: Support splitting schemas by adding `defineSchemas` and `mergeSchema` functions which requires a `Schemas` class as argument to `createDatabase`
 - f6d67be: Add document schema validation
-- 8c0370e: Add `createShape` to reuse type objects
 - cbb395e: Rename `Schema.encode/Schema.decode` to `Schema.input/Schema.output`
 - 8bec3f8: Add `Schema.rename()` method to rename fields in output
 

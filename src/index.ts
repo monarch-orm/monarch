@@ -30,7 +30,7 @@ export {
   type RelationsFn,
   type SchemasRelations,
 } from "./relations/relations";
-export { createSchema, createShape, defineSchemas, mergeSchemas, Schema, Schemas } from "./schema/schema";
+export { createSchema, defineSchemas, mergeSchemas, Schema, Schemas } from "./schema/schema";
 export type {
   Condition,
   CreateIndexKey,

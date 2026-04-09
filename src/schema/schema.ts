@@ -265,16 +265,6 @@ export function createSchema<TName extends string, TTypes extends Record<string,
   return new Schema(name, schemaTypes, {});
 }
 
-/**
- * Creates an object shape for a MongoDB schema or object type.
- *
- * @param types - Object defining field types
- * @returns Types object
- */
-export function createShape<TTypes extends Record<string, AnyMonarchType>>(types: TTypes): TTypes {
-  return types;
-}
-
 export class Schemas<
   TSchemas extends Record<string, AnySchema>,
   TRelations extends Record<string, Record<string, AnyRelation>> = {},
