@@ -1,5 +1,11 @@
 # monarch-orm
 
+## 0.12.0
+
+### Minor Changes
+
+- d415a26: Add reusable object shapes via `object(...).shape`
+
 ## 0.11.0
 
 ### Minor Changes
