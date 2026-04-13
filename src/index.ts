@@ -37,7 +37,7 @@ export type { ReplaceOneQueryOptions } from "./collection/query/replace-one";
 export type { UpdateManyQueryOptions } from "./collection/query/update-many";
 export type { UpdateOneQueryOptions } from "./collection/query/update-one";
 export type { PipelineStage } from "./collection/types/pipeline-stage";
-export { createClient, createDatabase, Database, type DatabaseOptions } from "./database";
+export { createClient, createDatabase, Database, type DatabaseOptions, type InitOptions } from "./database";
 export { MonarchError, MonarchParseError } from "./errors";
 export {
   mergeRelations,
@@ -46,7 +46,14 @@ export {
   type RelationsFn,
   type SchemasRelations,
 } from "./relations/relations";
+export type { CreateIndexesOptions, SchemaIndex } from "./schema/indexes";
 export { createSchema, defineSchemas, mergeSchemas, Schema, Schemas } from "./schema/schema";
+export type {
+  SchemaSearchIndex,
+  SchemaSearchIndexDefinition,
+  SearchIndexDefinition,
+  VectorSearchIndexDefinition,
+} from "./schema/search-indexes";
 export type {
   Condition,
   CreateIndexKey,

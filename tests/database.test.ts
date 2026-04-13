@@ -73,7 +73,7 @@ describe("Database options", async () => {
     ).rejects.toThrow("Document failed validation");
   });
 
-  it("initialize validation false skips applying validators", async () => {
+  it("initialize without validation option skips applying validators", async () => {
     const schema = createSchema("users", {
       name: string(),
       nickname: string(),
@@ -86,13 +86,13 @@ describe("Database options", async () => {
         validationAction: "error",
       },
     });
-    await db.initialize({ validation: false });
+    await db.initialize({});
 
     const rawCollection = client.db().collection("users");
     await expect(rawCollection.insertOne({})).resolves.toMatchObject({ acknowledged: true });
   });
 
-  it("initialize indexes false skips schema index creation", async () => {
+  it("initialize without indexes option skips schema index creation", async () => {
     const schema = createSchema("users", {
       username: string(),
     }).indexes(({ unique }) => ({
@@ -100,7 +100,7 @@ describe("Database options", async () => {
     }));
 
     const db = createDatabase(client.db(), defineSchemas({ users: schema }), { initialize: false });
-    await db.initialize({ indexes: false });
+    await db.initialize({});
 
     const rawCollection = client.db().collection("users");
     await rawCollection.insertOne({ username: "same-user" });
@@ -123,7 +123,7 @@ describe("Database options", async () => {
         validationAction: "error",
       },
     });
-    await db.initialize({ collections: { users: true } });
+    await db.initialize(true, { users: true });
 
     const existing = await client.db().listCollections({}, { nameOnly: true }).toArray();
     const existingNames = new Set(existing.map((collection) => collection.name));
@@ -164,7 +164,7 @@ describe("Database options", async () => {
     });
 
     const firstDb = createDatabase(client.db(), defineSchemas({ users: schema }), { initialize: false });
-    await firstDb.initialize({ validation: false });
+    await firstDb.initialize({});
 
     const rawCollection = client.db().collection("users");
     await expect(rawCollection.insertOne({})).resolves.toMatchObject({ acknowledged: true });
