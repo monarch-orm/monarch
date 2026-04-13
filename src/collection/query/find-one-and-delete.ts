@@ -6,6 +6,8 @@ import { addExtraInputsToProjection, makeProjection } from "../projection";
 import type { BoolProjection, Projection } from "../types/query-options";
 import { Query, type QueryOutput } from "./base";
 
+export type FindOneAndDeleteQueryOptions = Omit<FindOneAndDeleteOptions, "projection">;
+
 /**
  * Collection.findOneAndDelete().
  */
@@ -30,12 +32,16 @@ export class FindOneAndDeleteQuery<
   /**
    * Adds delete options. Options are merged into existing options.
    *
-   * @param options - FindOneAndDeleteOptions
+   * @param options - FindOneAndDeleteQueryOptions
    * @returns FindOneAndDeleteQuery instance
    */
-  public options(options: FindOneAndDeleteOptions): this {
-    Object.assign(this._options, options);
-    return this;
+  public options(options: FindOneAndDeleteQueryOptions): this {
+    const query = new FindOneAndDeleteQuery(this.schema, this.collection, this.readyPromise, this._filter, {
+      ...this._options,
+      ...options,
+    });
+    query._projection = this._projection;
+    return query as this;
   }
 
   /**
@@ -45,8 +51,15 @@ export class FindOneAndDeleteQuery<
    * @returns FindOneAndDeleteQuery instance
    */
   public omit<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
-    this._projection = makeProjection("omit", projection);
-    return this as FindOneAndDeleteQuery<TSchema, TOutput, ["omit", TrueKeys<TProjection>]>;
+    const query = new FindOneAndDeleteQuery(
+      this.schema,
+      this.collection,
+      this.readyPromise,
+      this._filter,
+      this._options,
+    );
+    query._projection = makeProjection("omit", projection);
+    return query as FindOneAndDeleteQuery<TSchema, TOutput, ["omit", TrueKeys<TProjection>]>;
   }
 
   /**
@@ -56,8 +69,15 @@ export class FindOneAndDeleteQuery<
    * @returns FindOneAndDeleteQuery instance
    */
   public select<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
-    this._projection = makeProjection("select", projection);
-    return this as FindOneAndDeleteQuery<TSchema, TOutput, ["select", TrueKeys<TProjection>]>;
+    const query = new FindOneAndDeleteQuery(
+      this.schema,
+      this.collection,
+      this.readyPromise,
+      this._filter,
+      this._options,
+    );
+    query._projection = makeProjection("select", projection);
+    return query as FindOneAndDeleteQuery<TSchema, TOutput, ["select", TrueKeys<TProjection>]>;
   }
 
   protected async exec(): Promise<QueryOutput<TOutput, TOmit> | null> {

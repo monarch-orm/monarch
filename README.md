@@ -37,9 +37,8 @@ const userSchema = createSchema("users", {
 
 const schemas = defineSchemas({ userSchema });
 
-// Create and connect the MongoDB client.
+// Create a MongoDB client.
 const client = createClient(process.env.MONGODB_URI!);
-await client.connect();
 
 // Create a database instance.
 const db = createDatabase(client.db("app"), schemas);
@@ -469,8 +468,6 @@ Deletes one document by `_id` and returns it.
 const deleted = await db.collections.users.findByIdAndDelete("67f0123456789abcdef0123");
 ```
 
-### Other Collection Methods
-
 ### `distinct(key, filter?)`
 
 Returns a query for the distinct values of a field.
@@ -518,13 +515,19 @@ Returns MongoDB's estimated document count for the collection.
 const totalCount = await db.collections.users.estimatedDocumentCount();
 ```
 
-### `aggregate()`
+### `aggregate(pipeline?)`
 
-Builds an aggregation pipeline.
+Builds an aggregation pipeline. Accepts an optional pipeline, and additional stages can be appended with `addStage()`.
 
 ```ts
 const result = await db.collections.users
-  .aggregate()
+  .aggregate<{ count: number }>([
+    { $match: { isVerified: true } },
+    { $group: { _id: "$isVerified", count: { $sum: 1 } } },
+  ]);
+
+const result = await db.collections.users
+  .aggregate<{ count: number }>()
   .addStage({ $match: { isVerified: true } })
   .addStage({ $group: { _id: "$isVerified", count: { $sum: 1 } } });
 ```
@@ -537,19 +540,20 @@ Returns the underlying MongoDB collection.
 const rawUsers = await db.collections.users.raw().find().toArray();
 ```
 
-Queries are lazy, so you can build and reuse them before execution. They run only when you `await` them or call a promise method like `.then()`, `.catch()`, or `.finally()`.
+Queries are lazy and immutable — each builder method returns a new query instance, leaving the original unchanged. Queries run only when you `await` them or call a promise method like `.then()`, `.catch()`, or `.finally()`.
 
 ```ts
-let verifiedUsersQuery = db.collections.users
+// Each builder method returns a new query — the original is never modified.
+const base = db.collections.users
   .find({ isVerified: true })
-  .omit({ age: true })
-  .sort({ email: "asc" });
+  .omit({ age: true });
 
-if (limitResults) {
-  verifiedUsersQuery = verifiedUsersQuery.limit(10);
-}
+const sorted = base.sort({ email: "asc" }); // new instance
+const limited = base.limit(10);             // new instance from base, no sort
 
-const verifiedUsers = await verifiedUsersQuery;
+const sortedUsers = await sorted;   // sorted, no limit
+const limitedUsers = await limited; // no sort, limited to 10
+const allVerified = await base;     // unchanged
 ```
 
 ### Schema features
