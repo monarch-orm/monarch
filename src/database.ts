@@ -32,11 +32,11 @@ export type DatabaseOptions = {
  */
 export class Database<TSchemas extends Schemas<any, any>> {
   /** Schema definitions*/
-  public schemas: TSchemas["schemas"];
+  protected schemas: TSchemas["schemas"];
   /** Relation definitions*/
-  public relations: TSchemas["relations"];
+  protected relations: TSchemas["relations"];
   /** Collection instances */
-  public collections: DbCollections<TSchemas["schemas"], TSchemas["relations"]>;
+  public readonly collections: DbCollections<TSchemas["schemas"], TSchemas["relations"]>;
   /** Collection read promises */
   private readyPromises: Record<string, AsyncResolver>;
 
@@ -49,7 +49,7 @@ export class Database<TSchemas extends Schemas<any, any>> {
    * @throws {MonarchError} If duplicate schema or relation names are found
    */
   constructor(
-    public db: Db,
+    public readonly db: Db,
     schemas: TSchemas,
     private options?: DatabaseOptions,
   ) {

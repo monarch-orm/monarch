@@ -14,6 +14,8 @@ export type DbCollections<
   [K in keyof TSchemas]: Collection<TSchemas[K], TRelations>;
 } & {};
 
+type DbSchemas<T> = T extends Database<infer U> ? U : never;
+
 /**
  * Infers the input type for a collection in a database.
  */
@@ -30,7 +32,7 @@ export type InferOutput<
   TCollection extends keyof TDatabase["collections"],
   TOptions extends PopulationBaseOptions<
     InferSchemaOutput<TDatabase["collections"][TCollection]["schema"]>,
-    TDatabase["relations"],
+    DbSchemas<TDatabase>["relations"],
     TCollection
   > = {},
 > = Pretty<
@@ -46,7 +48,7 @@ export type InferOutput<
         InferSchemaOutput<TDatabase["collections"][TCollection]["schema"]>
       >,
       TOptions["populate"] extends Population<any, any>
-        ? InferRelationObjectPopulation<TDatabase["relations"], TCollection, TOptions["populate"]>
+        ? InferRelationObjectPopulation<DbSchemas<TDatabase>["relations"], TCollection, TOptions["populate"]>
         : {}
     >
   >
