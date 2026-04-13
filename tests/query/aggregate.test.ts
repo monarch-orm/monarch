@@ -43,8 +43,54 @@ describe("Aggregation Operations", async () => {
     expect(result.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("executes raw MongoDB operations", async () => {
-    const result = await collections.users.raw().find().toArray();
+  it("accepts an initial pipeline", async () => {
+    await collections.users.insertMany(mockUsers);
+    const verifiedCount = mockUsers.filter((u) => u.isVerified).length;
+    const result = await collections.users.aggregate([{ $match: { isVerified: true } }]);
+    expect(result.length).toBe(verifiedCount);
+  });
+
+  it("extends an initial pipeline with addStage()", async () => {
+    await collections.users.insertMany(mockUsers);
+    const result = await collections.users
+      .aggregate([{ $match: { isVerified: true } }])
+      .addStage({ $group: { _id: "$isVerified", count: { $sum: 1 } } });
+    expect(result.length).toBe(1);
+  });
+
+  it("executes raw MongoDB aggregate", async () => {
+    await collections.users.insertMany(mockUsers);
+    const result = await collections.users
+      .raw()
+      .aggregate([{ $match: { isVerified: true } }])
+      .toArray();
     expect(result).toBeInstanceOf(Array);
+    expect(result.length).toBe(mockUsers.filter((u) => u.isVerified).length);
+  });
+
+  describe("immutability", () => {
+    it("addStage() returns a new instance and does not affect base pipeline", async () => {
+      await collections.users.insertMany(mockUsers);
+
+      const verifiedCount = mockUsers.filter((u) => u.isVerified).length;
+      const base = collections.users.aggregate();
+      const withMatch = base.addStage({ $match: { isVerified: true } });
+
+      expect(withMatch).not.toBe(base);
+      expect((await base).length).toBe(mockUsers.length);
+      expect((await withMatch).length).toBe(verifiedCount);
+    });
+
+    it("chained addStage() calls are independent from base", async () => {
+      await collections.users.insertMany(mockUsers);
+
+      const base = collections.users.aggregate();
+      const withMatch = base.addStage({ $match: { isVerified: true } });
+      const withLimit = base.addStage({ $limit: 1 });
+
+      expect((await base).length).toBe(mockUsers.length);
+      expect((await withMatch).length).toBe(mockUsers.filter((u) => u.isVerified).length);
+      expect((await withLimit).length).toBe(1);
+    });
   });
 });

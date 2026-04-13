@@ -5,6 +5,8 @@ import { makeProjection } from "../projection";
 import type { Projection } from "../types/query-options";
 import { Query, type QueryOutput } from "./base";
 
+export type InsertOneQueryOptions = InsertOneOptions;
+
 /**
  * Collection.insertOne().
  */
@@ -20,7 +22,7 @@ export class InsertOneQuery<
     collection: MongoCollection<InferSchemaData<TSchema>>,
     readyPromise: Promise<void>,
     private _data: InferSchemaInput<TSchema>,
-    private _options: InsertOneOptions = {},
+    private _options: InsertOneQueryOptions = {},
   ) {
     super(schema, collection, readyPromise);
     this._projection = makeProjection("omit", Schema.options(schema).omit ?? {});
@@ -29,12 +31,16 @@ export class InsertOneQuery<
   /**
    * Adds insert options. Options are merged into existing options.
    *
-   * @param options - InsertOneOptions
+   * @param options - InsertOneQueryOptions
    * @returns InsertOneQuery instance
    */
-  public options(options: InsertOneOptions): this {
-    Object.assign(this._options, options);
-    return this;
+  public options(options: InsertOneQueryOptions): this {
+    const query = new InsertOneQuery(this.schema, this.collection, this.readyPromise, this._data, {
+      ...this._options,
+      ...options,
+    });
+    query._projection = this._projection;
+    return query as this;
   }
 
   protected async exec(): Promise<QueryOutput<TOutput, TOmit>> {

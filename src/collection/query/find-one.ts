@@ -1,4 +1,4 @@
-import type { FindOptions, Collection as MongoCollection, Filter as MongoFilter } from "mongodb";
+import type { Abortable, FindOptions, Collection as MongoCollection, Filter as MongoFilter } from "mongodb";
 import type { AnyRelation } from "../../relations/relations";
 import type { InferRelationObjectPopulation, Population } from "../../relations/type-helpers";
 import { type AnySchema, Schema } from "../../schema/schema";
@@ -9,6 +9,8 @@ import { addExtraInputsToProjection, makeProjection } from "../projection";
 import type { PipelineStage } from "../types/pipeline-stage";
 import type { BoolProjection, Projection } from "../types/query-options";
 import { Query, type QueryOutput } from "./base";
+
+export type FindOneQueryOptions = Omit<FindOptions, "projection" | "timeoutMode"> & Abortable;
 
 /**
  * Collection.findOne().
@@ -38,12 +40,17 @@ export class FindOneQuery<
   /**
    * Adds find options. Options are merged into existing options.
    *
-   * @param options - FindOptions
+   * @param options - FindOneQueryOptions
    * @returns FindOneQuery instance
    */
-  public options(options: FindOptions): this {
-    Object.assign(this._options, options);
-    return this;
+  public options(options: FindOneQueryOptions): this {
+    const query = new FindOneQuery(this.schema, this.collection, this.readyPromise, this._relations, this._filter, {
+      ...this._options,
+      ...options,
+    });
+    query._projection = this._projection;
+    query._population = this._population;
+    return query as this;
   }
 
   /**
@@ -53,8 +60,17 @@ export class FindOneQuery<
    * @returns FindOneQuery instance
    */
   public omit<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
-    this._projection = makeProjection("omit", projection);
-    return this as FindOneQuery<TSchema, TRelations, TPopulate, TOutput, ["omit", TrueKeys<TProjection>]>;
+    const query = new FindOneQuery(
+      this.schema,
+      this.collection,
+      this.readyPromise,
+      this._relations,
+      this._filter,
+      this._options,
+    );
+    query._projection = makeProjection("omit", projection);
+    query._population = this._population;
+    return query as FindOneQuery<TSchema, TRelations, TPopulate, TOutput, ["omit", TrueKeys<TProjection>]>;
   }
 
   /**
@@ -64,8 +80,17 @@ export class FindOneQuery<
    * @returns FindOneQuery instance
    */
   public select<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
-    this._projection = makeProjection("select", projection);
-    return this as FindOneQuery<TSchema, TRelations, TPopulate, TOutput, ["select", TrueKeys<TProjection>]>;
+    const query = new FindOneQuery(
+      this.schema,
+      this.collection,
+      this.readyPromise,
+      this._relations,
+      this._filter,
+      this._options,
+    );
+    query._projection = makeProjection("select", projection);
+    query._population = this._population;
+    return query as FindOneQuery<TSchema, TRelations, TPopulate, TOutput, ["select", TrueKeys<TProjection>]>;
   }
 
   /**
@@ -75,8 +100,17 @@ export class FindOneQuery<
    * @returns FindOneQuery instance
    */
   public populate<TPopulation extends Population<TRelations, TSchema["name"]>>(population: TPopulation) {
-    this._population = population;
-    return this as FindOneQuery<
+    const query = new FindOneQuery(
+      this.schema,
+      this.collection,
+      this.readyPromise,
+      this._relations,
+      this._filter,
+      this._options,
+    );
+    query._projection = this._projection;
+    query._population = population;
+    return query as FindOneQuery<
       TSchema,
       TRelations,
       InferRelationObjectPopulation<TRelations, TSchema["name"], TPopulation>,
@@ -126,7 +160,6 @@ export class FindOneQuery<
     });
 
     addPipelineMetas(pipeline, {
-      limit: this._options.limit,
       skip: this._options.skip,
       sort: getSortDirection(this._options.sort),
     });

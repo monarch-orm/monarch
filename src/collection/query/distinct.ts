@@ -3,6 +3,8 @@ import type { AnySchema } from "../../schema/schema";
 import type { DistinctFilter, Filter, InferSchemaData } from "../../schema/type-helpers";
 import { Query } from "./base";
 
+export type DistinctQueryOptions = DistinctOptions;
+
 export class DistinctQuery<
   TSchema extends AnySchema,
   Key extends keyof DistinctFilter<TSchema>,
@@ -14,14 +16,16 @@ export class DistinctQuery<
     readyPromise: Promise<void>,
     private _filter: Filter<TSchema>,
     private _key: Key,
-    private _options: DistinctOptions = {},
+    private _options: DistinctQueryOptions = {},
   ) {
     super(schema, collection, readyPromise);
   }
 
-  public options(options: DistinctOptions): this {
-    Object.assign(this._options, options);
-    return this;
+  public options(options: DistinctQueryOptions): this {
+    return new DistinctQuery(this.schema, this.collection, this.readyPromise, this._filter, this._key, {
+      ...this._options,
+      ...options,
+    }) as this;
   }
 
   protected async exec(): Promise<TOutput> {

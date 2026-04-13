@@ -1,4 +1,5 @@
 import {
+  type Abortable,
   type AnyBulkWriteOperation,
   type CountDocumentsOptions,
   type Db,
@@ -30,6 +31,7 @@ import { InsertOneQuery } from "./query/insert-one";
 import { ReplaceOneQuery } from "./query/replace-one";
 import { UpdateManyQuery } from "./query/update-many";
 import { UpdateOneQuery } from "./query/update-one";
+import type { PipelineStage } from "./types/pipeline-stage";
 
 /**
  * Collection interface for MongoDB operations.
@@ -119,7 +121,7 @@ export class Collection<TSchema extends AnySchema, TRelations extends Record<str
    * @param update - Update operations
    * @returns FindOneAndUpdateQuery instance
    */
-  public findByIdAndUpdate(id: Index<InferSchemaInput<TSchema>, "_id">, update: UpdateFilter<TSchema> | Document[]) {
+  public findByIdAndUpdate(id: Index<InferSchemaInput<TSchema>, "_id">, update: UpdateFilter<TSchema>) {
     const _idType = Schema.types(this.schema)._id;
     const isObjectIdType = MonarchType.isInstanceOf(_idType, MonarchObjectId);
 
@@ -180,7 +182,7 @@ export class Collection<TSchema extends AnySchema, TRelations extends Record<str
    * @param update - Update operations
    * @returns FindOneAndUpdateQuery instance
    */
-  public findOneAndUpdate(filter: Filter<TSchema>, update: UpdateFilter<TSchema> | Document[]) {
+  public findOneAndUpdate(filter: Filter<TSchema>, update: UpdateFilter<TSchema>) {
     return new FindOneAndUpdateQuery(this.schema, this.collection, this.readyPromise, filter, update);
   }
 
@@ -242,7 +244,7 @@ export class Collection<TSchema extends AnySchema, TRelations extends Record<str
    * @param update - Update operations
    * @returns UpdateOneQuery instance
    */
-  public updateOne(filter: Filter<TSchema>, update: UpdateFilter<TSchema> | Document[]) {
+  public updateOne(filter: Filter<TSchema>, update: UpdateFilter<TSchema>) {
     return new UpdateOneQuery(this.schema, this.collection, this.readyPromise, filter, update);
   }
 
@@ -253,7 +255,7 @@ export class Collection<TSchema extends AnySchema, TRelations extends Record<str
    * @param update - Update operations
    * @returns UpdateManyQuery instance
    */
-  public updateMany(filter: Filter<TSchema>, update: UpdateFilter<TSchema> | Document[]) {
+  public updateMany(filter: Filter<TSchema>, update: UpdateFilter<TSchema>) {
     return new UpdateManyQuery(this.schema, this.collection, this.readyPromise, filter, update);
   }
 
@@ -282,8 +284,8 @@ export class Collection<TSchema extends AnySchema, TRelations extends Record<str
    *
    * @returns AggregationPipeline instance
    */
-  public aggregate<TOutput extends any[]>() {
-    return new AggregationPipeline<TSchema, TOutput[]>(this.schema, this.collection, this.readyPromise);
+  public aggregate<TOutput extends Document>(pipeline: PipelineStage<InferSchemaData<TSchema>>[] = []) {
+    return new AggregationPipeline<TSchema, TOutput>(this.schema, this.collection, this.readyPromise, {}, pipeline);
   }
 
   /**
@@ -293,7 +295,7 @@ export class Collection<TSchema extends AnySchema, TRelations extends Record<str
    * @param options - Count options
    * @returns Promise resolving to document count
    */
-  public async countDocuments(filter: Filter<TSchema> = {}, options?: CountDocumentsOptions) {
+  public async countDocuments(filter: Filter<TSchema> = {}, options?: CountDocumentsOptions & Abortable) {
     return await this.collection.countDocuments(filter as MongoFilter<InferSchemaData<TSchema>>, options);
   }
 

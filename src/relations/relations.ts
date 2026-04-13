@@ -1,6 +1,6 @@
 import type { ObjectId } from "mongodb";
 import { type AnySchema } from "../schema/schema";
-import type { InferSchemaData, InferSchemaInput } from "../schema/type-helpers";
+import type { InferSchemaData } from "../schema/type-helpers";
 import type { ExtractIfArray, Index, Merge, MergeN1, OrArray } from "../utils/type-helpers";
 import type { PopulationOptions, RelationPopulationOptions } from "./type-helpers";
 
@@ -27,9 +27,12 @@ export class Relation<
   ) {}
 
   public options<TOptions extends RelationPopulationOptions<TRelations, TRelation, TFields["to"]>>(options: TOptions) {
-    const relation = this as unknown as Relation<TRelation, TFields, TOptions, TRelations>;
-    relation._options = options;
-    return relation;
+    return new Relation<TRelation, TFields, TOptions, TRelations>(
+      this.relation,
+      this.schemaField,
+      this.targetField,
+      options,
+    );
   }
 
   public static options<T extends AnyRelation>(relation: T): PopulationOptions<any, any, any> | undefined {
@@ -115,13 +118,13 @@ type RelationsBuilder<
 >;
 
 type SchemaFields<T extends AnySchema> = {
-  [K in keyof InferSchemaInput<T> as NonNullable<InferSchemaInput<T>[K]> extends
+  [K in keyof InferSchemaData<T> as Exclude<InferSchemaData<T>[K], null | undefined> extends
     | string
     | number
     | ObjectId
     | Array<string | number | ObjectId>
     ? K
-    : never]-?: RelationField<K, NonNullable<InferSchemaData<T>[K]>, T>;
+    : never]-?: RelationField<K, Exclude<InferSchemaData<T>[K], null | undefined>, T>;
 };
 
 type SchemaOne<
@@ -164,8 +167,14 @@ type RelationFn<
     // target field type must match schema field type
     // one does not accept array fields
     TRelation extends "many"
-      ? OrArray<ExtractIfArray<NonNullable<Index<InferSchemaData<TSchemaField["schema"]>, TSchemaField["field"]>>>>
-      : ExtractIfArray<NonNullable<Index<InferSchemaData<TSchemaField["schema"]>, TSchemaField["field"]>>>,
+      ? OrArray<
+          ExtractIfArray<
+            Exclude<Index<InferSchemaData<TSchemaField["schema"]>, TSchemaField["field"]>, null | undefined>
+          >
+        >
+      : ExtractIfArray<
+          Exclude<Index<InferSchemaData<TSchemaField["schema"]>, TSchemaField["field"]>, null | undefined>
+        >,
     TTarget
   >,
 >(fields: {
