@@ -1,5 +1,12 @@
 # monarch-orm
 
+## 0.13.0
+
+### Minor Changes
+
+- 29d7e0c: Make query builder methods immutable — each method returns a new instance instead of mutating.
+- 8c6906b: Add searchIndexes support. Use `schema.searchIndexes()` for defining Atlas Search Indexes
+
 ## 0.12.0
 
 ### Minor Changes
