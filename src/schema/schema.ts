@@ -7,6 +7,7 @@ import { MonarchObjectId, objectId } from "../types/objectId";
 import { MonarchNullable, MonarchOptional, MonarchType, type AnyMonarchType } from "../types/type";
 import type { MergeAll, MergeN1All, Pretty, RequiredObject } from "../utils/type-helpers";
 import type { SchemaIndexes } from "./indexes";
+import type { SchemaSearchIndexes } from "./search-indexes";
 import type {
   InferSchemaData,
   InferSchemaInput,
@@ -52,6 +53,7 @@ export class Schema<
     private options: {
       omit?: SchemaOmit<TTypes>;
       indexes?: SchemaIndexes<TTypes>;
+      searchIndexes?: SchemaSearchIndexes<TTypes>;
       validation?: SchemaValidation;
       virtuals?: SchemaVirtuals<TTypes, TVirtuals>;
       renames?: TRenames;
@@ -104,7 +106,6 @@ export class Schema<
    * This method allows you to specify indexes that should be created for the schema.
    *
    * @param indexes - A function that defines the indexes to be created.
-   *
    * @returns The current schema instance for method chaining.
    *
    * @example
@@ -118,6 +119,33 @@ export class Schema<
    */
   public indexes(indexes: SchemaIndexes<TTypes>) {
     this.options.indexes = indexes;
+    return this;
+  }
+
+  /**
+   * Defines the search indexes for the schema.
+   *
+   * Search indexes are only supported on MongoDB Atlas clusters and are applied during initialization.
+   *
+   * @param searchIndexes - A function that defines the search indexes to be created.
+   * @returns The current schema instance for method chaining.
+   *
+   * @example
+   * const articleSchema = createSchema("articles", {
+   *   title: string(),
+   *   body: string(),
+   *   embedding: array(number()),
+   * }).searchIndexes(({ searchIndex, vectorSearchIndex }) => ({
+   *   fullText: searchIndex("articles_search", {
+   *     mappings: { dynamic: false, fields: { title: { type: "string" }, body: { type: "string" } } },
+   *   }),
+   *   semantic: vectorSearchIndex("articles_vector", {
+   *     fields: [{ type: "vector", path: "embedding", numDimensions: 1536, similarity: "cosine" }],
+   *   }),
+   * }));
+   */
+  public searchIndexes(searchIndexes: SchemaSearchIndexes<TTypes>) {
+    this.options.searchIndexes = searchIndexes;
     return this;
   }
 
