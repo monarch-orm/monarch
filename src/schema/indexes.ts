@@ -107,7 +107,7 @@ export function isStaleIndex(existingIndex: IndexDescriptionInfo, desiredIndex: 
     ...Object.keys(MONGODB_INDEX_DEFAULTS),
   ]);
   // Skip internal options
-  ["ns", "key", "name", "v", "textIndexVersion", "2dsphereIndexVersion"].forEach(allKeys.delete);
+  ["ns", "key", "name", "v", "textIndexVersion", "2dsphereIndexVersion"].forEach((v) => allKeys.delete(v));
 
   for (const key of allKeys) {
     const k = key as keyof CreateIndexesOptions;
