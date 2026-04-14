@@ -163,6 +163,85 @@ schemas.withRelations((r) => ({
 }));
 ```
 
+#### Indexes for relations
+
+Relations work by querying the target collection using the `to` field value collected from each source document. Without an index on the `to` field, MongoDB performs a full collection scan for every population. **Always create indexes on the fields used in relations.**
+
+- If `to` is `_id`, it is already indexed — no action needed.
+- For any other `to` field, add an **ascending index** (`{ field: 1 }`) on the target schema with `.indexes()`.
+- A `from` field does not need an index for the join, but you can index it on the source schema if you filter or sort by it in your own queries.
+
+**One relation — `from` points to `_id`**
+
+`to` is `_id` so it is already indexed. Index the `from` field (`authorId`) on `posts` so filtering posts by author is also fast.
+
+```ts
+const userSchema = createSchema("users", {
+  name: string(),
+});
+const postSchema = createSchema("posts", {
+  title: string(),
+  authorId: objectId(),
+}).indexes(({ createIndex }) => ({
+  byAuthor: createIndex({ authorId: 1 }),
+}));
+
+const schemas = defineSchemas({ userSchema, postSchema });
+const schemasWithRelations = schemas.withRelations((r) => ({
+  posts: {
+    author: r.one.users({ from: r.posts.authorId, to: r.users._id }),
+  },
+}));
+```
+
+**Many relation — foreign key on target**
+
+`to` is `posts.authorId` which is not `_id`, so index it on `posts`.
+
+```ts
+const userSchema = createSchema("users", {
+  name: string(),
+});
+const postSchema = createSchema("posts", {
+  title: string(),
+  authorId: objectId(),
+}).indexes(({ createIndex }) => ({
+  authorId: createIndex({ authorId: 1 }),
+}));
+
+const schemas = defineSchemas({ userSchema, postSchema });
+const schemasWithRelations = schemas.withRelations((r) => ({
+  users: {
+    posts: r.many.posts({ from: r.users._id, to: r.posts.authorId }),
+  },
+}));
+```
+
+**Many relation — array `to` field**
+
+`to` is `tags.postIds` which is an array field and not `_id`. MongoDB queries the target collection by the `to` field, so index it — MongoDB automatically uses a multikey index to cover each element in the array.
+
+An array `from` field does not need an index for the join itself — it is just read to collect lookup values and is never used as a query predicate. You can index it if you filter the source collection by that field in your own queries.
+
+```ts
+const tagSchema = createSchema("tags", {
+  name: string(),
+  postIds: array(objectId()),
+}).indexes(({ createIndex }) => ({
+  postIds: createIndex({ postIds: 1 }),
+}));
+const postSchema = createSchema("posts", {
+  title: string(),
+});
+
+const schemas = defineSchemas({ tagSchema, postSchema });
+const schemasWithRelations = schemas.withRelations((r) => ({
+  posts: {
+    tags: r.many.tags({ from: r.posts._id, to: r.tags.postIds }),
+  },
+}));
+```
+
 #### Default relation options
 
 Call `.options()` on any relation to set default population behavior. These defaults apply whenever the relation is populated with `true`. They can always be overridden by passing explicit options at query time.
