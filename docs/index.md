@@ -3,7 +3,7 @@ layout: home
 
 hero:
   name: "Monarch ORM"
-  text: "Type safe Object Document Mapper (ODM) for MongoDB"
+  text: "Type-safe ODM for MongoDB"
   tagline: "Designed to provide a seamless and efficient way to interact with your MongoDB database in a type-safe manner."
   actions:
     - theme: brand
