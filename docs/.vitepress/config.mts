@@ -2,7 +2,7 @@ import { defineConfig } from "vitepress";
 
 export default defineConfig({
   title: "Monarch ORM",
-  description: "Type safe Object Document Mapper (ODM) for MongoDB",
+  description: "Type safe ODM for MongoDB",
   cleanUrls: true,
   themeConfig: {
     nav: [
@@ -17,6 +17,7 @@ export default defineConfig({
         items: [
           { text: "Getting Started", link: "/guide/getting-started" },
           { text: "Schemas & Types", link: "/guide/schemas-and-types" },
+          { text: "Queries & Operators", link: "/guide/queries-and-operators" },
           { text: "Advanced Schemas", link: "/guide/advanced-schemas" },
           { text: "Aggregations & Relations", link: "/guide/aggregation-and-relations" },
         ],
