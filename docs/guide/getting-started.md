@@ -22,7 +22,8 @@ pnpm add monarch-orm
 ## Basic Usage
 
 ```typescript
-import { boolean, createClient, createDatabase, createSchema, number, string } from "monarch-orm";
+import { createClient, createDatabase, createSchema, defineSchemas } from "monarch-orm";
+import { boolean, number, string } from "monarch-orm/types";
 
 const UserSchema = createSchema("users", {
   name: string().nullable(),
@@ -125,28 +126,20 @@ Update documents in your collection using the `updateOne` or `updateMany` method
 Example: Updating a single user's email
 
 ```typescript
-const updatedUser = await collections.users
-  .updateOne()
-  .set({
-    email: "alice.updated@example.com",
-  })
-  .where({
-    name: "Alice",
-  });
+const updatedUser = await collections.users.updateOne(
+  { name: "Alice" },
+  { $set: { email: "alice.updated@example.com" } }
+);
 console.log(updatedUser);
 ```
 
 Example: Updating multiple users' `isVerified` field
 
 ```typescript
-const updatedUsers = await collections.users
-  .updateMany()
-  .set({
-    isVerified: true,
-  })
-  .where({
-    isVerified: false,
-  });
+const updatedUsers = await collections.users.updateMany(
+  { isVerified: false },
+  { $set: { isVerified: true } }
+);
 console.log(updatedUsers);
 ```
 
@@ -157,14 +150,15 @@ Note: The update method returns the number of documents updated.
 You can also decentralize the models:
 
 ```typescript
-const { db } = createDatabase(client.db());
+import { createDatabase, defineSchemas } from "monarch-orm";
 
 const UserSchema = createSchema("users", {
   name: string(),
   isVerified: boolean(),
 });
 
-const UserModel = db(UserSchema);
+const monarchDb = createDatabase(client.db(), defineSchemas({ users: UserSchema }));
+const UserModel = monarchDb.use(UserSchema);
 export default UserModel;
 ```
 

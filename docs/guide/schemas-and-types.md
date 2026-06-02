@@ -4,22 +4,6 @@ Monarch provides a rich set of schema builders to strictly enforce your MongoDB 
 
 ## Primitives
 
-### Shape `createShape()`
-
-Use `createShape()` when you want to define a reusable shape for schemas or objects.
-
-```typescript
-const addressShape = createShape({
-  street: string(),
-  city: string(),
-});
-
-const userSchema = createSchema("users", {
-  name: string(),
-  address: object(addressShape),
-});
-```
-
 ### String `string()`
 
 Defines a field that accepts string values.
@@ -67,16 +51,6 @@ Defines a field that accepts JavaScript `Date` objects.
 ```typescript
 const UserSchema = createSchema("users", {
   birthDate: date(),
-});
-```
-
-### Date String `dateString()`
-
-Defines a field that accepts date strings in ISO format.
-
-```typescript
-const UserSchema = createSchema("users", {
-  registrationDate: dateString(),
 });
 ```
 

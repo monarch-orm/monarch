@@ -4,7 +4,7 @@ Monarch ORM provides powerful ways to connect collections through relations and 
 
 ## Relations
 
-You can establish relations between collections after defining your schemas. Use the `defineSchemas` higher-order function to bundle schemas and the `.withRelations` method to establish `$one` and `$many` connections between them.
+You can establish relations between collections after defining your schemas. Use the `defineSchemas` higher-order function to bundle schemas and the `.withRelations` method to establish `one` and `many` connections between them.
 
 ### Defining Relations
 
@@ -29,13 +29,13 @@ const schemas = defineSchemas({
 });
 
 // Configure the relationships
-const relations = schemas.withRelations((s) => ({
+const relations = schemas.withRelations((r) => ({
   users: {
-    tutor: s.users.$one.users({ from: "tutorId", to: "_id" }),
-    posts: s.users.$many.posts({ from: "_id", to: "authorId" }),
+    tutor: r.one.users({ from: r.users.tutorId, to: r.users._id }),
+    posts: r.many.posts({ from: r.users._id, to: r.posts.authorId }),
   },
   posts: {
-    author: s.posts.$one.users({ from: "authorId", to: "_id" }),
+    author: r.one.users({ from: r.posts.authorId, to: r.users._id }),
   },
 }));
 

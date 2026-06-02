@@ -91,8 +91,8 @@ In expansive, microservice-like or component-based setups, placing all schemas i
 import { defineSchemas, mergeSchemas } from "monarch-orm";
 
 // 1. Module defined for Users
-const userGroup = defineSchemas({ UserSchema }).withRelations((s) => ({
-  users: { tutor: s.users.$one.users({ from: "tutorId", to: "_id" }) },
+const userGroup = defineSchemas({ UserSchema }).withRelations((r) => ({
+  users: { tutor: r.one.users({ from: r.users.tutorId, to: r.users._id }) },
 }));
 
 // 2. Module defined for Content 
@@ -102,12 +102,12 @@ const contentGroup = defineSchemas({ PostSchema, CategorySchema });
 const mergedGroups = mergeSchemas(userGroup, contentGroup);
 
 // Optionally attach relationships ACROSS the groups post-merge
-const finalSchema = mergedGroups.withRelations((s) => ({
+const finalSchema = mergedGroups.withRelations((r) => ({
   users: {
-    posts: s.users.$many.posts({ from: "_id", to: "authorId" }),
+    posts: r.many.posts({ from: r.users._id, to: r.posts.authorId }),
   },
   posts: {
-    author: s.posts.$one.users({ from: "authorId", to: "_id" }),
+    author: r.one.users({ from: r.posts.authorId, to: r.users._id }),
   },
 }));
 

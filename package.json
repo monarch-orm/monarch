@@ -39,9 +39,6 @@
     }
   },
   "scripts": {
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs",
     "build": "tsdown && tsc",
     "release": "pnpm run build && changeset publish",
     "check": "tsc --noEmit && pnpm run format",
@@ -89,7 +86,6 @@
     "tsdown": "^0.18.3",
     "typescript": "^5.9.3",
     "vite": "^8.0.16",
-    "vitepress": "^1.6.4",
     "vitest": "^4.0.16"
   }
 }
