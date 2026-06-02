@@ -10,8 +10,8 @@ hero:
       text: Get Started
       link: /guide/getting-started
     - theme: alt
-      text: API Reference
-      link: /api/
+      text: Collection Methods
+      link: /guide/collection-methods
 
 features:
   - title: Strongly Typed

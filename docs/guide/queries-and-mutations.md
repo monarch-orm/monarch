@@ -1,10 +1,24 @@
-# API Documentation
+# Queries & Mutations
 
-This page provides a comprehensive list of all collection methods available in Monarch ORM.
+Once your database is initialized, every collection becomes available under `db.collections`. This object provides a fully type-safe gateway to interact with your MongoDB database.
 
-## Queries
+This page serves as an API reference for the core methods you can call directly on a collection instance to insert, update, delete, or retrieve data.
 
-Collections expose typed query methods.
+## Accessing Collections
+
+You don't need to manually instantiate or wrap collections. Just access them directly off the `db.collections` object. Because of your schemas, Monarch knows exactly what data shapes are valid.
+
+```typescript
+// Access your "users" collection
+// The collection is strictly typed!
+await db.collections.users.insertOne({ name: "Alice" });
+```
+
+---
+
+## Mutations
+
+Mutations allow you to add, modify, or delete documents. All mutations immediately execute against the database.
 
 ### `insertOne(data)`
 
@@ -27,6 +41,12 @@ await db.collections.users.insertMany([
   { name: "Linus", email: "linus@example.com" },
 ]);
 ```
+
+---
+
+## Queries
+
+Queries retrieve data from the database. Unlike mutations, queries like `.find()` return a lazy builder that isn't executed until you `await` it.
 
 ### `find(filter?)`
 

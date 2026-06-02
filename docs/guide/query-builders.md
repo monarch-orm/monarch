@@ -1,13 +1,28 @@
-# Queries
+# Query Builders
 
-Monarch ORM provides a powerful, type-safe API for querying your MongoDB collections. By using the query builders, you can construct complex filters without losing type safety.
+When you want to retrieve and shape documents from your database, Monarch ORM provides a powerful, type-safe builder API. Instead of forcing you to write complex JSON structures all at once, you can chain methods together to slowly construct your query.
+
+## The Basic Concept
+
+When you call data retrieval methods like `.find()` or `.findOne()`, Monarch doesn't execute the query immediately against the database. Instead, it returns a **lazy query builder**. The query is only sent to MongoDB when you `await` the builder.
+
+```typescript
+// 1. Get the lazy builder
+const query = db.collections.users.find({ isVerified: true });
+
+// 2. Chain modifiers to shape what you want returned
+query.select({ name: true }).sort({ createdAt: -1 });
+
+// 3. Await it to actually execute the query
+const users = await query;
+```
 
 ## Query Modifiers and Immutability
 
 When you use `.find()` or `.findOne()`, Monarch returns a lazy query builder. The query is not executed until you `await` it. This allows you to chain modifiers to shape your results.
 
 > [!IMPORTANT]
-> Query modifier methods (`.select()`, `.sort()`, `.limit()`, etc.) **do not mutate** the original query instance. Instead, they return a **new** instance of the query builder. 
+> Query modifier methods (`.select()`, `.sort()`, `.limit()`, etc.) **do not mutate** the original query instance. Instead, they return a **new** instance of the query builder.
 
 This immutability makes it incredibly safe to re-use base queries throughout your application without unintended side effects.
 
