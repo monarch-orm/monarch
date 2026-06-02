@@ -4,6 +4,22 @@ Monarch provides a rich set of schema builders to strictly enforce your MongoDB 
 
 ## Primitives
 
+### Shape `createShape()`
+
+Use `createShape()` when you want to define a reusable shape for schemas or objects.
+
+```typescript
+const addressShape = createShape({
+  street: string(),
+  city: string(),
+});
+
+const userSchema = createSchema("users", {
+  name: string(),
+  address: object(addressShape),
+});
+```
+
 ### String `string()`
 
 Defines a field that accepts string values.
@@ -62,6 +78,64 @@ Defines a field that accepts date strings in ISO format.
 const UserSchema = createSchema("users", {
   registrationDate: dateString(),
 });
+```
+
+### UUID `uuid()`
+
+Defines a field that accepts MongoDB `UUID` values or valid UUID strings.
+
+```typescript
+const SessionSchema = createSchema("sessions", {
+  sessionId: uuid().auto(),
+});
+```
+
+### Regex `regex()`
+
+Parses `RegExp` and BSON regex values.
+
+```typescript
+const pattern = regex();
+```
+
+### Binary `binary()`
+
+Parses MongoDB binary values.
+
+```typescript
+const fileData = binary();
+```
+
+### Int32 `int32()`
+
+Parses BSON `Int32` values.
+
+```typescript
+const version = int32();
+```
+
+### Double `double()`
+
+Parses BSON `Double` values.
+
+```typescript
+const score = double();
+```
+
+### Long `long()`
+
+Parses BSON `Long` values.
+
+```typescript
+const totalViews = long();
+```
+
+### Decimal128 `decimal128()`
+
+Parses BSON `Decimal128` values.
+
+```typescript
+const amount = decimal128();
 ```
 
 ### General Modifiers

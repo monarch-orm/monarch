@@ -2,237 +2,277 @@
 
 This page provides a comprehensive list of all collection methods available in Monarch ORM.
 
-## Collection Operations
+## Queries
 
-### `insert()`
-Inserts a new document into the collection.
-- **Return Type:** `Promise<InsertOneWriteOpResult<InferSchemaData<T>>>`
+Collections expose typed query methods.
 
-### `insertOne()`
-Inserts a single document into the collection.
-- **Return Type:** `Promise<InsertOneWriteOpResult<InferSchemaData<T>>>`
+### `insertOne(data)`
 
-### `insertMany()`
-Inserts multiple documents into the collection.
-- **Return Type:** `Promise<InsertWriteOpResult<InferSchemaData<T>>>`
+Inserts one document after parsing it through the schema.
 
-### `find()`
-Retrieves documents from the collection.
-- **Arguments:**
-  - `filter`: `Filter<InferSchemaData<T>>`
-- **Return Type:** `Promise<InferSchemaData<T>[]>`
-- **Callable Methods:**
-  - `where()`: Filters the documents based on a specified condition.
-  - `limit()`: Limits the number of documents returned.
-  - `skip()`: Skips a specified number of documents.
-  - `sort()`: Sorts the documents by a specified field.
+```ts
+const user = await db.collections.users.insertOne({
+  name: "Alice",
+  email: "alice@example.com",
+});
+```
 
-### `findOne()`
-Retrieves a single document from the collection.
-- **Arguments:**
-  - `filter`: `Filter<InferSchemaData<T>>`
-- **Return Type:** `Promise<InferSchemaData<T> | null>`
-- **Callable Methods:**
-  - `where()`: Filters the documents based on a specified condition.
+### `insertMany(data[])`
 
-### `findOneAndDelete()`
-Retrieves a single document from the collection and deletes it.
-- **Arguments:**
-  - `filter`: `Filter<InferSchemaData<T>>`
-- **Return Type:** `Promise<FindAndModifyWriteOpResultObject<InferSchemaData<T>>>`
+Inserts multiple documents after parsing each one through the schema.
 
-### `findOneAndUpdate()`
-Retrieves a single document from the collection, updates it, and returns the updated document.
-- **Arguments:**
-  - `filter`: `Filter<InferSchemaData<T>>`
-  - `update`: `UpdateFilter<InferSchemaData<T>>`
-- **Return Type:** `Promise<FindAndModifyWriteOpResultObject<InferSchemaData<T>>>`
+```ts
+await db.collections.users.insertMany([
+  { name: "Grace", email: "grace@example.com" },
+  { name: "Linus", email: "linus@example.com" },
+]);
+```
 
-### `findOneAndReplace()`
-Retrieves a single document from the collection, replaces it, and returns the new document.
-- **Arguments:**
-  - `filter`: `Filter<InferSchemaData<T>>`
-  - `replacement`: `InferSchemaData<T>`
-- **Return Type:** `Promise<FindAndModifyWriteOpResultObject<InferSchemaData<T>>>`
+### `find(filter?)`
 
-### `count()`
-Counts the number of documents in the collection.
-- **Arguments:**
-  - `filter`: `Filter<InferSchemaData<T>>`
-- **Return Type:** `Promise<number>`
+Returns a query for multiple documents. It supports `select()`, `omit()`, `sort()`, `limit()`, `skip()`, `options()`, `cursor()`, and `populate()`.
 
-### `updateOne()`
-Updates a single document in the collection.
-- **Arguments:**
-  - `filter`: `Filter<InferSchemaData<T>>`
-  - `update`: `UpdateFilter<InferSchemaData<T>>`
-- **Return Type:** `Promise<UpdateWriteOpResult>`
+```ts
+const allUsers = await db.collections.users.find();
 
-### `updateMany()`
-Updates multiple documents in the collection.
-- **Arguments:**
-  - `filter`: `Filter<InferSchemaData<T>>`
-  - `update`: `UpdateFilter<InferSchemaData<T>>`
-- **Return Type:** `Promise<UpdateWriteOpResult>`
+const verifiedUsers = await db.collections.users
+  .find({ isVerified: true })
+  .omit({ age: true })
+  .limit(20)
+  .skip(10)
+  .sort({ email: "asc" });
 
-### `deleteOne()`
-Deletes a single document from the collection.
-- **Arguments:**
-  - `filter`: `Filter<InferSchemaData<T>>`
-- **Return Type:** `Promise<DeleteWriteOpResultObject>`
+const cursor = await db.collections.users.find({ isVerified: true }).cursor();
+for await (const item of cursor) {
+  console.log(item.email);
+}
+```
 
-### `deleteMany()`
-Deletes multiple documents from the collection.
-- **Arguments:**
-  - `filter`: `Filter<InferSchemaData<T>>`
-- **Return Type:** `Promise<DeleteWriteOpResultObject>`
+If your schema has relations, `find()` can populate them:
 
-### `replaceOne()`
-Replaces a single document in the collection.
-- **Arguments:**
-  - `filter`: `Filter<InferSchemaData<T>>`
-  - `replacement`: `InferSchemaData<T>`
-- **Return Type:** `Promise<ReplaceWriteOpResult>`
+```ts
+const posts = await db.collections.posts.find().populate({
+  author: true,
+  contributors: true,
+});
+```
+
+Populate options support nested `populate`, plus `select`, `omit`, `sort`, `skip`, and `limit` on the populated query.
+
+```ts
+const users = await db.collections.users.find().populate({
+  posts: {
+    sort: { title: -1 },
+    limit: 5,
+    populate: {
+      author: true,
+    },
+  },
+});
+```
+
+### `findOne(filter)`
+
+Returns a query for a single document. It supports `select()`, `omit()`, `options()`, and `populate()`.
+
+```ts
+const user = await db.collections.users.findOne({ email: "alice@example.com" });
+```
+
+### `findById(id)`
+
+Returns a query for a single document by `_id`. For `objectId()` schemas, it accepts either an `ObjectId` or a valid ObjectId string.
+
+```ts
+const byId = await db.collections.users.findById("67f0123456789abcdef0123");
+```
+
+### `updateOne(filter, update)`
+
+Updates one matching document. It supports `options()`.
+
+```ts
+await db.collections.users.updateOne(
+  { email: "alice@example.com" },
+  { $set: { isVerified: true } },
+);
+```
+
+### `updateMany(filter, update)`
+
+Updates all matching documents. It supports `options()`.
+
+```ts
+await db.collections.users.updateMany(
+  { isVerified: false },
+  { $set: { age: 18 } },
+);
+```
+
+### `findOneAndUpdate(filter, update)`
+
+Updates one document and returns the matched document by default, or the updated one when configured with `options({ returnDocument: "after" })`. It also supports `select()`, `omit()`, and `options()`.
+
+```ts
+const updated = await db.collections.users
+  .findOneAndUpdate(
+    { email: "alice@example.com" },
+    { $set: { isVerified: true } },
+  )
+  .options({ returnDocument: "after" });
+```
+
+### `findByIdAndUpdate(id, update)`
+
+Like `findOneAndUpdate()`, but matches by `_id`.
+
+```ts
+const updated = await db.collections.users
+  .findByIdAndUpdate("67f0123456789abcdef0123", {
+    $set: { isVerified: true },
+  })
+  .options({ returnDocument: "after" });
+```
+
+Schema parsing still runs for update input, so transforms like `.lowercase()` and validators still apply inside `$set`.
+
+### `replaceOne(filter, replacement)`
+
+Replaces one matching document. It supports `options()`.
+
+```ts
+await db.collections.users.replaceOne(
+  { email: "alice@example.com" },
+  { name: "Alice Lovelace", email: "alice@example.com" },
+);
+```
+
+### `findOneAndReplace(filter, replacement)`
+
+Replaces one document and returns the matched document by default, or the replacement when configured with `options({ returnDocument: "after" })`. It also supports `select()`, `omit()`, and `options()`.
+
+```ts
+const replaced = await db.collections.users
+  .findOneAndReplace(
+    { email: "alice@example.com" },
+    { name: "Alice", email: "alice@example.com" },
+  )
+  .options({ returnDocument: "after" });
+```
+
+### `deleteOne(filter)`
+
+Deletes one matching document.
+
+```ts
+await db.collections.users.deleteOne({ email: "alice@example.com" });
+```
+
+### `deleteMany(filter)`
+
+Deletes all matching documents.
+
+```ts
+await db.collections.users.deleteMany({ isVerified: false });
+```
+
+### `findOneAndDelete(filter)`
+
+Deletes one matching document and returns it.
+
+```ts
+const deleted = await db.collections.users.findOneAndDelete({
+  email: "alice@example.com",
+});
+```
+
+### `findByIdAndDelete(id)`
+
+Deletes one document by `_id` and returns it.
+
+```ts
+const deleted = await db.collections.users.findByIdAndDelete("67f0123456789abcdef0123");
+```
+
+### Other Collection Methods
+
+### `distinct(key, filter?)`
+
+Returns a query for the distinct values of a field.
+
+```ts
+const emails = await db.collections.users.distinct("email", { isVerified: true });
+```
+
+### `bulkWrite(operations)`
+
+Runs multiple MongoDB bulk write operations.
+
+```ts
+await db.collections.users.bulkWrite([
+  {
+    insertOne: {
+      document: {
+        name: "Alice",
+        email: "alice@example.com",
+      },
+    },
+  },
+  {
+    updateOne: {
+      filter: { email: "alice@example.com" },
+      update: { $set: { isVerified: true } },
+    },
+  },
+]);
+```
+
+### `countDocuments(filter?, options?)`
+
+Counts matching documents.
+
+```ts
+const verifiedCount = await db.collections.users.countDocuments({ isVerified: true });
+```
+
+### `estimatedDocumentCount(options?)`
+
+Returns MongoDB's estimated document count for the collection.
+
+```ts
+const totalCount = await db.collections.users.estimatedDocumentCount();
+```
 
 ### `aggregate()`
-Performs aggregation operations on the collection.
-- **Arguments:**
-  - `pipeline`: `PipelineStage<OptionalUnlessRequiredId<InferSchemaData<T>>>[]`
-- **Return Type:** `AggregationCursor<InferSchemaData<T>>`
-- **Callable Methods:**
-  - `allowDiskUse()`: Allows the aggregation operation to use disk storage.
-  - `cursor()`: Returns a cursor for the aggregation operation.
 
-### `watch()`
-Watches for changes in the collection.
-- **Arguments:**
-  - `pipeline`: `PipelineStage<any>[]`
-- **Return Type:** `ChangeStream<InferSchemaData<T>>`
-- **Callable Methods:**
-  - `on()`: Attaches a listener to the change stream.
+Builds an aggregation pipeline. It supports `options()`.
 
-### `bulkWrite()`
-Performs bulk write operations on the collection.
-- **Return Type:** `Promise<BulkWriteOpResultObject>`
-
-### `distinct()`
-Finds the distinct values for a specified field in the collection.
-- **Arguments:**
-  - `field`: `keyof InferSchemaOutput<T>`
-  - `filter`: `Filter<InferSchemaData<T>>`
-- **Return Type:** `Promise<InferSchemaOutput<T>[]>`
-
-### `drop()`
-Drops the collection.
-- **Return Type:** `Promise<void>`
-
-### `estimatedDocumentCount()`
-Estimates the number of documents in the collection.
-- **Arguments:**
-  - `options`: `EstimatedDocumentCountOptions`
-- **Return Type:** `Promise<number>`
-
-### `isCapped()`
-Checks if the collection is capped.
-- **Return Type:** `Promise<boolean>`
-
-### `options()`
-Gets the options of the collection.
-- **Arguments:**
-  - `options`: `OperationOptions`
-- **Return Type:** `Promise<any>`
-
-### `rename()`
-Renames the collection.
-- **Arguments:**
-  - `newName`: `string`
-  - `options`: `RenameOptions`
-- **Return Type:** `Promise<MongoClient>`
+```ts
+const result = await db.collections.users
+  .aggregate()
+  .addStage({ $match: { isVerified: true } })
+  .addStage({ $group: { _id: "$isVerified", count: { $sum: 1 } } });
+```
 
 ### `raw()`
-Returns the raw MongoDB collection.
-- **Return Type:** `MongoDBCollection<InferSchemaData<T>>`
-- **Callable Methods:**
-  - Various MongoDB collection methods.
 
-## Index Operations
+Returns the underlying MongoDB collection.
 
-### `createIndex()`
-Creates an index on the collection.
-- **Arguments:**
-  - `key`: `IndexDefinitionKey<Partial<InferSchemaData<T>>>`
-  - `options`: `IndexDefinitionOptions<InferSchemaData<T>>`
-- **Return Type:** `Promise<string>`
+```ts
+const rawUsers = await db.collections.users.raw().find().toArray();
+```
 
-### `createIndexes()`
-Creates multiple indexes on the collection.
-- **Arguments:**
-  - `keys`: `IndexDefinitionKey<Partial<InferSchemaData<T>>>[]`
-  - `options`: `IndexDefinitionOptions<InferSchemaData<T>>`
-- **Return Type:** `Promise<string[]>`
+Queries are lazy, so you can build and reuse them before execution. They run only when you `await` them or call a promise method like `.then()`, `.catch()`, or `.finally()`.
 
-### `dropIndex()`
-Drops an index from the collection.
-- **Arguments:**
-  - `value`: `string`
-- **Return Type:** `Promise<string>`
+```ts
+let verifiedUsersQuery = db.collections.users
+  .find({ isVerified: true })
+  .omit({ age: true })
+  .sort({ email: "asc" });
 
-### `dropIndexes()`
-Drops all indexes from the collection.
-- **Arguments:**
-  - `options`: `DropIndexesOptions`
-- **Return Type:** `Promise<string[]>`
+if (limitResults) {
+  verifiedUsersQuery = verifiedUsersQuery.limit(10);
+}
 
-### `listIndexes()`
-Lists all indexes on the collection.
-- **Return Type:** `CommandCursor<IndexInformation[]>`
-- **Callable Methods:**
-  - `forEach()`: Iterates over the index information.
-
-### `indexExists()`
-Checks if an index exists on the collection.
-- **Arguments:**
-  - `name`: `string`
-  - `options`: `AbstractCursorOptions`
-- **Return Type:** `Promise<boolean>`
-
-### `indexInformation()`
-Gets information about the indexes on the collection.
-- **Arguments:**
-  - `options`: `IndexInformationOptions & { full?: boolean; }`
-- **Return Type:** `Promise<IndexInformation[]>`
-- **Callable Methods:**
-  - `forEach()`: Iterates over the index information.
-
-## Search Index Operations
-
-### `createSearchIndex()`
-Creates a search index on the collection.
-- **Arguments:**
-  - `description`: `SearchIndexDescription`
-- **Return Type:** `Promise<string>`
-
-### `createSearchIndexes()`
-Creates multiple search indexes on the collection.
-- **Arguments:**
-  - `descriptions`: `SearchIndexDescription[]`
-- **Return Type:** `Promise<string[]>`
-
-### `dropSearchIndex()`
-Drops a search index from the collection.
-- **Arguments:**
-  - `name`: `string`
-- **Return Type:** `Promise<string>`
-
-### `listSearchIndexes()`
-Lists all search indexes on the collection.
-- **Return Type:** `CommandCursor<SearchIndexInformation[]>`
-- **Callable Methods:**
-  - `forEach()`: Iterates over the search index information.
-
-### `updateSearchIndex()`
-Updates a search index on the collection.
-- **Arguments:**
-  - `name`: `string`
-  - `description`: `SearchIndexDescription`
-- **Return Type:** `Promise<string>`
+const verifiedUsers = await verifiedUsersQuery;
+```

@@ -113,3 +113,45 @@ const finalSchema = mergedGroups.withRelations((s) => ({
 
 const db = createDatabase(client.db(), finalSchema);
 ```
+
+## Rename output fields
+
+`schema.rename()` changes field names in query output without changing how the field is stored in MongoDB.
+
+```typescript
+const userSchema = createSchema("users", {
+  name: string(),
+}).rename({
+  _id: "id",
+  name: "fullName",
+});
+```
+
+## Collection validation
+
+`schema.validation()` enables collection-level document validation using a JSON Schema generated from your Monarch schema. It is not enabled by default. Validation can also be set on the database, where it acts as a default for all schemas.
+
+```typescript
+const userSchema = createSchema("users", {
+  email: string().lowercase(),
+}).validation({
+  validationLevel: "strict",
+  validationAction: "error",
+});
+```
+
+## Automatic update fields
+
+`schema.onUpdate()` injects update operators into every update query for that schema. This is useful for fields like `updatedAt`.
+
+```typescript
+import { date } from "monarch-orm/types";
+
+const userSchema = createSchema("users", {
+  updatedAt: date().optional(),
+}).onUpdate(() => ({
+  $set: {
+    updatedAt: new Date(),
+  },
+}));
+```
