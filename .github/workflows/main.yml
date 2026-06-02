@@ -3,12 +3,12 @@ name: CI
 on:
   pull_request:
     paths-ignore:
-      - 'docs/**'
+      - "docs/**"
   push:
     branches:
       - main
     paths-ignore:
-      - 'docs/**'
+      - "docs/**"
 
 jobs:
   build:

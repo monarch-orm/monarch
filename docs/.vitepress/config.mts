@@ -28,8 +28,6 @@ export default defineConfig({
       },
     ],
 
-    socialLinks: [
-      { icon: "github", link: "https://github.com/monarch-orm/monarch" },
-    ],
+    socialLinks: [{ icon: "github", link: "https://github.com/monarch-orm/monarch" }],
   },
 });
