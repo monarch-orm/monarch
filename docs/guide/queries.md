@@ -115,16 +115,60 @@ const activeUsers = await db.collections.users.find({
 
 ## Aggregation
 
-Monarch's aggregation pipeline simplifies MongoDB aggregations with a chained `addStage` interface. Each stage can accept a standard MongoDB aggregation command.
+Monarch's aggregation pipeline simplifies MongoDB aggregations by strictly typing operators and offering both a chained `addStage` interface and an array-based initializer.
+
+### Building Pipelines
+
+You can initialize an aggregation with an array of stages, and dynamically append to it using `.addStage()`. Both methods are strictly typed against your schema.
 
 ```typescript
-const result = await db.collections.users
-  .aggregate()
-  .addStage({ $match: { isVerified: true } })
+// Initializing with an array
+const baseAggregation = db.collections.users.aggregate([
+  { $match: { isVerified: true } }
+]);
+
+// Extending via the chained interface
+const result = await baseAggregation
   .addStage({ $group: { _id: "$isVerified", count: { $sum: 1 } } });
   
 console.log(result); // [{ _id: true, count: 5 }]
 ```
+
+### Typing the Output
+
+When you perform complex aggregations involving `$group`, `$project`, or other reshaping stages, the resulting documents will no longer match your base schema. You can explicitly provide the expected output type to the `.aggregate()` method.
+
+```typescript
+type GroupedResult = {
+  _id: boolean;
+  count: number;
+};
+
+// By passing the expected type, `result` is correctly inferred as `GroupedResult[]`
+const result = await db.collections.users
+  .aggregate<GroupedResult>()
+  .addStage({ $match: { isVerified: true } })
+  .addStage({ $group: { _id: "$isVerified", count: { $sum: 1 } } });
+```
+
+### Immutability and Promises
+
+Just like standard query builders, the aggregation pipeline is **immutable**. Calling `.addStage()` returns a new instance of the pipeline, leaving the base pipeline completely untouched. 
+
+Furthermore, the pipeline instance itself is "Thenable"—it implements `.then()`, `.catch()`, and `.finally()`. This means you can `await` the pipeline instance directly to execute the aggregation and receive the resulting array, without needing a separate `.exec()` method.
+
+```typescript
+const base = db.collections.users.aggregate();
+
+// These two pipelines branch off independently!
+const verifiedPipeline = base.addStage({ $match: { isVerified: true } });
+const unverifiedPipeline = base.addStage({ $match: { isVerified: false } });
+
+// Await them directly
+const verifiedUsers = await verifiedPipeline;
+```
+
+### Pipeline Options
 
 To provide custom options such as `.allowDiskUse()`, you can call `.options()` directly in the pipeline sequence:
 
@@ -134,4 +178,29 @@ const largeResult = await db.collections.posts
   .options({ allowDiskUse: true })
   .addStage({ $match: { likes: { $gt: 100 } } })
   .addStage({ $sort: { likes: -1 } });
+```
+
+### Aggregation Cursors
+
+For extremely large aggregations, you can request an `AggregationCursor` instead of pulling all results into memory. Simply call `.cursor()` instead of `await`ing the pipeline directly.
+
+```typescript
+const cursor = await db.collections.users
+  .aggregate([{ $match: { isVerified: true } }])
+  .cursor();
+
+for await (const doc of cursor) {
+  // process each document iteratively
+}
+```
+
+### Raw Driver Fallback
+
+If you need to bypass Monarch's typing completely for a complex aggregation, you can always drop down to the raw MongoDB driver collection using `.raw()`.
+
+```typescript
+const rawResult = await db.collections.users
+  .raw()
+  .aggregate([{ $match: { isVerified: true } }])
+  .toArray();
 ```
