@@ -29,9 +29,9 @@ describe("uuid", () => {
   test("rejects non-string / non-UUID input types", () => {
     const schema = createSchema("test", { value: uuid() });
     // @ts-expect-error
-    expect(() => Schema.input(schema, { value: 123 })).toThrowError("expected 'UUID' or 'string' received 'number'");
+    expect(() => Schema.input(schema, { value: 123 })).toThrow("expected 'UUID' or 'string' received 'number'");
     // @ts-expect-error
-    expect(() => Schema.input(schema, { value: {} })).toThrowError("expected 'UUID' or 'string' received 'object'");
+    expect(() => Schema.input(schema, { value: {} })).toThrow("expected 'UUID' or 'string' received 'object'");
   });
 
   test("works with nullable and optional", () => {

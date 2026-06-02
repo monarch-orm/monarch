@@ -32,9 +32,9 @@ describe("objectId", () => {
       id: objectId(),
     });
 
-    expect(() => Schema.input(schema, { id: "invalid" })).toThrowError("expected 'ObjectId'");
+    expect(() => Schema.input(schema, { id: "invalid" })).toThrow("expected 'ObjectId'");
     // @ts-expect-error
-    expect(() => Schema.input(schema, { id: {} })).toThrowError("expected 'ObjectId'");
+    expect(() => Schema.input(schema, { id: {} })).toThrow("expected 'ObjectId'");
   });
 
   test("works with nullable and optional", () => {

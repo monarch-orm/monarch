@@ -87,7 +87,7 @@ describe("Insert and Find Operations", async () => {
     it("rejects invalid ObjectId string", async () => {
       await expect(async () => {
         await collections.users.insertOne({ _id: "not_an_object_id", ...mockUsers[0] });
-      }).rejects.toThrowError("expected 'ObjectId'");
+      }).rejects.toThrow("expected 'ObjectId'");
     });
 
     describe("explicit ObjectId _id", () => {
@@ -141,7 +141,7 @@ describe("Insert and Find Operations", async () => {
             _id: objectId().nullable(),
             name: string(),
           }),
-        ).toThrowError("schema _id cannot be nullable");
+        ).toThrow("schema _id cannot be nullable");
       });
     });
 
@@ -152,7 +152,7 @@ describe("Insert and Find Operations", async () => {
             _id: string().optional(),
             name: string(),
           }),
-        ).toThrowError("schema _id may only be optional when it is objectId()");
+        ).toThrow("schema _id may only be optional when it is objectId()");
       });
 
       it("requires _id when omitted", async () => {
@@ -161,7 +161,7 @@ describe("Insert and Find Operations", async () => {
           await collections.explicitStringIds.insertOne({
             name: "Alice",
           });
-        }).rejects.toThrowError("expected 'string'");
+        }).rejects.toThrow("expected 'string'");
       });
 
       it("accepts _id when provided", async () => {
@@ -203,7 +203,7 @@ describe("Insert and Find Operations", async () => {
           // @ts-expect-error
           extraField: "This should error",
         });
-      }).rejects.toThrowError();
+      }).rejects.toThrow();
     });
 
     it("inserts many documents", async () => {
@@ -313,7 +313,7 @@ describe("Insert and Find Operations", async () => {
     it("rejects invalid ObjectId string in findById", async () => {
       await expect(async () => {
         await collections.users.findById("not_an_object_id");
-      }).rejects.toThrowError();
+      }).rejects.toThrow();
     });
 
     it("finds one document by non-ObjectId primary key", async () => {

@@ -316,7 +316,7 @@ describe("Schema", async () => {
         username: "bobpaul",
         age: 0,
       });
-    }).rejects.toThrowError("E11000 duplicate key error");
+    }).rejects.toThrow("E11000 duplicate key error");
 
     // duplicate firstname and lastname pair
     await db.collections.users.insertOne({
@@ -332,7 +332,7 @@ describe("Schema", async () => {
         username: "allywon",
         age: 0,
       });
-    }).rejects.toThrowError("E11000 duplicate key error");
+    }).rejects.toThrow("E11000 duplicate key error");
   });
 
   it("builds mongodb validator json schema", () => {
@@ -388,13 +388,13 @@ describe("Schema", async () => {
         age: "not-a-number",
         nickname: "tc",
       }),
-    ).rejects.toThrowError("Document failed validation");
+    ).rejects.toThrow("Document failed validation");
 
     await expect(
       rawCollection.insertOne({
         name: "tom",
       }),
-    ).rejects.toThrowError("Document failed validation");
+    ).rejects.toThrow("Document failed validation");
 
     await expect(
       rawCollection.insertOne({
@@ -402,7 +402,7 @@ describe("Schema", async () => {
         nickname: "tc",
         extra: true,
       }),
-    ).rejects.toThrowError("Document failed validation");
+    ).rejects.toThrow("Document failed validation");
   });
 
   it("supports custom _id type with string", async () => {
@@ -475,6 +475,6 @@ describe("Schema", async () => {
     expect(() => {
       const schemas = defineSchemas({ users: UserSchema, users2: AnotherUserSchema });
       createDatabase(client.db(), schemas);
-    }).toThrowError("Schema with name 'users' already exists.");
+    }).toThrow("Schema with name 'users' already exists.");
   });
 });

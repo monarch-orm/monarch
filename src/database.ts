@@ -4,6 +4,7 @@ import { Collection } from "./collection/collection";
 import { applyIndexes } from "./schema/indexes";
 import type { AnySchema, Schemas } from "./schema/schema";
 import { Schema } from "./schema/schema";
+import { applySearchIndexes } from "./schema/search-indexes";
 import { getValidator, type SchemaValidation, type Validator } from "./schema/validation";
 import type { DbCollections } from "./type-helpers";
 import { createAsyncLimiter, createAsyncResolver, type AsyncResolver } from "./utils/misc";
@@ -32,11 +33,11 @@ export type DatabaseOptions = {
  */
 export class Database<TSchemas extends Schemas<any, any>> {
   /** Schema definitions*/
-  public schemas: TSchemas["schemas"];
+  protected schemas: TSchemas["schemas"];
   /** Relation definitions*/
-  public relations: TSchemas["relations"];
+  protected relations: TSchemas["relations"];
   /** Collection instances */
-  public collections: DbCollections<TSchemas["schemas"], TSchemas["relations"]>;
+  public readonly collections: DbCollections<TSchemas["schemas"], TSchemas["relations"]>;
   /** Collection read promises */
   private readyPromises: Record<string, AsyncResolver>;
 
@@ -49,7 +50,7 @@ export class Database<TSchemas extends Schemas<any, any>> {
    * @throws {MonarchError} If duplicate schema or relation names are found
    */
   constructor(
-    public db: Db,
+    public readonly db: Db,
     schemas: TSchemas,
     private options?: DatabaseOptions,
   ) {
@@ -92,17 +93,23 @@ export class Database<TSchemas extends Schemas<any, any>> {
   /**
    * Creates collections with indexes and document validation if provided.
    *
-   * @param options - Init options
+   * @param options - Init options. Pass `true` to run all steps, or an object to selectively enable steps.
+   * @param collections - Select collections. Omit to initialize all collections, or an object to selectively enable collections.
    */
-  public async initialize(options?: InitOptions<keyof TSchemas["schemas"] & string>) {
+  public async initialize(
+    options?: InitOptions | true,
+    collections?: InitCollections<keyof TSchemas["schemas"] & string>,
+  ): Promise<void> {
     const promises: Promise<void>[] = [];
-    const collections = Object.values(this.collections).map((c: Collection<any, any>): CollectionInit => {
-      const resolver = createAsyncResolver();
-      promises.push(resolver.promise);
-      return { schema: c.schema, defaultValidation: this.options?.validation, resolver };
-    });
-    initializeCollections(this.db, collections, options);
-    return Promise.all(promises);
+    const collectionInits = (Object.values(this.collections) as Collection<any, any>[])
+      .filter((c) => !collections || collections[c.schema.name] === true)
+      .map((c): CollectionInit => {
+        const resolver = createAsyncResolver();
+        promises.push(resolver.promise);
+        return { schema: c.schema, defaultValidation: this.options?.validation, resolver };
+      });
+    initializeCollections(this.db, collectionInits, options);
+    return Promise.all(promises).then<void>(() => undefined);
   }
 
   /**
@@ -126,7 +133,7 @@ export class Database<TSchemas extends Schemas<any, any>> {
    * @returns Array of collection keys
    */
   public listCollections() {
-    return Object.keys(this.collections) as (keyof this["collections"])[];
+    return Object.keys(this.collections) as Extract<keyof this["collections"], string>[];
   }
 }
 
@@ -145,11 +152,24 @@ export function createDatabase<T extends Schemas<any, any>>(
   return new Database(db, schemas, options);
 }
 
-type InitOptions<T extends string> = {
-  indexes?: boolean;
-  validation?: boolean;
-  collections?: Partial<Record<T, true>>;
+/**
+ * Initialization options. When provided, only fields explicitly set to `true` will run.
+ * When omitted, all initialization steps run.
+ */
+export type InitOptions = {
+  /** Create or update schema indexes. */
+  indexes?: true;
+  /** Create or update search indexes. */
+  searchIndexes?: true;
+  /** Apply document validation rules. */
+  validation?: true;
 };
+
+/**
+ * Limit initialization to specific collections.
+ * When provided, only collections with a `true` value will be initialized.
+ */
+type InitCollections<T extends string> = { [K in T]?: true };
 
 type CollectionInit = {
   schema: AnySchema;
@@ -157,7 +177,8 @@ type CollectionInit = {
   resolver: AsyncResolver;
 };
 
-function initializeCollections(db: Db, collections: CollectionInit[], options?: InitOptions<any>) {
+function initializeCollections(db: Db, collections: CollectionInit[], options?: InitOptions | true) {
+  const opts = options === true ? undefined : options;
   const run = createAsyncLimiter(10);
   const existingPromise = db
     .listCollections({}, { nameOnly: true })
@@ -165,13 +186,6 @@ function initializeCollections(db: Db, collections: CollectionInit[], options?: 
     .then((colls) => new Set(colls.map((c) => c.name)));
 
   for (const c of collections) {
-    // Skip disabled collections
-    const enabled = options?.collections ? options.collections[c.schema.name] === true : true;
-    if (!enabled) {
-      c.resolver.resolve();
-      continue;
-    }
-
     run(async () => {
       const existing = await existingPromise;
       const exists = existing.has(c.schema.name);
@@ -180,7 +194,7 @@ function initializeCollections(db: Db, collections: CollectionInit[], options?: 
       // Get schema validation
       let validation: (SchemaValidation & { validator: Validator }) | undefined;
       const validationOptions = schemaOptions.validation ?? c.defaultValidation;
-      if ((options?.validation ?? true) && validationOptions) {
+      if ((opts === undefined || opts.validation) && validationOptions) {
         validation = { ...validationOptions, validator: getValidator(c.schema) };
       }
 
@@ -194,8 +208,13 @@ function initializeCollections(db: Db, collections: CollectionInit[], options?: 
       }
 
       // Create schema indexes
-      if ((options?.indexes ?? true) && schemaOptions.indexes) {
+      if ((opts === undefined || opts.indexes) && schemaOptions.indexes) {
         await applyIndexes(coll, schemaOptions.indexes);
+      }
+
+      // Create schema search indexes
+      if ((opts === undefined || opts.searchIndexes) && schemaOptions.searchIndexes) {
+        await applySearchIndexes(coll, schemaOptions.searchIndexes);
       }
     })
       .then(c.resolver.resolve)

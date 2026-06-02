@@ -35,6 +35,6 @@ describe("Relation Validations", async () => {
 
     await expect(async () => {
       await db.collections.users.find().populate({ posts: true });
-    }).rejects.toThrowError("No relations found for schema 'users'");
+    }).rejects.toThrow("No relations found for schema 'users'");
   });
 });

@@ -5,6 +5,7 @@
 // The following types and interfaces are derived from Mongoose's aggregate pipeline stages
 // with modifications to fit our project's needs.
 
+import type { Document } from "mongodb";
 import type {
   AccumulatorOperator,
   AnyExpression,
@@ -16,7 +17,7 @@ import type {
   WindowOperator,
 } from "./expressions";
 
-export type PipelineStage<T> =
+export type PipelineStage<T = Document> =
   | AddFields
   | Bucket
   | BucketAuto

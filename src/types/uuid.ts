@@ -25,7 +25,7 @@ export class MonarchUUID extends MonarchType<UUID | string, UUID> {
           throw MonarchParseError.fromCause({ cause: error });
         }
       }
-      throw MonarchParseError.create({ message: `expected 'UUID' or 'string' received '${typeof input}'` });
+      throw MonarchParseError.create(`expected 'UUID' or 'string' received '${typeof input}'`);
     });
   }
 

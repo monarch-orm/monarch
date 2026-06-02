@@ -8,7 +8,7 @@ describe("type", () => {
       age: number().validate((input) => input >= 0, "must be positive"),
     });
 
-    expect(() => Schema.input(schema, { age: -1 })).toThrowError("must be positive");
+    expect(() => Schema.input(schema, { age: -1 })).toThrow("must be positive");
 
     const data = Schema.input(schema, {
       age: 0,
@@ -27,7 +27,7 @@ describe("type", () => {
     const data = Schema.input(schema, { age: null });
     expect(data).toStrictEqual({ age: null });
 
-    expect(() => Schema.input(schema, { age: -1 })).toThrowError("must be positive");
+    expect(() => Schema.input(schema, { age: -1 })).toThrow("must be positive");
   });
 
   test("optional", () => {
@@ -41,7 +41,7 @@ describe("type", () => {
     const data1 = Schema.input(schema, {});
     expect(data1).toStrictEqual({});
 
-    expect(() => Schema.input(schema, { age: -1 })).toThrowError("must be positive");
+    expect(() => Schema.input(schema, { age: -1 })).toThrow("must be positive");
   });
 
   test("default", () => {
@@ -73,7 +73,7 @@ describe("type", () => {
     });
 
     // default value is validated when applied before
-    expect(() => Schema.input(schema2, { age: -1 })).toThrowError("must be positive");
+    expect(() => Schema.input(schema2, { age: -1 })).toThrow("must be positive");
 
     const schema3 = createSchema("users", {
       age: number()
@@ -82,7 +82,7 @@ describe("type", () => {
     });
 
     // default value is validated when applied before
-    expect(() => Schema.input(schema3, { age: -1 })).toThrowError("must be positive");
+    expect(() => Schema.input(schema3, { age: -1 })).toThrow("must be positive");
   });
 
   describe("preprocess and parse", () => {
@@ -172,7 +172,7 @@ describe("type", () => {
       expect(data).toStrictEqual({ value: "PREPROCESSED" });
 
       const schema2 = createSchema("test", { value: baseType });
-      expect(() => Schema.input(schema2, { value: "anything" })).toThrowError("expected preprocessed input");
+      expect(() => Schema.input(schema2, { value: "anything" })).toThrow("expected preprocessed input");
     });
 
     test("parse can transform output after base parser", () => {
@@ -206,7 +206,7 @@ describe("type", () => {
       expect(data).toStrictEqual({ value: "HELLO" });
 
       const schema2 = createSchema("test", { value: baseType });
-      expect(() => Schema.input(schema2, { value: "  hello  " })).toThrowError("no empty space allowed");
+      expect(() => Schema.input(schema2, { value: "  hello  " })).toThrow("no empty space allowed");
     });
   });
 });

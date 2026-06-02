@@ -9,13 +9,11 @@ describe("array", () => {
     });
 
     // @ts-expect-error
-    expect(() => Schema.input(schema, {})).toThrowError("expected 'array' received 'undefined'");
+    expect(() => Schema.input(schema, {})).toThrow("expected 'array' received 'undefined'");
     // empty array is ok
-    expect(() => Schema.input(schema, { items: [] })).not.toThrowError();
+    expect(() => Schema.input(schema, { items: [] })).not.toThrow();
     // @ts-expect-error
-    expect(() => Schema.input(schema, { items: [0, "1"] })).toThrowError(
-      "items.1: expected 'number' received 'string'",
-    );
+    expect(() => Schema.input(schema, { items: [0, "1"] })).toThrow("items.1: expected 'number' received 'string'");
     const data = Schema.input(schema, { items: [0, 1] });
     expect(data).toStrictEqual({ items: [0, 1] });
   });
@@ -31,8 +29,8 @@ describe("array", () => {
     const data2 = Schema.input(schema, { items: ["a", "b", "c"] });
     expect(data2).toStrictEqual({ items: ["a", "b", "c"] });
 
-    expect(() => Schema.input(schema, { items: ["a"] })).toThrowError("array must have at least 2 elements");
-    expect(() => Schema.input(schema, { items: [] })).toThrowError("array must have at least 2 elements");
+    expect(() => Schema.input(schema, { items: ["a"] })).toThrow("array must have at least 2 elements");
+    expect(() => Schema.input(schema, { items: [] })).toThrow("array must have at least 2 elements");
   });
 
   test("maxLength - validates maximum array length", () => {
@@ -46,9 +44,7 @@ describe("array", () => {
     const data2 = Schema.input(schema, { items: ["a"] });
     expect(data2).toStrictEqual({ items: ["a"] });
 
-    expect(() => Schema.input(schema, { items: ["a", "b", "c", "d"] })).toThrowError(
-      "array must have at most 3 elements",
-    );
+    expect(() => Schema.input(schema, { items: ["a", "b", "c", "d"] })).toThrow("array must have at most 3 elements");
   });
 
   test("length - validates exact array length", () => {
@@ -59,8 +55,8 @@ describe("array", () => {
     const data = Schema.input(schema, { coordinates: [10.5, 20.3] });
     expect(data).toStrictEqual({ coordinates: [10.5, 20.3] });
 
-    expect(() => Schema.input(schema, { coordinates: [10.5] })).toThrowError("array must have exactly 2 elements");
-    expect(() => Schema.input(schema, { coordinates: [10.5, 20.3, 30.1] })).toThrowError(
+    expect(() => Schema.input(schema, { coordinates: [10.5] })).toThrow("array must have exactly 2 elements");
+    expect(() => Schema.input(schema, { coordinates: [10.5, 20.3, 30.1] })).toThrow(
       "array must have exactly 2 elements",
     );
   });
@@ -73,7 +69,7 @@ describe("array", () => {
     const data = Schema.input(schema, { items: ["a"] });
     expect(data).toStrictEqual({ items: ["a"] });
 
-    expect(() => Schema.input(schema, { items: [] })).toThrowError("array must not be empty");
+    expect(() => Schema.input(schema, { items: [] })).toThrow("array must not be empty");
   });
 
   test("array methods can be chained", () => {
@@ -84,8 +80,8 @@ describe("array", () => {
     const data = Schema.input(schema, { items: ["a", "b", "c"] });
     expect(data).toStrictEqual({ items: ["a", "b", "c"] });
 
-    expect(() => Schema.input(schema, { items: ["a"] })).toThrowError("array must have at least 2 elements");
-    expect(() => Schema.input(schema, { items: ["a", "b", "c", "d", "e", "f"] })).toThrowError(
+    expect(() => Schema.input(schema, { items: ["a"] })).toThrow("array must have at least 2 elements");
+    expect(() => Schema.input(schema, { items: ["a", "b", "c", "d", "e", "f"] })).toThrow(
       "array must have at most 5 elements",
     );
   });
@@ -111,6 +107,6 @@ describe("array", () => {
       createSchema("test", {
         items: array(number().optional()),
       }),
-    ).toThrowError("array item type cannot be optional");
+    ).toThrow("array item type cannot be optional");
   });
 });

@@ -18,52 +18,48 @@ export class MonarchObject<T extends Record<string, AnyMonarchType>> extends Mon
   InferTypeObjectInput<T>,
   InferTypeObjectOutput<T>
 > {
-  constructor(private types: T) {
+  constructor(public shape: T) {
     super((input) => {
       if (typeof input === "object" && input !== null) {
         for (const key of Object.keys(input)) {
-          if (!(key in types)) {
-            throw MonarchParseError.create({ message: `unknown field '${key}', object may only specify known fields` });
+          if (!(key in shape)) {
+            throw MonarchParseError.create(`unknown field '${key}', object may only specify known fields`);
           }
         }
         const parsed = {} as InferTypeObjectOutput<T>;
-        for (const [key, type] of Object.entries(types) as [keyof T & string, T[keyof T]][]) {
-          try {
-            const parser = MonarchType.parser(type);
-            const result = parser(input[key as keyof typeof input] as InferTypeInput<T[keyof T]>);
-            if (result !== undefined) parsed[key as keyof typeof parsed] = result;
-          } catch (error) {
-            throw MonarchParseError.fromCause({ path: key, cause: error });
-          }
+        for (const [key, type] of Object.entries(shape) as [keyof T & string, T[keyof T]][]) {
+          const parser = MonarchType.parser(type, key);
+          const result = parser(input[key as keyof typeof input] as InferTypeInput<T[keyof T]>);
+          if (result !== undefined) parsed[key as keyof typeof parsed] = result;
         }
         return parsed;
       }
-      throw MonarchParseError.create({ message: `expected 'object' received '${typeof input}'` });
+      throw MonarchParseError.create(`expected 'object' received '${typeof input}'`);
     });
   }
 
   protected copy() {
-    return new MonarchObject(this.types);
+    return new MonarchObject(this.shape);
   }
 
   protected index(path: string[], depth: number): AnyMonarchType {
     if (depth === path.length - 1) return this;
     const key = path[depth + 1];
-    if (key && key in this.types) {
+    if (key && key in this.shape) {
       try {
-        return MonarchType.index(this.types[key]!, path, depth + 1);
+        return MonarchType.index(this.shape[key]!, path, depth + 1);
       } catch (error) {
         throw MonarchParseError.fromCause({ path: key, cause: error });
       }
     }
-    throw MonarchParseError.create({ message: `unknown field '${key}'` });
+    throw MonarchParseError.create(`unknown field '${key}'`);
   }
 
   protected jsonSchema(): JSONSchema {
     const properties: Record<string, JSONSchema> = {};
     const required: string[] = [];
 
-    for (const [key, type] of Object.entries(this.types)) {
+    for (const [key, type] of Object.entries(this.shape)) {
       properties[key] = MonarchType.jsonSchema(type);
       const isOptional = MonarchType.isInstanceOf(type, MonarchOptional);
       if (!isOptional) required.push(key);

@@ -12,7 +12,7 @@ describe("number", () => {
     expect(data).toStrictEqual({ value: 42 });
 
     // @ts-expect-error
-    expect(() => Schema.input(schema, { value: "42" })).toThrowError("expected 'number' received 'string'");
+    expect(() => Schema.input(schema, { value: "42" })).toThrow("expected 'number' received 'string'");
   });
 
   test("min and max constraints", () => {
@@ -21,8 +21,8 @@ describe("number", () => {
       max: number().max(10),
     });
 
-    expect(() => Schema.input(schema, { min: 3, max: 8 })).toThrowError("number must be greater than or equal to 5");
-    expect(() => Schema.input(schema, { min: 6, max: 12 })).toThrowError("number must be less than or equal to 10");
+    expect(() => Schema.input(schema, { min: 3, max: 8 })).toThrow("number must be greater than or equal to 5");
+    expect(() => Schema.input(schema, { min: 6, max: 12 })).toThrow("number must be less than or equal to 10");
 
     const data = Schema.input(schema, { min: 7, max: 8 });
     expect(data).toStrictEqual({ min: 7, max: 8 });
@@ -33,7 +33,7 @@ describe("number", () => {
       value: number().integer(),
     });
 
-    expect(() => Schema.input(schema, { value: 5.7 })).toThrowError("number must be an integer");
+    expect(() => Schema.input(schema, { value: 5.7 })).toThrow("number must be an integer");
   });
 
   test("validation error order - type error before value validation", () => {
@@ -52,7 +52,7 @@ describe("number", () => {
         maxValue: 8,
         integerValue: 6,
       }),
-    ).toThrowError("expected 'number' received 'string'");
+    ).toThrow("expected 'number' received 'string'");
 
     // Invalid type for number().max() should throw type error first
     expect(() =>
@@ -62,7 +62,7 @@ describe("number", () => {
         maxValue: true,
         integerValue: 6,
       }),
-    ).toThrowError("expected 'number' received 'boolean'");
+    ).toThrow("expected 'number' received 'boolean'");
 
     // Invalid type for number().integer() should throw type error first
     expect(() =>
@@ -72,6 +72,6 @@ describe("number", () => {
         // @ts-expect-error
         integerValue: { value: 6 },
       }),
-    ).toThrowError("expected 'number' received 'object'");
+    ).toThrow("expected 'number' received 'object'");
   });
 });

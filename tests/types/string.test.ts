@@ -19,13 +19,13 @@ describe("string", () => {
       exact: string().length(4),
     });
 
-    expect(() => Schema.input(schema, { min: "ab", max: "test", exact: "test" })).toThrowError(
+    expect(() => Schema.input(schema, { min: "ab", max: "test", exact: "test" })).toThrow(
       "string must have a minimum length of 3",
     );
-    expect(() => Schema.input(schema, { min: "test", max: "toolong", exact: "test" })).toThrowError(
+    expect(() => Schema.input(schema, { min: "test", max: "toolong", exact: "test" })).toThrow(
       "string must have a maximum length of 5",
     );
-    expect(() => Schema.input(schema, { min: "test", max: "test", exact: "toolong" })).toThrowError(
+    expect(() => Schema.input(schema, { min: "test", max: "test", exact: "toolong" })).toThrow(
       "string must have a length of 4",
     );
 
@@ -42,7 +42,7 @@ describe("string", () => {
       email: string().pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/),
     });
 
-    expect(() => Schema.input(schema, { email: "invalid" })).toThrowError(
+    expect(() => Schema.input(schema, { email: "invalid" })).toThrow(
       "string must match pattern /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/",
     );
 
@@ -64,7 +64,7 @@ describe("string", () => {
       required: string().nonempty(),
     });
 
-    expect(() => Schema.input(schema, { required: "" })).toThrowError("string must not be empty");
+    expect(() => Schema.input(schema, { required: "" })).toThrow("string must not be empty");
 
     const data = Schema.input(schema, { required: "hello" });
     expect(data).toStrictEqual({ required: "hello" });

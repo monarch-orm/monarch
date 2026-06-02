@@ -1,11 +1,12 @@
 import type {
+  Abortable,
   AbstractCursor,
   FindOptions,
   Collection as MongoCollection,
   Filter as MongoFilter,
   Sort as MongoSort,
 } from "mongodb";
-import type { AnyRelations } from "../../relations/relations";
+import type { AnyRelation } from "../../relations/relations";
 import type { InferRelationObjectPopulation, Population } from "../../relations/type-helpers";
 import { type AnySchema, Schema } from "../../schema/schema";
 import type { Filter, InferSchemaData, InferSchemaOmit, InferSchemaOutput } from "../../schema/type-helpers";
@@ -16,24 +17,26 @@ import type { PipelineStage } from "../types/pipeline-stage";
 import type { BoolProjection, Projection, Sort } from "../types/query-options";
 import { Query, type QueryOutput } from "./base";
 
+export type FindQueryOptions = Omit<FindOptions, "projection"> & Abortable;
+
 /**
  * Collection.find().
  */
 export class FindQuery<
   TSchema extends AnySchema,
-  TDbRelations extends Record<string, AnyRelations>,
+  TRelations extends Record<string, Record<string, AnyRelation>>,
   TPopulate extends Record<string, any> = {},
   TOutput = InferSchemaOutput<TSchema>,
   TOmit extends ["omit" | "select", keyof any] = ["omit", InferSchemaOmit<TSchema>],
 > extends Query<TSchema, QueryOutput<TOutput, TOmit, TPopulate>[]> {
   private _projection: Projection<InferSchemaOutput<TSchema>>;
-  private _population: Population<TDbRelations, TSchema["name"]> = {};
+  private _population: Population<TRelations, TSchema["name"]> = {};
 
   constructor(
     schema: TSchema,
     collection: MongoCollection<InferSchemaData<TSchema>>,
     readyPromise: Promise<void>,
-    private _relations: TDbRelations,
+    private _relations: TRelations,
     private _filter: Filter<TSchema>,
     private _options: FindOptions = {},
   ) {
@@ -44,12 +47,17 @@ export class FindQuery<
   /**
    * Adds find options. Options are merged into existing options.
    *
-   * @param options - FindOptions
+   * @param options - FindQueryOptions
    * @returns FindQuery instance
    */
-  public options(options: FindOptions): this {
-    Object.assign(this._options, options);
-    return this;
+  public options(options: FindQueryOptions): this {
+    const query = new FindQuery(this.schema, this.collection, this.readyPromise, this._relations, this._filter, {
+      ...this._options,
+      ...options,
+    });
+    query._projection = this._projection;
+    query._population = this._population;
+    return query as unknown as this;
   }
 
   /**
@@ -58,9 +66,14 @@ export class FindQuery<
    * @param sort - Sort specification
    * @returns FindQuery instance
    */
-  public sort(sort: Sort<InferSchemaOutput<TSchema>>): this {
-    this._options.sort = sort as MongoSort;
-    return this;
+  public sort(sort: Sort<InferSchemaData<TSchema>>): this {
+    const query = new FindQuery(this.schema, this.collection, this.readyPromise, this._relations, this._filter, {
+      ...this._options,
+      sort: sort as MongoSort,
+    });
+    query._projection = this._projection;
+    query._population = this._population;
+    return query as unknown as this;
   }
 
   /**
@@ -70,8 +83,13 @@ export class FindQuery<
    * @returns FindQuery instance
    */
   public limit(limit: number): this {
-    this._options.limit = limit;
-    return this;
+    const query = new FindQuery(this.schema, this.collection, this.readyPromise, this._relations, this._filter, {
+      ...this._options,
+      limit,
+    });
+    query._projection = this._projection;
+    query._population = this._population;
+    return query as unknown as this;
   }
 
   /**
@@ -81,8 +99,13 @@ export class FindQuery<
    * @returns FindQuery instance
    */
   public skip(skip: number): this {
-    this._options.skip = skip;
-    return this;
+    const query = new FindQuery(this.schema, this.collection, this.readyPromise, this._relations, this._filter, {
+      ...this._options,
+      skip,
+    });
+    query._projection = this._projection;
+    query._population = this._population;
+    return query as unknown as this;
   }
 
   /**
@@ -92,8 +115,17 @@ export class FindQuery<
    * @returns FindQuery instance
    */
   public omit<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
-    this._projection = makeProjection("omit", projection);
-    return this as FindQuery<TSchema, TDbRelations, TPopulate, TOutput, ["omit", TrueKeys<TProjection>]>;
+    const query = new FindQuery(
+      this.schema,
+      this.collection,
+      this.readyPromise,
+      this._relations,
+      this._filter,
+      this._options,
+    );
+    query._projection = makeProjection("omit", projection);
+    query._population = this._population;
+    return query as unknown as FindQuery<TSchema, TRelations, TPopulate, TOutput, ["omit", TrueKeys<TProjection>]>;
   }
 
   /**
@@ -103,8 +135,17 @@ export class FindQuery<
    * @returns FindQuery instance
    */
   public select<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
-    this._projection = makeProjection("select", projection);
-    return this as FindQuery<TSchema, TDbRelations, TPopulate, TOutput, ["select", TrueKeys<TProjection>]>;
+    const query = new FindQuery(
+      this.schema,
+      this.collection,
+      this.readyPromise,
+      this._relations,
+      this._filter,
+      this._options,
+    );
+    query._projection = makeProjection("select", projection);
+    query._population = this._population;
+    return query as unknown as FindQuery<TSchema, TRelations, TPopulate, TOutput, ["select", TrueKeys<TProjection>]>;
   }
 
   /**
@@ -113,12 +154,21 @@ export class FindQuery<
    * @param population - Relation population config
    * @returns FindQuery instance
    */
-  public populate<TPopulation extends Population<TDbRelations, TSchema["name"]>>(population: TPopulation) {
-    this._population = population;
-    return this as FindQuery<
+  public populate<TPopulation extends Population<TRelations, TSchema["name"]>>(population: TPopulation) {
+    const query = new FindQuery(
+      this.schema,
+      this.collection,
+      this.readyPromise,
+      this._relations,
+      this._filter,
+      this._options,
+    );
+    query._projection = this._projection;
+    query._population = population;
+    return query as unknown as FindQuery<
       TSchema,
-      TDbRelations,
-      InferRelationObjectPopulation<TDbRelations, TSchema["name"], TPopulation>,
+      TRelations,
+      InferRelationObjectPopulation<TRelations, TSchema["name"], TPopulation>,
       TOutput,
       TOmit
     >;

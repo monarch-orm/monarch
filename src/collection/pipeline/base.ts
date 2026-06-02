@@ -1,4 +1,4 @@
-import type { Collection as MongoCollection } from "mongodb";
+import type { Document, Collection as MongoCollection } from "mongodb";
 import type { AnySchema } from "../../schema/schema";
 import type { InferSchemaData } from "../../schema/type-helpers";
 import type { PipelineStage } from "../types/pipeline-stage";
@@ -6,24 +6,13 @@ import type { PipelineStage } from "../types/pipeline-stage";
 /**
  * Base aggregation pipeline class implementing thenable interface.
  */
-export abstract class Pipeline<TSchema extends AnySchema, TOutput> {
+export abstract class Pipeline<TSchema extends AnySchema, TOutput extends Document> {
   constructor(
     protected schema: TSchema,
     protected collection: MongoCollection<InferSchemaData<TSchema>>,
     protected readyPromise: Promise<void>,
     protected pipeline: PipelineStage<InferSchemaData<TSchema>>[] = [],
   ) {}
-
-  /**
-   * Appends aggregation pipeline stage.
-   *
-   * @param stage - Pipeline stage
-   * @returns Pipeline instance
-   */
-  public addStage(stage: PipelineStage<InferSchemaData<TSchema>>): this {
-    this.pipeline.push(stage);
-    return this;
-  }
 
   protected abstract exec(): Promise<TOutput[]>;
 

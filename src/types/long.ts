@@ -23,7 +23,7 @@ export class MonarchLong extends MonarchType<Long | number | bigint, Long | numb
       } catch (error) {
         throw MonarchParseError.fromCause({ cause: error });
       }
-      throw MonarchParseError.create({ message: `expected 'Long', 'number', or 'bigint' received '${typeof input}'` });
+      throw MonarchParseError.create(`expected 'Long', 'number', or 'bigint' received '${typeof input}'`);
     });
   }
 

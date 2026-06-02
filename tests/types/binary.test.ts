@@ -21,13 +21,13 @@ describe("binary", () => {
     });
 
     // @ts-expect-error
-    expect(() => Schema.input(schema, { data: "not a buffer" })).toThrowError(
+    expect(() => Schema.input(schema, { data: "not a buffer" })).toThrow(
       "expected 'Buffer' or 'Binary' received 'string'",
     );
     // @ts-expect-error
-    expect(() => Schema.input(schema, { data: 123 })).toThrowError("expected 'Buffer' or 'Binary' received 'number'");
+    expect(() => Schema.input(schema, { data: 123 })).toThrow("expected 'Buffer' or 'Binary' received 'number'");
     // @ts-expect-error
-    expect(() => Schema.input(schema, { data: {} })).toThrowError("expected 'Buffer' or 'Binary' received 'object'");
+    expect(() => Schema.input(schema, { data: {} })).toThrow("expected 'Buffer' or 'Binary' received 'object'");
   });
 
   test("works with nullable and optional", () => {

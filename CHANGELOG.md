@@ -1,5 +1,32 @@
 # monarch-orm
 
+## 0.13.0
+
+### Minor Changes
+
+- 29d7e0c: Make query builder methods immutable — each method returns a new instance instead of mutating.
+- 8c6906b: Add searchIndexes support. Use `schema.searchIndexes()` for defining Atlas Search Indexes
+
+## 0.12.0
+
+### Minor Changes
+
+- d415a26: Add reusable object shapes via `object(...).shape`
+
+## 0.11.0
+
+### Minor Changes
+
+- f09d62c: Relations now use typed field references instead of plain strings for `from` and `to` fields.
+
+  Relations also support default population options via `.options()`, which apply whenever a relation is populated with `true` and can be overridden per query.
+
+- fee15c4: The `many` relation now supports all field type combinations: single→single, single→array, array→single, and array→array.
+
+  The `refs` relation has been removed. Use `many` with an array `from` field instead.
+
+- 5fc2c49: Bumped minimum required MongoDB driver version to `>= 7.0.0`.
+
 ## 0.10.0
 
 ### Minor Changes
@@ -15,7 +42,6 @@
 - 8c0370e: Add custom implementations for `Filter`, `UpdateFilter` and `DistinctFilter` types
 - 742f147: Support splitting schemas by adding `defineSchemas` and `mergeSchema` functions which requires a `Schemas` class as argument to `createDatabase`
 - f6d67be: Add document schema validation
-- 8c0370e: Add `createShape` to reuse type objects
 - cbb395e: Rename `Schema.encode/Schema.decode` to `Schema.input/Schema.output`
 - 8bec3f8: Add `Schema.rename()` method to rename fields in output
 

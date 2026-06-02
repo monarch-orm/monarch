@@ -17,6 +17,8 @@ import { addExtraInputsToProjection, makeProjection } from "../projection";
 import type { BoolProjection, Projection } from "../types/query-options";
 import { Query, type QueryOutput } from "./base";
 
+export type FindOneAndReplaceQueryOptions = Omit<FindOneAndReplaceOptions, "projection">;
+
 /**
  * Collection.findOneAndReplace().
  */
@@ -42,12 +44,20 @@ export class FindOneAndReplaceQuery<
   /**
    * Adds replace options. Options are merged into existing options.
    *
-   * @param options - FindOneAndReplaceOptions
+   * @param options - FindOneAndReplaceQueryOptions
    * @returns FindOneAndReplaceQuery instance
    */
-  public options(options: FindOneAndReplaceOptions): this {
-    Object.assign(this._options, options);
-    return this;
+  public options(options: FindOneAndReplaceQueryOptions): this {
+    const query = new FindOneAndReplaceQuery(
+      this.schema,
+      this.collection,
+      this.readyPromise,
+      this._filter,
+      this._replacement,
+      { ...this._options, ...options },
+    );
+    query._projection = this._projection;
+    return query as this;
   }
 
   /**
@@ -57,8 +67,16 @@ export class FindOneAndReplaceQuery<
    * @returns FindOneAndReplaceQuery instance
    */
   public omit<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
-    this._projection = makeProjection("omit", projection);
-    return this as FindOneAndReplaceQuery<TSchema, TOutput, ["omit", TrueKeys<TProjection>]>;
+    const query = new FindOneAndReplaceQuery(
+      this.schema,
+      this.collection,
+      this.readyPromise,
+      this._filter,
+      this._replacement,
+      this._options,
+    );
+    query._projection = makeProjection("omit", projection);
+    return query as FindOneAndReplaceQuery<TSchema, TOutput, ["omit", TrueKeys<TProjection>]>;
   }
 
   /**
@@ -68,8 +86,16 @@ export class FindOneAndReplaceQuery<
    * @returns FindOneAndReplaceQuery instance
    */
   public select<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
-    this._projection = makeProjection("select", projection);
-    return this as FindOneAndReplaceQuery<TSchema, TOutput, ["select", TrueKeys<TProjection>]>;
+    const query = new FindOneAndReplaceQuery(
+      this.schema,
+      this.collection,
+      this.readyPromise,
+      this._filter,
+      this._replacement,
+      this._options,
+    );
+    query._projection = makeProjection("select", projection);
+    return query as FindOneAndReplaceQuery<TSchema, TOutput, ["select", TrueKeys<TProjection>]>;
   }
 
   protected async exec(): Promise<QueryOutput<TOutput, TOmit> | null> {

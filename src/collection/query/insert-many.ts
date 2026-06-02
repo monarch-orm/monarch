@@ -8,6 +8,8 @@ import { type AnySchema, Schema } from "../../schema/schema";
 import type { InferSchemaData, InferSchemaInput } from "../../schema/type-helpers";
 import { Query } from "./base";
 
+export type InsertManyQueryOptions = BulkWriteOptions;
+
 /**
  * Collection.insertMany().
  */
@@ -20,7 +22,7 @@ export class InsertManyQuery<TSchema extends AnySchema> extends Query<
     collection: MongoCollection<InferSchemaData<TSchema>>,
     readyPromise: Promise<void>,
     private _data: InferSchemaInput<TSchema>[],
-    private _options: BulkWriteOptions = {},
+    private _options: InsertManyQueryOptions = {},
   ) {
     super(schema, collection, readyPromise);
   }
@@ -28,12 +30,14 @@ export class InsertManyQuery<TSchema extends AnySchema> extends Query<
   /**
    * Adds insert options. Options are merged into existing options.
    *
-   * @param options - BulkWriteOptions
+   * @param options - InsertManyQueryOptions
    * @returns InsertManyQuery instance
    */
-  public options(options: BulkWriteOptions): this {
-    Object.assign(this._options, options);
-    return this;
+  public options(options: InsertManyQueryOptions): this {
+    return new InsertManyQuery(this.schema, this.collection, this.readyPromise, this._data, {
+      ...this._options,
+      ...options,
+    }) as this;
   }
 
   protected async exec(): Promise<InsertManyResult<InferSchemaData<TSchema>>> {

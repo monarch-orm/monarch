@@ -9,6 +9,8 @@ import { Schema, type AnySchema } from "../../schema/schema";
 import type { Filter, InferSchemaData, InferSchemaInput } from "../../schema/type-helpers";
 import { Query } from "./base";
 
+export type ReplaceOneQueryOptions = ReplaceOptions;
+
 /**
  * Collection.replaceOne().
  */
@@ -19,7 +21,7 @@ export class ReplaceOneQuery<TSchema extends AnySchema> extends Query<TSchema, U
     readyPromise: Promise<void>,
     private _filter: Filter<TSchema>,
     private _replacement: WithoutId<InferSchemaInput<TSchema>>,
-    private _options: ReplaceOptions = {},
+    private _options: ReplaceOneQueryOptions = {},
   ) {
     super(schema, collection, readyPromise);
   }
@@ -27,12 +29,14 @@ export class ReplaceOneQuery<TSchema extends AnySchema> extends Query<TSchema, U
   /**
    * Adds replace options. Options are merged into existing options.
    *
-   * @param options - ReplaceOptions
+   * @param options - ReplaceOneQueryOptions
    * @returns ReplaceOneQuery instance
    */
-  public options(options: ReplaceOptions): this {
-    Object.assign(this._options, options);
-    return this;
+  public options(options: ReplaceOneQueryOptions): this {
+    return new ReplaceOneQuery(this.schema, this.collection, this.readyPromise, this._filter, this._replacement, {
+      ...this._options,
+      ...options,
+    }) as this;
   }
 
   protected async exec(): Promise<UpdateResult<InferSchemaData<TSchema>>> {

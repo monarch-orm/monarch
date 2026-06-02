@@ -16,7 +16,7 @@ export class MonarchString extends MonarchType<string> {
   constructor() {
     super((input) => {
       if (typeof input === "string") return input;
-      throw MonarchParseError.create({ message: `expected 'string' received '${typeof input}'` });
+      throw MonarchParseError.create(`expected 'string' received '${typeof input}'`);
     });
   }
 
@@ -66,7 +66,7 @@ export class MonarchString extends MonarchType<string> {
       jsonSchemaParser(
         (input) => {
           if (input.length < length) {
-            throw MonarchParseError.create({ message: `string must have a minimum length of ${length}` });
+            throw MonarchParseError.create(`string must have a minimum length of ${length}`);
           }
           return input;
         },
@@ -86,7 +86,7 @@ export class MonarchString extends MonarchType<string> {
       jsonSchemaParser(
         (input) => {
           if (input.length > length) {
-            throw MonarchParseError.create({ message: `string must have a maximum length of ${length}` });
+            throw MonarchParseError.create(`string must have a maximum length of ${length}`);
           }
           return input;
         },
@@ -106,7 +106,7 @@ export class MonarchString extends MonarchType<string> {
       jsonSchemaParser(
         (input) => {
           if (input.length !== length) {
-            throw MonarchParseError.create({ message: `string must have a length of ${length}` });
+            throw MonarchParseError.create(`string must have a length of ${length}`);
           }
           return input;
         },
@@ -126,7 +126,7 @@ export class MonarchString extends MonarchType<string> {
       jsonSchemaParser(
         (input) => {
           if (!regex.test(input)) {
-            throw MonarchParseError.create({ message: `string must match pattern ${regex}` });
+            throw MonarchParseError.create(`string must match pattern ${regex}`);
           }
           return input;
         },
@@ -145,7 +145,7 @@ export class MonarchString extends MonarchType<string> {
       jsonSchemaParser(
         (input) => {
           if (input.length === 0) {
-            throw MonarchParseError.create({ message: "string must not be empty" });
+            throw MonarchParseError.create("string must not be empty");
           }
           return input;
         },

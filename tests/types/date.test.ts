@@ -16,9 +16,9 @@ describe("date", () => {
     expect(validData).toStrictEqual({ date: now });
 
     // @ts-expect-error
-    expect(() => Schema.input(schema, { date: "not a date" })).toThrowError("expected 'Date' received 'string'");
+    expect(() => Schema.input(schema, { date: "not a date" })).toThrow("expected 'Date' received 'string'");
     // @ts-expect-error
-    expect(() => Schema.input(schema, { date: 123 })).toThrowError("expected 'Date' received 'number'");
+    expect(() => Schema.input(schema, { date: 123 })).toThrow("expected 'Date' received 'number'");
   });
 
   test("MonarchDate after() and before()", () => {
@@ -27,18 +27,18 @@ describe("date", () => {
       beforeDate: date().before(now),
     });
 
-    expect(() => Schema.input(schema, { afterDate: past, beforeDate: future })).toThrowError(
+    expect(() => Schema.input(schema, { afterDate: past, beforeDate: future })).toThrow(
       `date must be after ${now.toISOString()}`,
     );
-    expect(() => Schema.input(schema, { afterDate: future, beforeDate: future })).toThrowError(
+    expect(() => Schema.input(schema, { afterDate: future, beforeDate: future })).toThrow(
       `date must be before ${now.toISOString()}`,
     );
 
     // Edge case: date equal to boundary should fail
-    expect(() => Schema.input(schema, { afterDate: now, beforeDate: past })).toThrowError(
+    expect(() => Schema.input(schema, { afterDate: now, beforeDate: past })).toThrow(
       `date must be after ${now.toISOString()}`,
     );
-    expect(() => Schema.input(schema, { afterDate: future, beforeDate: now })).toThrowError(
+    expect(() => Schema.input(schema, { afterDate: future, beforeDate: now })).toThrow(
       `date must be before ${now.toISOString()}`,
     );
 
@@ -63,7 +63,7 @@ describe("date", () => {
         dateWithAfter: "not a date",
         dateWithBefore: past,
       }),
-    ).toThrowError("expected 'Date' received 'string'");
+    ).toThrow("expected 'Date' received 'string'");
 
     // Invalid type for date().before() should throw type error first
     expect(() =>
@@ -72,6 +72,6 @@ describe("date", () => {
         // @ts-expect-error
         dateWithBefore: 123,
       }),
-    ).toThrowError("expected 'Date' received 'number'");
+    ).toThrow("expected 'Date' received 'number'");
   });
 });

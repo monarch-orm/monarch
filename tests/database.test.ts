@@ -41,7 +41,7 @@ describe("Database options", async () => {
         age: "not-a-number",
         nickname: "tc",
       }),
-    ).rejects.toThrowError("Document failed validation");
+    ).rejects.toThrow("Document failed validation");
   });
 
   it("supports initialize false after a prior initialize call", async () => {
@@ -70,10 +70,10 @@ describe("Database options", async () => {
         age: "not-a-number",
         nickname: "tc",
       }),
-    ).rejects.toThrowError("Document failed validation");
+    ).rejects.toThrow("Document failed validation");
   });
 
-  it("initialize validation false skips applying validators", async () => {
+  it("initialize without validation option skips applying validators", async () => {
     const schema = createSchema("users", {
       name: string(),
       nickname: string(),
@@ -86,13 +86,13 @@ describe("Database options", async () => {
         validationAction: "error",
       },
     });
-    await db.initialize({ validation: false });
+    await db.initialize({});
 
     const rawCollection = client.db().collection("users");
     await expect(rawCollection.insertOne({})).resolves.toMatchObject({ acknowledged: true });
   });
 
-  it("initialize indexes false skips schema index creation", async () => {
+  it("initialize without indexes option skips schema index creation", async () => {
     const schema = createSchema("users", {
       username: string(),
     }).indexes(({ unique }) => ({
@@ -100,7 +100,7 @@ describe("Database options", async () => {
     }));
 
     const db = createDatabase(client.db(), defineSchemas({ users: schema }), { initialize: false });
-    await db.initialize({ indexes: false });
+    await db.initialize({});
 
     const rawCollection = client.db().collection("users");
     await rawCollection.insertOne({ username: "same-user" });
@@ -123,7 +123,7 @@ describe("Database options", async () => {
         validationAction: "error",
       },
     });
-    await db.initialize({ collections: { users: true } });
+    await db.initialize(true, { users: true });
 
     const existing = await client.db().listCollections({}, { nameOnly: true }).toArray();
     const existingNames = new Set(existing.map((collection) => collection.name));
@@ -131,7 +131,7 @@ describe("Database options", async () => {
     expect(existingNames.has("posts")).toBe(false);
 
     const usersRaw = client.db().collection("users");
-    await expect(usersRaw.insertOne({})).rejects.toThrowError("Document failed validation");
+    await expect(usersRaw.insertOne({})).rejects.toThrow("Document failed validation");
 
     // posts collection wasn't initialized, so it is created lazily by MongoDB without schema validator.
     const postsRaw = client.db().collection("posts");
@@ -164,7 +164,7 @@ describe("Database options", async () => {
     });
 
     const firstDb = createDatabase(client.db(), defineSchemas({ users: schema }), { initialize: false });
-    await firstDb.initialize({ validation: false });
+    await firstDb.initialize({});
 
     const rawCollection = client.db().collection("users");
     await expect(rawCollection.insertOne({})).resolves.toMatchObject({ acknowledged: true });
@@ -178,6 +178,6 @@ describe("Database options", async () => {
     });
     await secondDb.initialize();
 
-    await expect(rawCollection.insertOne({})).rejects.toThrowError("Document failed validation");
+    await expect(rawCollection.insertOne({})).rejects.toThrow("Document failed validation");
   });
 });

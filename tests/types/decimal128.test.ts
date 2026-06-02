@@ -43,13 +43,9 @@ describe("decimal128", () => {
     });
 
     // @ts-expect-error
-    expect(() => Schema.input(schema, { value: 123 })).toThrowError(
-      "expected 'Decimal128' or 'string' received 'number'",
-    );
+    expect(() => Schema.input(schema, { value: 123 })).toThrow("expected 'Decimal128' or 'string' received 'number'");
     // @ts-expect-error
-    expect(() => Schema.input(schema, { value: {} })).toThrowError(
-      "expected 'Decimal128' or 'string' received 'object'",
-    );
+    expect(() => Schema.input(schema, { value: {} })).toThrow("expected 'Decimal128' or 'string' received 'object'");
   });
 
   test("works with nullable and optional", () => {

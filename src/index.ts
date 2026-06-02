@@ -21,9 +21,39 @@ import { uuid } from "./types/uuid";
 
 export { ObjectId } from "mongodb";
 export { Collection } from "./collection/collection";
-export { createClient, createDatabase, Database, type DatabaseOptions } from "./database";
+export type { AggregationPipelineOptions } from "./collection/pipeline/aggregation";
+export type { BulkWriteQueryOptions } from "./collection/query/bulk-write";
+export type { DeleteManyQueryOptions } from "./collection/query/delete-many";
+export type { DeleteOneQueryOptions } from "./collection/query/delete-one";
+export type { DistinctQueryOptions } from "./collection/query/distinct";
+export type { FindQueryOptions } from "./collection/query/find";
+export type { FindOneQueryOptions } from "./collection/query/find-one";
+export type { FindOneAndDeleteQueryOptions } from "./collection/query/find-one-and-delete";
+export type { FindOneAndReplaceQueryOptions } from "./collection/query/find-one-and-replace";
+export type { FindOneAndUpdateQueryOptions } from "./collection/query/find-one-and-update";
+export type { InsertManyQueryOptions } from "./collection/query/insert-many";
+export type { InsertOneQueryOptions } from "./collection/query/insert-one";
+export type { ReplaceOneQueryOptions } from "./collection/query/replace-one";
+export type { UpdateManyQueryOptions } from "./collection/query/update-many";
+export type { UpdateOneQueryOptions } from "./collection/query/update-one";
+export type { PipelineStage } from "./collection/types/pipeline-stage";
+export { createClient, createDatabase, Database, type DatabaseOptions, type InitOptions } from "./database";
 export { MonarchError, MonarchParseError } from "./errors";
-export { createSchema, createShape, defineSchemas, mergeSchemas, Schema, Schemas } from "./schema/schema";
+export {
+  mergeRelations,
+  Relation,
+  RelationField,
+  type RelationsFn,
+  type SchemasRelations,
+} from "./relations/relations";
+export type { CreateIndexesOptions, SchemaIndex } from "./schema/indexes";
+export { createSchema, defineSchemas, mergeSchemas, Schema, Schemas } from "./schema/schema";
+export type {
+  SchemaSearchIndex,
+  SchemaSearchIndexDefinition,
+  SearchIndexDefinition,
+  VectorSearchIndexDefinition,
+} from "./schema/search-indexes";
 export type {
   Condition,
   CreateIndexKey,

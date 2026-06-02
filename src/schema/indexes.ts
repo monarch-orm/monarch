@@ -8,6 +8,8 @@ import { MonarchError } from "../errors";
 import type { AnyMonarchType } from "../types/type";
 import type { CreateIndexKey } from "./type-helpers";
 
+export type { CreateIndexesOptions };
+
 export type CreateIndex<T extends Record<string, AnyMonarchType>> = (
   key: CreateIndexKey<T>,
   options?: CreateIndexesOptions,
@@ -28,15 +30,15 @@ export type SchemaIndexes<T extends Record<string, AnyMonarchType>> = (options: 
   [k: string]: SchemaIndex<T>;
 };
 
-export function makeIndexes<T extends Record<string, AnyMonarchType>>(indexesFn: SchemaIndexes<T>) {
-  return indexesFn({
+export function makeIndexes<T extends Record<string, AnyMonarchType>>(fn: SchemaIndexes<T>) {
+  return fn({
     createIndex: (key, options) => ({ key, options }),
     unique: (key) => ({ key: { [key]: 1 } as CreateIndexKey<T>, options: { unique: true } }),
   });
 }
 
-export async function applyIndexes(coll: MongoCollection, indexesFn: SchemaIndexes<any>) {
-  const indexes = Object.entries(makeIndexes(indexesFn));
+export async function applyIndexes(coll: MongoCollection, fn: SchemaIndexes<any>) {
+  const indexes = Object.entries(makeIndexes(fn));
   const desiredIndexes = new Map(indexes.map(([_, idx]) => [JSON.stringify(idx.key), idx.options ?? {}]));
   const existingIndexes = await coll.indexes();
   const indexesToDrop: string[] = [];
@@ -105,7 +107,7 @@ export function isStaleIndex(existingIndex: IndexDescriptionInfo, desiredIndex: 
     ...Object.keys(MONGODB_INDEX_DEFAULTS),
   ]);
   // Skip internal options
-  ["ns", "key", "name", "v", "textIndexVersion", "2dsphereIndexVersion"].forEach(allKeys.delete);
+  ["ns", "key", "name", "v", "textIndexVersion", "2dsphereIndexVersion"].forEach((v) => allKeys.delete(v));
 
   for (const key of allKeys) {
     const k = key as keyof CreateIndexesOptions;

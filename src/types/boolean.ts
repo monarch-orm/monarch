@@ -16,7 +16,7 @@ export class MonarchBoolean extends MonarchType<boolean> {
   constructor() {
     super((input) => {
       if (typeof input === "boolean") return input;
-      throw MonarchParseError.create({ message: `expected 'boolean' received '${typeof input}'` });
+      throw MonarchParseError.create(`expected 'boolean' received '${typeof input}'`);
     });
   }
 

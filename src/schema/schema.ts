@@ -7,6 +7,7 @@ import { MonarchObjectId, objectId } from "../types/objectId";
 import { MonarchNullable, MonarchOptional, MonarchType, type AnyMonarchType } from "../types/type";
 import type { MergeAll, MergeN1All, Pretty, RequiredObject } from "../utils/type-helpers";
 import type { SchemaIndexes } from "./indexes";
+import type { SchemaSearchIndexes } from "./search-indexes";
 import type {
   InferSchemaData,
   InferSchemaInput,
@@ -52,6 +53,7 @@ export class Schema<
     private options: {
       omit?: SchemaOmit<TTypes>;
       indexes?: SchemaIndexes<TTypes>;
+      searchIndexes?: SchemaSearchIndexes<TTypes>;
       validation?: SchemaValidation;
       virtuals?: SchemaVirtuals<TTypes, TVirtuals>;
       renames?: TRenames;
@@ -104,7 +106,6 @@ export class Schema<
    * This method allows you to specify indexes that should be created for the schema.
    *
    * @param indexes - A function that defines the indexes to be created.
-   *
    * @returns The current schema instance for method chaining.
    *
    * @example
@@ -118,6 +119,33 @@ export class Schema<
    */
   public indexes(indexes: SchemaIndexes<TTypes>) {
     this.options.indexes = indexes;
+    return this;
+  }
+
+  /**
+   * Defines the search indexes for the schema.
+   *
+   * Search indexes are only supported on MongoDB Atlas clusters and are applied during initialization.
+   *
+   * @param searchIndexes - A function that defines the search indexes to be created.
+   * @returns The current schema instance for method chaining.
+   *
+   * @example
+   * const articleSchema = createSchema("articles", {
+   *   title: string(),
+   *   body: string(),
+   *   embedding: array(number()),
+   * }).searchIndexes(({ searchIndex, vectorSearchIndex }) => ({
+   *   fullText: searchIndex("articles_search", {
+   *     mappings: { dynamic: false, fields: { title: { type: "string" }, body: { type: "string" } } },
+   *   }),
+   *   semantic: vectorSearchIndex("articles_vector", {
+   *     fields: [{ type: "vector", path: "embedding", numDimensions: 1536, similarity: "cosine" }],
+   *   }),
+   * }));
+   */
+  public searchIndexes(searchIndexes: SchemaSearchIndexes<TTypes>) {
+    this.options.searchIndexes = searchIndexes;
     return this;
   }
 
@@ -265,19 +293,9 @@ export function createSchema<TName extends string, TTypes extends Record<string,
   return new Schema(name, schemaTypes, {});
 }
 
-/**
- * Creates an object shape for a MongoDB schema or object type.
- *
- * @param types - Object defining field types
- * @returns Types object
- */
-export function createShape<TTypes extends Record<string, AnyMonarchType>>(types: TTypes): TTypes {
-  return types;
-}
-
 export class Schemas<
   TSchemas extends Record<string, AnySchema>,
-  TRelations extends Record<string, Record<string, AnyRelation> | undefined> = {},
+  TRelations extends Record<string, Record<string, AnyRelation>> = {},
 > {
   constructor(
     public schemas: TSchemas,
@@ -286,7 +304,113 @@ export class Schemas<
     this.withRelations = this.withRelations.bind(this);
   }
 
-  public withRelations<T extends SchemasRelations<TSchemas>>(fn: RelationsFn<TSchemas, T>) {
+  /**
+   * Defines relationships between schemas.
+   *
+   * Relations use field lookups to join documents across collections. To ensure fast
+   * population queries, **you must create indexes on the fields used in each relation**.
+   *
+   * For every relation, MongoDB queries the target collection by the `to` field using
+   * the values collected from the `from` field. Without an index on the `to` field,
+   * MongoDB performs a full collection scan for each population.
+   *
+   * **Index recommendation:**
+   * - If `to` is `_id`, it is already indexed — no action needed.
+   * - For any other `to` field, create an **ascending index** (`{ field: 1 }`) on the
+   *   target schema using `.indexes()`.
+   * - A `from` field does not need an index for the join, but you can index it on
+   *   the source schema if you filter or sort by it in your own queries.
+   *
+   * @example
+   * // Relation: posts.authorId → users._id
+   * // `to` is _id which is already indexed.
+   * // You may index `authorId` on posts  (the `from` field) for filtering posts by author.
+   * const userSchema = createSchema("users", {
+   *   name: string(),
+   * });
+   * const postSchema = createSchema("posts", {
+   *   title: string(),
+   *   authorId: objectId(),
+   * }).indexes(({ createIndex }) => ({
+   *   byAuthor: createIndex({ authorId: 1 }),
+   * }));
+   *
+   * const schemas = defineSchemas({ userSchema, postSchema });
+   * const relations = schemas.withRelations((r) => ({
+   *   posts: {
+   *     author: r.one.users({ from: r.posts.authorId, to: r.users._id }),
+   *   },
+   * }));
+   *
+   * @example
+   * // Relation: comments.postSlug → posts.slug
+   * // `to` is not _id, so index `slug` on the target schema (posts).
+   * // You may also index `postSlug` on comments (the `from` field) for filtering.
+   * const postSchema = createSchema("posts", {
+   *   slug: string(),
+   *   title: string(),
+   * }).indexes(({ createIndex }) => ({
+   *   slug: createIndex({ slug: 1 }),
+   * }));
+   * const commentSchema = createSchema("comments", {
+   *   body: string(),
+   *   postSlug: string(),
+   * }).indexes(({ createIndex }) => ({
+   *   byPostSlug: createIndex({ postSlug: 1 }),
+   * }));
+   *
+   * const schemas = defineSchemas({ postSchema, commentSchema });
+   * const relations = schemas.withRelations((r) => ({
+   *   comments: {
+   *     post: r.one.posts({ from: r.comments.postSlug, to: r.posts.slug }),
+   *   },
+   * }));
+   *
+   * @example
+   * // Many relation (foreign key): users._id → posts.authorId
+   * // `to` is posts.authorId which is not _id, so index it on posts.
+   * const userSchema = createSchema("users", {
+   *   name: string(),
+   * });
+   * const postSchema = createSchema("posts", {
+   *   title: string(),
+   *   authorId: objectId(),
+   * }).indexes(({ createIndex }) => ({
+   *   authorId: createIndex({ authorId: 1 }),
+   * }));
+   *
+   * const schemas = defineSchemas({ userSchema, postSchema });
+   * const relations = schemas.withRelations((r) => ({
+   *   users: {
+   *     posts: r.many.posts({ from: r.users._id, to: r.posts.authorId }),
+   *   },
+   * }));
+   *
+   * @example
+   * // Many relation (array `to` field): posts._id → tags.postIds
+   * // `to` is tags.postIds which is an array field and not _id.
+   * // MongoDB queries the target by the `to` field, so index it.
+   * // MongoDB automatically uses a multikey index to cover each element in the array.
+   * // An array `from` field does not need an index for the join itself.
+   * // You can index it if you filter the source collection by that field directly.
+   * const tagSchema = createSchema("tags", {
+   *   name: string(),
+   *   postIds: array(objectId()),
+   * }).indexes(({ createIndex }) => ({
+   *   postIds: createIndex({ postIds: 1 }),
+   * }));
+   * const postSchema = createSchema("posts", {
+   *   title: string(),
+   * });
+   *
+   * const schemas = defineSchemas({ tagSchema, postSchema });
+   * const relations = schemas.withRelations((r) => ({
+   *   posts: {
+   *     tags: r.many.tags({ from: r.posts._id, to: r.tags.postIds }),
+   *   },
+   * }));
+   */
+  public withRelations<T extends SchemasRelations<TSchemas>>(fn: RelationsFn<TSchemas, TRelations, T>) {
     const mergedRelations = mergeRelations(this.schemas, this.relations, fn);
     return new Schemas(this.schemas, mergedRelations);
   }

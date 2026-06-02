@@ -1,8 +1,8 @@
 import type {
-  Document,
   FindOneAndUpdateOptions,
   Collection as MongoCollection,
   Filter as MongoFilter,
+  Sort as MongoSort,
   UpdateFilter as MongoUpdateFilter,
 } from "mongodb";
 import { type AnySchema, Schema } from "../../schema/schema";
@@ -15,8 +15,10 @@ import type {
 } from "../../schema/type-helpers";
 import type { TrueKeys } from "../../utils/type-helpers";
 import { addExtraInputsToProjection, makeProjection } from "../projection";
-import type { BoolProjection, Projection } from "../types/query-options";
+import type { BoolProjection, Projection, Sort } from "../types/query-options";
 import { Query, type QueryOutput } from "./base";
+
+export type FindOneAndUpdateQueryOptions = Omit<FindOneAndUpdateOptions, "projection">;
 
 /**
  * Collection.findOneAndUpdate().
@@ -33,7 +35,7 @@ export class FindOneAndUpdateQuery<
     collection: MongoCollection<InferSchemaData<TSchema>>,
     readyPromise: Promise<void>,
     private _filter: Filter<TSchema>,
-    private _update: UpdateFilter<TSchema> | Document[],
+    private _update: UpdateFilter<TSchema>,
     private _options: FindOneAndUpdateOptions = {},
   ) {
     super(schema, collection, readyPromise);
@@ -43,12 +45,42 @@ export class FindOneAndUpdateQuery<
   /**
    * Adds update options. Options are merged into existing options.
    *
-   * @param options - FindOneAndUpdateOptions
+   * @param options - FindOneAndUpdateQueryOptions
    * @returns FindOneAndUpdateQuery instance
    */
-  public options(options: FindOneAndUpdateOptions): this {
-    Object.assign(this._options, options);
-    return this;
+  public options(options: FindOneAndUpdateQueryOptions): this {
+    const query = new FindOneAndUpdateQuery(
+      this.schema,
+      this.collection,
+      this.readyPromise,
+      this._filter,
+      this._update,
+      {
+        ...this._options,
+        ...options,
+      },
+    );
+    query._projection = this._projection;
+    return query as this;
+  }
+
+  /**
+   * Sets sort order to determine which document is updated when multiple match.
+   *
+   * @param sort - Sort specification
+   * @returns FindOneAndUpdateQuery instance
+   */
+  public sort(sort: Sort<InferSchemaData<TSchema>>): this {
+    const query = new FindOneAndUpdateQuery(
+      this.schema,
+      this.collection,
+      this.readyPromise,
+      this._filter,
+      this._update,
+      { ...this._options, sort: sort as MongoSort },
+    );
+    query._projection = this._projection;
+    return query as this;
   }
 
   /**
@@ -58,8 +90,16 @@ export class FindOneAndUpdateQuery<
    * @returns FindOneAndUpdateQuery instance
    */
   public omit<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
-    this._projection = makeProjection("omit", projection);
-    return this as FindOneAndUpdateQuery<TSchema, TOutput, ["omit", TrueKeys<TProjection>]>;
+    const query = new FindOneAndUpdateQuery(
+      this.schema,
+      this.collection,
+      this.readyPromise,
+      this._filter,
+      this._update,
+      this._options,
+    );
+    query._projection = makeProjection("omit", projection);
+    return query as FindOneAndUpdateQuery<TSchema, TOutput, ["omit", TrueKeys<TProjection>]>;
   }
 
   /**
@@ -69,14 +109,20 @@ export class FindOneAndUpdateQuery<
    * @returns FindOneAndUpdateQuery instance
    */
   public select<TProjection extends BoolProjection<InferSchemaOutput<TSchema>>>(projection: TProjection) {
-    this._projection = makeProjection("select", projection);
-    return this as FindOneAndUpdateQuery<TSchema, TOutput, ["select", TrueKeys<TProjection>]>;
+    const query = new FindOneAndUpdateQuery(
+      this.schema,
+      this.collection,
+      this.readyPromise,
+      this._filter,
+      this._update,
+      this._options,
+    );
+    query._projection = makeProjection("select", projection);
+    return query as FindOneAndUpdateQuery<TSchema, TOutput, ["select", TrueKeys<TProjection>]>;
   }
 
   protected async exec(): Promise<QueryOutput<TOutput, TOmit> | null> {
-    const update = Array.isArray(this._update)
-      ? this._update
-      : Schema.updateInput(this.schema, this._update, this._options.upsert ?? false);
+    const update = Schema.updateInput(this.schema, this._update, this._options.upsert ?? false);
 
     const extras = addExtraInputsToProjection(this._projection, Schema.options(this.schema).virtuals);
     const res = await this.collection.findOneAndUpdate(

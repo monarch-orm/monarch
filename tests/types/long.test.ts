@@ -36,11 +36,11 @@ describe("long", () => {
   test("rejects invalid values", () => {
     const schema = createSchema("test", { value: long() });
     // @ts-expect-error
-    expect(() => Schema.input(schema, { value: "not a long" })).toThrowError(
+    expect(() => Schema.input(schema, { value: "not a long" })).toThrow(
       "expected 'Long', 'number', or 'bigint' received 'string'",
     );
     // @ts-expect-error
-    expect(() => Schema.input(schema, { value: {} })).toThrowError(
+    expect(() => Schema.input(schema, { value: {} })).toThrow(
       "expected 'Long', 'number', or 'bigint' received 'object'",
     );
   });

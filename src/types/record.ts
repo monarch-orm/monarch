@@ -23,17 +23,13 @@ export class MonarchRecord<T extends AnyMonarchType> extends MonarchType<
       if (typeof input === "object" && input !== null) {
         const parsed = {} as Record<string, InferTypeOutput<T>>;
         for (const [key, value] of Object.entries(input)) {
-          try {
-            const parser = MonarchType.parser(type);
-            const result = parser(value);
-            if (result !== undefined) parsed[key] = result;
-          } catch (error) {
-            throw MonarchParseError.fromCause({ path: key, cause: error });
-          }
+          const parser = MonarchType.parser(type, key);
+          const result = parser(value);
+          if (result !== undefined) parsed[key] = result;
         }
         return parsed;
       }
-      throw MonarchParseError.create({ message: `expected 'object' received '${typeof input}'` });
+      throw MonarchParseError.create(`expected 'object' received '${typeof input}'`);
     });
   }
 
@@ -51,7 +47,7 @@ export class MonarchRecord<T extends AnyMonarchType> extends MonarchType<
         throw MonarchParseError.fromCause({ path: key, cause: error });
       }
     }
-    throw MonarchParseError.create({ message: `expected a string key` });
+    throw MonarchParseError.create(`expected a string key`);
   }
 
   protected jsonSchema(): JSONSchema {

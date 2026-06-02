@@ -6,7 +6,7 @@ Type-safe MongoDB collections, schema parsing, relations, and query helpers for 
 
 - **Strongly Typed:** Infer schema inputs and outputs for queries and collection methods.
 - **Flexible Schemas:** Use transforms, defaults, validation, virtuals, renames, and default omit rules.
-- **Typed Relations:** Define one, many, and refs relations with typed population support.
+- **Typed Relations:** Define one and many relations with typed population support.
 - **Familiar MongoDB Access:** Use typed query methods, operators, aggregation, and raw collection access.
 - **Collection Initialization:** Automatically initialize collections with indexes and JSON Schema validation, or do it manually.
 
@@ -37,9 +37,8 @@ const userSchema = createSchema("users", {
 
 const schemas = defineSchemas({ userSchema });
 
-// Create and connect the MongoDB client.
+// Create a MongoDB client.
 const client = createClient(process.env.MONGODB_URI!);
-await client.connect();
 
 // Create a database instance.
 const db = createDatabase(client.db("app"), schemas);
@@ -83,27 +82,6 @@ const postSchema = createSchema("posts", {
 const schemas = defineSchemas({ userSchema, postSchema });
 ```
 
-### `createShape()`
-
-Use `createShape()` when you want to define a reusable shape for schemas or objects.
-
-```ts
-import { createShape, createSchema } from "monarch-orm";
-import { object, string } from "monarch-orm/types";
-
-const addressShape = createShape({
-  street: string(),
-  city: string(),
-});
-
-const userSchema = createSchema("users", {
-  name: string(),
-  address: object(addressShape),
-});
-
-const addressSchema = createSchema("addresses", addressShape);
-```
-
 ### Relations
 
 Use `withRelations()` on a schemas object to define typed relations.
@@ -111,39 +89,190 @@ Use `withRelations()` on a schemas object to define typed relations.
 ```ts
 const schemas = defineSchemas({ userSchema, postSchema });
 
-const schemasWithRelations = schemas.withRelations((s) => ({
+const schemasWithRelations = schemas.withRelations((r) => ({
   users: {
-    posts: s.users.$many.posts({ from: "_id", to: "authorId" }),
+    posts: r.many.posts({ from: r.users._id, to: r.posts.authorId }),
   },
   posts: {
-    author: s.posts.$one.users({ from: "authorId", to: "_id" }),
-    contributors: s.posts.$refs.users({ from: "contributorIds", to: "_id" }),
+    author: r.one.users({ from: r.posts.authorId, to: r.users._id }),
+    contributors: r.many.users({ from: r.posts.contributorIds, to: r.users._id }),
   },
 }));
 ```
 
 #### One relations
 
-Use `$one` when a local field points to a single document in another collection.
+Use `one` when a single local field points to a single document in another collection.
 
 ```ts
-author: s.posts.$one.users({ from: "authorId", to: "_id" })
+const userSchema = createSchema("users", { name: string() });
+const postSchema = createSchema("posts", {
+  title: string(),
+  authorId: objectId(),
+});
+
+const schemas = defineSchemas({ userSchema, postSchema });
+
+schemas.withRelations((r) => ({
+  posts: {
+    author: r.one.users({ from: r.posts.authorId, to: r.users._id }),
+  },
+}));
 ```
 
 #### Many relations
 
-Use `$many` when one document relates to many documents in another collection by matching a local field against a foreign field.
+Use `many` when one document relates to many documents in another collection. The `from` and `to` fields can each be a single value or an array, so you can model different relation patterns:
+
+- **single → single** — a foreign key on the target side (`user._id` → `post.authorId`)
+- **single → array** — the target embeds a list of references (`post._id` → `tag.postIds`)
+- **array → single** — the source embeds a list of references (`post.tagIds` → `tag._id`)
+- **array → array** — match documents that share any element between two arrays (`post.tagIds` → `event.tagIds`)
 
 ```ts
-posts: s.users.$many.posts({ from: "_id", to: "authorId" })
+const userSchema = createSchema("users", { name: string() });
+const postSchema = createSchema("posts", {
+  title: string(),
+  authorId: objectId(),
+  tagIds: array(objectId()).default([]),
+});
+const tagSchema = createSchema("tags", {
+  name: string(),
+  postIds: array(objectId()).default([]),
+});
+const eventSchema = createSchema("events", {
+  name: string(),
+  tagIds: array(objectId()).default([]),
+});
+
+const schemas = defineSchemas({ userSchema, postSchema, tagSchema, eventSchema });
+
+schemas.withRelations((r) => ({
+  users: {
+    // single → single: all posts where post.authorId equals user._id
+    posts: r.many.posts({ from: r.users._id, to: r.posts.authorId }),
+  },
+  posts: {
+    // single → array: all tags where post._id appears in tag.postIds
+    taggedBy: r.many.tags({ from: r.posts._id, to: r.tags.postIds }),
+    // array → single: all tags where tag._id appears in post.tagIds
+    tags: r.many.tags({ from: r.posts.tagIds, to: r.tags._id }),
+    // array → array: all events where event.tagIds shares any value with post.tagIds
+    relatedEvents: r.many.events({ from: r.posts.tagIds, to: r.events.tagIds }),
+  },
+}));
 ```
 
-#### Refs relations
+#### Indexes for relations
 
-Use `$refs` when a local array field stores multiple references to another collection.
+Relations work by querying the target collection using the `to` field value collected from each source document. Without an index on the `to` field, MongoDB performs a full collection scan for every population. **Always create indexes on the fields used in relations.**
+
+- If `to` is `_id`, it is already indexed — no action needed.
+- For any other `to` field, add an **ascending index** (`{ field: 1 }`) on the target schema with `.indexes()`.
+- A `from` field does not need an index for the join, but you can index it on the source schema if you filter or sort by it in your own queries.
+
+**One relation — `from` points to `_id`**
+
+`to` is `_id` so it is already indexed. Index the `from` field (`authorId`) on `posts` so filtering posts by author is also fast.
 
 ```ts
-contributors: s.posts.$refs.users({ from: "contributorIds", to: "_id" })
+const userSchema = createSchema("users", {
+  name: string(),
+});
+const postSchema = createSchema("posts", {
+  title: string(),
+  authorId: objectId(),
+}).indexes(({ createIndex }) => ({
+  byAuthor: createIndex({ authorId: 1 }),
+}));
+
+const schemas = defineSchemas({ userSchema, postSchema });
+const schemasWithRelations = schemas.withRelations((r) => ({
+  posts: {
+    author: r.one.users({ from: r.posts.authorId, to: r.users._id }),
+  },
+}));
+```
+
+**Many relation — foreign key on target**
+
+`to` is `posts.authorId` which is not `_id`, so index it on `posts`.
+
+```ts
+const userSchema = createSchema("users", {
+  name: string(),
+});
+const postSchema = createSchema("posts", {
+  title: string(),
+  authorId: objectId(),
+}).indexes(({ createIndex }) => ({
+  authorId: createIndex({ authorId: 1 }),
+}));
+
+const schemas = defineSchemas({ userSchema, postSchema });
+const schemasWithRelations = schemas.withRelations((r) => ({
+  users: {
+    posts: r.many.posts({ from: r.users._id, to: r.posts.authorId }),
+  },
+}));
+```
+
+**Many relation — array `to` field**
+
+`to` is `tags.postIds` which is an array field and not `_id`. MongoDB queries the target collection by the `to` field, so index it — MongoDB automatically uses a multikey index to cover each element in the array.
+
+An array `from` field does not need an index for the join itself — it is just read to collect lookup values and is never used as a query predicate. You can index it if you filter the source collection by that field in your own queries.
+
+```ts
+const tagSchema = createSchema("tags", {
+  name: string(),
+  postIds: array(objectId()),
+}).indexes(({ createIndex }) => ({
+  postIds: createIndex({ postIds: 1 }),
+}));
+const postSchema = createSchema("posts", {
+  title: string(),
+});
+
+const schemas = defineSchemas({ tagSchema, postSchema });
+const schemasWithRelations = schemas.withRelations((r) => ({
+  posts: {
+    tags: r.many.tags({ from: r.posts._id, to: r.tags.postIds }),
+  },
+}));
+```
+
+#### Default relation options
+
+Call `.options()` on any relation to set default population behavior. These defaults apply whenever the relation is populated with `true`. They can always be overridden by passing explicit options at query time.
+
+```ts
+const schemasWithRelations = schemas.withRelations((r) => ({
+  users: {
+    posts: r.many.posts({ from: r.users._id, to: r.posts.authorId }).options({
+      sort: { createdAt: -1 },
+      limit: 10,
+      select: { title: true, createdAt: true },
+    }),
+  },
+  posts: {
+    author: r.one.users({ from: r.posts.authorId, to: r.users._id }).options({
+      omit: { passwordHash: true },
+    }),
+  },
+}));
+```
+
+With these defaults in place, populating with `true` applies them automatically:
+
+```ts
+// applies sort, limit, and select from the relation definition
+const users = await db.collections.users.find().populate({ posts: true });
+
+// override the defaults for this query
+const users2 = await db.collections.users.find().populate({
+  posts: { sort: { title: 1 }, limit: 5 },
+});
 ```
 
 ### Schema Groups
@@ -159,9 +288,9 @@ const userSchema = createSchema("users", {
   tutorId: objectId().optional(),
 });
 
-const userGroup = defineSchemas({ userSchema }).withRelations((s) => ({
+const userGroup = defineSchemas({ userSchema }).withRelations((r) => ({
   users: {
-    tutor: s.users.$one.users({ from: "tutorId", to: "_id" }),
+    tutor: r.one.users({ from: r.users.tutorId, to: r.users._id }),
   },
 }));
 
@@ -175,9 +304,9 @@ const categorySchema = createSchema("categories", {
   parentId: objectId().optional(),
 });
 
-const contentGroup = defineSchemas({ postSchema, categorySchema }).withRelations((s) => ({
+const contentGroup = defineSchemas({ postSchema, categorySchema }).withRelations((r) => ({
   categories: {
-    parent: s.categories.$one.categories({ from: "parentId", to: "_id" }),
+    parent: r.one.categories({ from: r.categories.parentId, to: r.categories._id }),
   },
 }));
 
@@ -187,12 +316,12 @@ const schemas = mergeSchemas(userGroup, contentGroup);
 You can also add cross-group relations after merging:
 
 ```ts
-const schemasWithCrossGroupRelations = schemas.withRelations((s) => ({
+const schemasWithCrossGroupRelations = schemas.withRelations((r) => ({
   users: {
-    posts: s.users.$many.posts({ from: "_id", to: "authorId" }),
+    posts: r.many.posts({ from: r.users._id, to: r.posts.authorId }),
   },
   posts: {
-    author: s.posts.$one.users({ from: "authorId", to: "_id" }),
+    author: r.one.users({ from: r.posts.authorId, to: r.users._id }),
   },
 }));
 ```
@@ -418,8 +547,6 @@ Deletes one document by `_id` and returns it.
 const deleted = await db.collections.users.findByIdAndDelete("67f0123456789abcdef0123");
 ```
 
-### Other Collection Methods
-
 ### `distinct(key, filter?)`
 
 Returns a query for the distinct values of a field.
@@ -467,13 +594,19 @@ Returns MongoDB's estimated document count for the collection.
 const totalCount = await db.collections.users.estimatedDocumentCount();
 ```
 
-### `aggregate()`
+### `aggregate(pipeline?)`
 
-Builds an aggregation pipeline.
+Builds an aggregation pipeline. Accepts an optional pipeline, and additional stages can be appended with `addStage()`.
 
 ```ts
 const result = await db.collections.users
-  .aggregate()
+  .aggregate<{ count: number }>([
+    { $match: { isVerified: true } },
+    { $group: { _id: "$isVerified", count: { $sum: 1 } } },
+  ]);
+
+const result = await db.collections.users
+  .aggregate<{ count: number }>()
   .addStage({ $match: { isVerified: true } })
   .addStage({ $group: { _id: "$isVerified", count: { $sum: 1 } } });
 ```
@@ -486,19 +619,20 @@ Returns the underlying MongoDB collection.
 const rawUsers = await db.collections.users.raw().find().toArray();
 ```
 
-Queries are lazy, so you can build and reuse them before execution. They run only when you `await` them or call a promise method like `.then()`, `.catch()`, or `.finally()`.
+Queries are lazy and immutable — each builder method returns a new query instance, leaving the original unchanged. Queries run only when you `await` them or call a promise method like `.then()`, `.catch()`, or `.finally()`.
 
 ```ts
-let verifiedUsersQuery = db.collections.users
+// Each builder method returns a new query — the original is never modified.
+const base = db.collections.users
   .find({ isVerified: true })
-  .omit({ age: true })
-  .sort({ email: "asc" });
+  .omit({ age: true });
 
-if (limitResults) {
-  verifiedUsersQuery = verifiedUsersQuery.limit(10);
-}
+const sorted = base.sort({ email: "asc" }); // new instance
+const limited = base.limit(10);             // new instance from base, no sort
 
-const verifiedUsers = await verifiedUsersQuery;
+const sortedUsers = await sorted;   // sorted, no limit
+const limitedUsers = await limited; // no sort, limited to 10
+const allVerified = await base;     // unchanged
 ```
 
 ### Schema features
@@ -720,6 +854,25 @@ const profile = object({
   bio: string(),
   website: string(),
 });
+```
+
+Use `.shape` to reuse an object's fields in another object or schema.
+
+```ts
+import { createSchema } from "monarch-orm";
+import { object, string } from "monarch-orm/types";
+
+const address = object({
+  street: string(),
+  city: string(),
+});
+
+const user = object({
+  name: string(),
+  address,
+});
+
+const addressSchema = createSchema("addresses", address.shape);
 ```
 
 ### `array(type)`
