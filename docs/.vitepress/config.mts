@@ -16,9 +16,10 @@ export default defineConfig({
         text: "Guide",
         items: [
           { text: "Getting Started", link: "/guide/getting-started" },
-          { text: "Schemas & Types", link: "/guide/schemas-and-types" },
-          { text: "Queries & Operators", link: "/guide/queries-and-operators" },
-          { text: "Advanced Schemas", link: "/guide/advanced-schemas" },
+          { text: "Schemas", link: "/guide/schemas" },
+          { text: "Types", link: "/guide/types" },
+          { text: "Queries", link: "/guide/queries" },
+          { text: "Operators", link: "/guide/operators" },
           { text: "Aggregations & Relations", link: "/guide/aggregation-and-relations" },
         ],
       },

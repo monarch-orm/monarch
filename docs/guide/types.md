@@ -1,4 +1,4 @@
-# Schemas & Types
+# Types
 
 Monarch provides a rich set of schema builders to strictly enforce your MongoDB documents structure.
 

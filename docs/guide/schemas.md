@@ -1,6 +1,20 @@
-# Advanced Schemas
+# Schemas
 
-Monarch ORM provides advanced capabilities to shape the data returned by your queries, add indexes reliably to records, and group schema structures effectively in large applications.
+Monarch provides a rich set of schema builders to strictly enforce your MongoDB documents structure.
+
+## Creating Schemas
+
+Use `createSchema` to initialize a schema for a given collection name.
+
+```typescript
+import { createSchema } from "monarch-orm";
+import { string, number } from "monarch-orm/types";
+
+const UserSchema = createSchema("users", {
+  name: string().required(),
+  age: number().optional(),
+});
+```
 
 ## Virtuals
 
