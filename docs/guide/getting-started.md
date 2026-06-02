@@ -4,20 +4,25 @@
 
 ## Installation
 
-NPM:
-```bash
+::: code-group
+
+```bash [npm]
 npm install monarch-orm
 ```
 
-Or Yarn:
-```bash
+```bash [pnpm]
+pnpm add monarch-orm
+```
+
+```bash [yarn]
 yarn add monarch-orm
 ```
 
-Or PNPM:
-```bash
-pnpm add monarch-orm
+```bash [bun]
+bun add monarch-orm
 ```
+
+:::
 
 ## Basic Usage
 
@@ -26,20 +31,20 @@ import { createClient, createDatabase, createSchema, defineSchemas } from "monar
 import { boolean, number, string } from "monarch-orm/types";
 
 const UserSchema = createSchema("users", {
-  name: string().nullable(),
-  email: string().lowercase().optional(),
-  age: number().optional().default(10),
+  name: string(),
+  email: string(),
+  age: number().default(10),
   isVerified: boolean(),
 });
 
-const client = createClient(/** db uri **/)
 const schemas = defineSchemas({
   UserSchema,
 });
 
-const { collections } = createDatabase(client.db(), schemas);
+const client = createClient("mongodb://localhost:27017/monarch-example");
+const db = createDatabase(client.db(), schemas);
 
-const newUser = await collections.users
+const newUser = await db.collections.users
   .insertOne({
     name: "anon",
     email: "anon@gmail.com",
@@ -47,7 +52,7 @@ const newUser = await collections.users
     isVerified: true,
   });
 
-const users = await collections.users.find({});
+const users = await db.collections.users.find({});
 ```
 
 ## Quick Start
@@ -72,7 +77,7 @@ const schemas = defineSchemas({
   UserSchema,
 });
 
-const { collections } = createDatabase(client.db(), schemas);
+const db = createDatabase(client.db(), schemas);
 ```
 
 ### Inserting Documents
