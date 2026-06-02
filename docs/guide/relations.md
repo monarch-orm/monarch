@@ -1,12 +1,10 @@
-# Aggregations & Relations
+# Relations
 
-Monarch ORM provides powerful ways to connect collections through relations and deeply populate documents. Additionally, it offers a wrapper around the native MongoDB aggregation pipeline framework.
-
-## Relations
+Monarch ORM provides powerful ways to connect collections through relations and deeply populate documents.
 
 You can establish relations between collections after defining your schemas. Use the `defineSchemas` higher-order function to bundle schemas and the `.withRelations` method to establish `one` and `many` connections between them.
 
-### Defining Relations
+## Defining Relations
 
 ```typescript
 import { createSchema, defineSchemas, createDatabase } from "monarch-orm";
@@ -43,7 +41,36 @@ const relations = schemas.withRelations((r) => ({
 const db = createDatabase(client.db(), relations);
 ```
 
-### Populating Relations
+## Indexing Recommendations
+
+Relations use field lookups to join documents across collections. To ensure fast population queries, **you must create indexes on the fields used in each relation**.
+
+For every relation, MongoDB queries the target collection by the `to` field using the values collected from the `from` field. Without an index on the `to` field, MongoDB performs a full collection scan for each population.
+
+> [!IMPORTANT]
+> - If the `to` field is `_id`, it is already indexed — no action is needed.
+> - For any other `to` field, create an **ascending index** (`{ field: 1 }`) on the target schema using `.indexes()`.
+> - A `from` field does not technically need an index for the population join, but you should index it on the source schema if you plan to filter or sort by it in your own queries.
+
+### Indexing Example
+
+```typescript
+// 1. We want users to have many posts (users._id -> posts.authorId)
+const userSchema = createSchema("users", {
+  name: string(),
+});
+
+// 2. Since the `to` field in this relation is `posts.authorId` and NOT `_id`, 
+//    we MUST index it on the Post collection for fast joins.
+const postSchema = createSchema("posts", {
+  title: string(),
+  authorId: objectId(),
+}).indexes(({ createIndex }) => ({
+  authorId: createIndex({ authorId: 1 }),
+}));
+```
+
+## Populating Relations
 
 Once relations are defined, use `.populate()` on queried results to fetch the referenced documents automatically. Population can grab single references or deeply nested relations.
 
@@ -69,7 +96,7 @@ const userWithPosts = await db.collections.users
 console.log(userWithPosts?.posts[0].title); // "My First Post"
 ```
 
-#### Deep Population and Omission
+### Deep Population and Omission
 
 You can populate nested relationships and conditionally omit fields when populating:
 
@@ -88,27 +115,4 @@ const populatedPost = await db.collections.posts
   });
 
 console.log(populatedPost?.author?.tutor?.name);
-```
-
-## Aggregation
-
-Monarch's aggregation pipeline simplifies MongoDB aggregations with a chained `addStage` interface. Each stage can accept a standard MongoDB aggregation command.
-
-```typescript
-const result = await db.collections.users
-  .aggregate()
-  .addStage({ $match: { isVerified: true } })
-  .addStage({ $group: { _id: "$isVerified", count: { $sum: 1 } } });
-  
-console.log(result); // [{ _id: true, count: 5 }]
-```
-
-To provide custom options such as `.allowDiskUse()`, you can call `.options()` directly in the pipeline sequence:
-
-```typescript
-const largeResult = await db.collections.posts
-  .aggregate()
-  .options({ allowDiskUse: true })
-  .addStage({ $match: { likes: { $gt: 100 } } })
-  .addStage({ $sort: { likes: -1 } });
 ```

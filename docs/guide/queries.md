@@ -112,3 +112,26 @@ const activeUsers = await db.collections.users.find({
   role: { $in: ["admin", "moderator"] }
 });
 ```
+
+## Aggregation
+
+Monarch's aggregation pipeline simplifies MongoDB aggregations with a chained `addStage` interface. Each stage can accept a standard MongoDB aggregation command.
+
+```typescript
+const result = await db.collections.users
+  .aggregate()
+  .addStage({ $match: { isVerified: true } })
+  .addStage({ $group: { _id: "$isVerified", count: { $sum: 1 } } });
+  
+console.log(result); // [{ _id: true, count: 5 }]
+```
+
+To provide custom options such as `.allowDiskUse()`, you can call `.options()` directly in the pipeline sequence:
+
+```typescript
+const largeResult = await db.collections.posts
+  .aggregate()
+  .options({ allowDiskUse: true })
+  .addStage({ $match: { likes: { $gt: 100 } } })
+  .addStage({ $sort: { likes: -1 } });
+```

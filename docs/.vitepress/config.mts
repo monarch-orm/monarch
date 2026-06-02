@@ -19,8 +19,8 @@ export default defineConfig({
           { text: "Schemas", link: "/guide/schemas" },
           { text: "Types", link: "/guide/types" },
           { text: "Queries", link: "/guide/queries" },
+          { text: "Relations", link: "/guide/relations" },
           { text: "Operators", link: "/guide/operators" },
-          { text: "Aggregations & Relations", link: "/guide/aggregation-and-relations" },
         ],
       },
       {
