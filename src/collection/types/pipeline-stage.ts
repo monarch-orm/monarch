@@ -5,13 +5,12 @@
 // The following types and interfaces are derived from Mongoose's aggregate pipeline stages
 // with modifications to fit our project's needs.
 
-import type { Document } from "mongodb";
+import type { Document, Filter } from "mongodb";
 import type {
   AccumulatorOperator,
   AnyExpression,
   AnyObject,
   Expression,
-  FilterQuery,
   Meta,
   ObjectExpressionOperator,
   WindowOperator,
@@ -208,7 +207,7 @@ export interface Lookup<T> {
 
 export interface Match<T> {
   /** [`$match` reference](https://www.mongodb.com/docs/manual/reference/operator/aggregation/match/) */
-  $match: FilterQuery<T>;
+  $match: Filter<T>;
 }
 
 export interface Merge<T> {
