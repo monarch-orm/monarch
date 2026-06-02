@@ -34,7 +34,7 @@ const UserSchema = createSchema("users", {
 
 const client = createClient(/** db uri **/)
 const schemas = defineSchemas({
-  users: UserSchema,
+  UserSchema,
 });
 
 const { collections } = createDatabase(client.db(), schemas);
@@ -69,7 +69,7 @@ It is good practice to assign your `defineSchemas` result to a variable (e.g. `s
 
 ```typescript
 const schemas = defineSchemas({
-  users: UserSchema,
+  UserSchema,
 });
 
 const { collections } = createDatabase(client.db(), schemas);
@@ -157,7 +157,7 @@ const UserSchema = createSchema("users", {
   isVerified: boolean(),
 });
 
-const monarchDb = createDatabase(client.db(), defineSchemas({ users: UserSchema }));
+const monarchDb = createDatabase(client.db(), defineSchemas({ UserSchema }));
 const UserModel = monarchDb.use(UserSchema);
 export default UserModel;
 ```

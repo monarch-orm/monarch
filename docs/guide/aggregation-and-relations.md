@@ -24,8 +24,8 @@ const PostSchema = createSchema("posts", {
 });
 
 const schemas = defineSchemas({
-  users: UserSchema,
-  posts: PostSchema,
+  UserSchema,
+  PostSchema,
 });
 
 // Configure the relationships
