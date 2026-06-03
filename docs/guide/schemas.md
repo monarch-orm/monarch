@@ -141,7 +141,7 @@ const userSchema = createSchema("users", {
 });
 ```
 
-## Collection validation
+## Document validation
 
 `schema.validation()` enables collection-level document validation using a JSON Schema generated from your Monarch schema. It is not enabled by default. Validation can also be set on the database, where it acts as a default for all schemas.
 
