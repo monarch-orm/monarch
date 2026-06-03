@@ -5,13 +5,12 @@
 // The following types and interfaces are derived from Mongoose's aggregate pipeline stages
 // with modifications to fit our project's needs.
 
-import type { Document } from "mongodb";
+import type { Document, Filter } from "mongodb";
 import type {
   AccumulatorOperator,
   AnyExpression,
   AnyObject,
   Expression,
-  FilterQuery,
   Meta,
   ObjectExpressionOperator,
   WindowOperator,
@@ -63,8 +62,8 @@ export interface Bucket {
   /** [`$bucket` reference](https://www.mongodb.com/docs/manual/reference/operator/aggregation/bucket/) */
   $bucket: {
     groupBy: Expression;
-    boundaries: any[];
-    default?: any;
+    boundaries: Expression[];
+    default?: Expression;
     output?: Record<string, AccumulatorOperator>;
   };
 }
@@ -135,7 +134,7 @@ export interface Facet {
   $facet: Record<string, FacetPipelineStage[]>;
 }
 
-export type FacetPipelineStage<T = any> = Exclude<
+export type FacetPipelineStage<T = Document> = Exclude<
   PipelineStage<T>,
   CollStats | Facet | GeoNear | IndexStats | Out | Merge<T> | PlanCacheStats
 >;
@@ -176,7 +175,7 @@ export interface GraphLookup {
 
 export interface Group {
   /** [`$group` reference](https://www.mongodb.com/docs/manual/reference/operator/aggregation/group) */
-  $group: { _id: any } | { [key: string]: AccumulatorOperator };
+  $group: { _id: Expression } | { [key: string]: AccumulatorOperator };
 }
 
 export interface IndexStats {
@@ -208,7 +207,7 @@ export interface Lookup<T> {
 
 export interface Match<T> {
   /** [`$match` reference](https://www.mongodb.com/docs/manual/reference/operator/aggregation/match/) */
-  $match: FilterQuery<T>;
+  $match: Filter<T>;
 }
 
 export interface Merge<T> {
@@ -274,7 +273,7 @@ export interface Search {
       maxCharsToExamine?: number;
       maxNumPassages?: number;
     };
-    [operator: string]: any;
+    [operator: string]: unknown;
   };
 }
 
@@ -288,19 +287,19 @@ export interface SearchMeta {
       maxCharsToExamine?: number;
       maxNumPassages?: number;
     };
-    [operator: string]: any;
+    [operator: string]: unknown;
   };
 }
 
 export interface Set {
   /** [`$set` reference](https://www.mongodb.com/docs/manual/reference/operator/aggregation/set/) */
-  $set: Record<string, AnyExpression | any>;
+  $set: Record<string, AnyExpression>;
 }
 
 export interface SetWindowFields {
   /** [`$setWindowFields` reference](https://www.mongodb.com/docs/manual/reference/operator/aggregation/setWindowFields/) */
   $setWindowFields: {
-    partitionBy?: any;
+    partitionBy?: Expression;
     sortBy?: Record<string, 1 | -1>;
     output: Record<
       string,

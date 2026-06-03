@@ -1,6 +1,4 @@
 import type { Filter } from "mongodb";
-import type { AnySchema } from "../schema/schema";
-import type { InferSchemaData } from "../schema/type-helpers";
 
 /**
  * Logical AND operator - matches documents that satisfy all expressions.
@@ -8,7 +6,7 @@ import type { InferSchemaData } from "../schema/type-helpers";
  * @param expressions - Array of filter expressions
  * @returns MongoDB $and operator
  */
-export function and<T extends AnySchema>(...expressions: Filter<InferSchemaData<T>>[]) {
+export function and<T>(...expressions: Filter<T>[]) {
   return { $and: expressions };
 }
 
@@ -18,7 +16,7 @@ export function and<T extends AnySchema>(...expressions: Filter<InferSchemaData<
  * @param expressions - Array of filter expressions
  * @returns MongoDB $or operator
  */
-export function or<T extends AnySchema>(...expressions: Filter<InferSchemaData<T>>[]) {
+export function or<T>(...expressions: Filter<T>[]) {
   return { $or: expressions };
 }
 
@@ -28,7 +26,7 @@ export function or<T extends AnySchema>(...expressions: Filter<InferSchemaData<T
  * @param expressions - Array of filter expressions
  * @returns MongoDB $nor operator
  */
-export function nor<T extends AnySchema>(...expressions: Filter<InferSchemaData<T>>[]) {
+export function nor<T>(...expressions: Filter<T>[]) {
   return { $nor: expressions };
 }
 
@@ -38,7 +36,7 @@ export function nor<T extends AnySchema>(...expressions: Filter<InferSchemaData<
  * @param expression - Filter expression to negate
  * @returns MongoDB $not operator
  */
-export function not<T extends AnySchema>(expression: Filter<InferSchemaData<T>>) {
+export function not<T>(expression: Filter<T>) {
   return { $not: expression };
 }
 
