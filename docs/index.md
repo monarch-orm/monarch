@@ -9,9 +9,6 @@ hero:
     - theme: brand
       text: Get Started
       link: /guide/getting-started
-    - theme: alt
-      text: Collection Methods
-      link: /guide/collection-methods
 
 features:
   - title: Strongly Typed
