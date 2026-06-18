@@ -299,6 +299,13 @@ describe("Update Operations", async () => {
         expect(updated?.tags).toEqual(["x", "y"]);
       });
 
+      it("$addToSet parses element through type", async () => {
+        const doc = await db.collections.arrays.insertOne({ name: "a", tags: [], nums: [] });
+        await db.collections.arrays.updateOne({ _id: doc._id }, { $addToSet: { tags: "UPPER" } });
+        const updated = await db.collections.arrays.findOne({ _id: doc._id });
+        expect(updated?.tags).toEqual(["upper"]);
+      });
+
       it("$push rejects non-array field", async () => {
         const doc = await db.collections.numeric.insertOne({ name: "a", count: 0 });
         // @ts-expect-error

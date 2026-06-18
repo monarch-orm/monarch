@@ -89,10 +89,7 @@ export function updateParser<T extends AnyMonarchType>(
   return input;
 }
 
-function unwrapTo<T extends new (...args: any) => AnyMonarchType>(
-  type: AnyMonarchType,
-  target: T
-): InstanceType<T> {
+function unwrapTo<T extends new (...args: any) => AnyMonarchType>(type: AnyMonarchType, target: T): InstanceType<T> {
   let unwrapped: any = type;
   while (!(unwrapped instanceof target)) {
     if (unwrapped instanceof MonarchDefaulted) unwrapped = MonarchDefaulted.type(unwrapped);
