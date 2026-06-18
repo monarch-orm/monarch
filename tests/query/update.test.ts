@@ -703,25 +703,107 @@ describe("Update Operations", async () => {
       ).rejects.toThrow("$rename.data: operator '$rename' requires an optional field");
     });
 
-    it("$inc on a mixed field throws at runtime (runtime checks for numeric type)", async () => {
+    it("$push on a mixed field holding a non-array throws at runtime (runtime checks for array type)", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: "string" });
+      await expect(db.collections.mixed.updateOne({ _id: doc._id }, { $push: { data: "item" } })).rejects.toThrow();
+    });
+
+    it("$push on a mixed field holding an array passes", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: [] });
+      await db.collections.mixed.updateOne({ _id: doc._id }, { $push: { data: "item" } });
+      const updated = await db.collections.mixed.findOne({ _id: doc._id });
+      expect(updated?.data).toEqual(["item"]);
+    });
+
+    it("$addToSet on a mixed field holding a non-array throws at runtime (runtime checks for array type)", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: "string" });
+      await expect(db.collections.mixed.updateOne({ _id: doc._id }, { $addToSet: { data: "item" } })).rejects.toThrow();
+    });
+
+    it("$addToSet on a mixed field holding an array passes", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: [] });
+      await db.collections.mixed.updateOne({ _id: doc._id }, { $addToSet: { data: "item" } });
+      const updated = await db.collections.mixed.findOne({ _id: doc._id });
+      expect(updated?.data).toEqual(["item"]);
+    });
+
+    it("$pull on a mixed field holding a non-array throws at runtime (runtime checks for array type)", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: "string" });
+      await expect(db.collections.mixed.updateOne({ _id: doc._id }, { $pull: { data: "a" } })).rejects.toThrow();
+    });
+
+    it("$pull on a mixed field holding an array passes", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: ["a", "b", "a"] });
+      await db.collections.mixed.updateOne({ _id: doc._id }, { $pull: { data: "a" } });
+      const updated = await db.collections.mixed.findOne({ _id: doc._id });
+      expect(updated?.data).toEqual(["b"]);
+    });
+
+    it("$pop on a mixed field holding a non-array throws at runtime (runtime checks for array type)", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: "string" });
+      await expect(db.collections.mixed.updateOne({ _id: doc._id }, { $pop: { data: 1 } })).rejects.toThrow();
+    });
+
+    it("$pop on a mixed field holding an array passes", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: ["a", "b", "c"] });
+      await db.collections.mixed.updateOne({ _id: doc._id }, { $pop: { data: 1 } });
+      const updated = await db.collections.mixed.findOne({ _id: doc._id });
+      expect(updated?.data).toEqual(["a", "b"]);
+    });
+
+    it("$pullAll on a mixed field holding a non-array throws at runtime (runtime checks for array type)", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: "string" });
+      await expect(db.collections.mixed.updateOne({ _id: doc._id }, { $pullAll: { data: ["a"] } })).rejects.toThrow();
+    });
+
+    it("$pullAll on a mixed field holding an array passes", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: ["a", "b", "c"] });
+      await db.collections.mixed.updateOne({ _id: doc._id }, { $pullAll: { data: ["a", "c"] } });
+      const updated = await db.collections.mixed.findOne({ _id: doc._id });
+      expect(updated?.data).toEqual(["b"]);
+    });
+
+    it("$inc on a mixed field holding a non-numeric throws at runtime (runtime checks for numeric type)", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: "string" });
+      await expect(db.collections.mixed.updateOne({ _id: doc._id }, { $inc: { data: 1 } })).rejects.toThrow();
+    });
+
+    it("$inc on a mixed field holding a number passes", async () => {
       const doc = await db.collections.mixed.insertOne({ label: "a", data: 5 });
-      await expect(db.collections.mixed.updateOne({ _id: doc._id }, { $inc: { data: 1 } })).rejects.toThrow(
-        "$inc.data: operator '$inc' requires a numeric field",
-      );
+      await db.collections.mixed.updateOne({ _id: doc._id }, { $inc: { data: 1 } });
+      const updated = await db.collections.mixed.findOne({ _id: doc._id });
+      expect(updated?.data).toBe(6);
     });
 
-    it("$push on a mixed field throws at runtime (runtime checks for array type)", async () => {
-      const doc = await db.collections.mixed.insertOne({ label: "a", data: [] });
-      await expect(db.collections.mixed.updateOne({ _id: doc._id }, { $push: { data: "item" } })).rejects.toThrow(
-        "$push.data: operator '$push' requires an array field",
-      );
+    it("$mul on a mixed field holding a non-numeric throws at runtime (runtime checks for numeric type)", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: "string" });
+      await expect(db.collections.mixed.updateOne({ _id: doc._id }, { $mul: { data: 2 } })).rejects.toThrow();
     });
 
-    it("$addToSet on a mixed field throws at runtime (runtime checks for array type)", async () => {
-      const doc = await db.collections.mixed.insertOne({ label: "a", data: [] });
-      await expect(db.collections.mixed.updateOne({ _id: doc._id }, { $addToSet: { data: "item" } })).rejects.toThrow(
-        "$addToSet.data: operator '$addToSet' requires an array field",
-      );
+    it("$mul on a mixed field holding a number passes", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: 5 });
+      await db.collections.mixed.updateOne({ _id: doc._id }, { $mul: { data: 2 } });
+      const updated = await db.collections.mixed.findOne({ _id: doc._id });
+      expect(updated?.data).toBe(10);
+    });
+
+    it("$currentDate on a mixed field passes", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: new Date() });
+      await db.collections.mixed.updateOne({ _id: doc._id }, { $currentDate: { data: true } });
+      const updated = await db.collections.mixed.findOne({ _id: doc._id });
+      expect(updated?.data).toBeInstanceOf(Date);
+    });
+
+    it("$bit on a mixed field holding a non-integer throws at runtime (runtime checks for integer type)", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: "string" });
+      await expect(db.collections.mixed.updateOne({ _id: doc._id }, { $bit: { data: { and: 3 } } })).rejects.toThrow();
+    });
+
+    it("$bit on a mixed field holding an integer passes", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: 5 });
+      await db.collections.mixed.updateOne({ _id: doc._id }, { $bit: { data: { and: 3 } } });
+      const updated = await db.collections.mixed.findOne({ _id: doc._id });
+      expect(updated?.data).toBe(1); // 5 & 3 = 1
     });
   });
 
