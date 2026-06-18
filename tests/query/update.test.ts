@@ -239,6 +239,7 @@ describe("Update Operations", async () => {
     const ArraySchema = createSchema("arrays", {
       name: string(),
       tags: array(string().lowercase()),
+      attrs: array(string().lowercase()).default([]),
       nums: array(number()),
     });
 
@@ -304,6 +305,13 @@ describe("Update Operations", async () => {
         await db.collections.arrays.updateOne({ _id: doc._id }, { $addToSet: { tags: "UPPER" } });
         const updated = await db.collections.arrays.findOne({ _id: doc._id });
         expect(updated?.tags).toEqual(["upper"]);
+      });
+
+      it("$addToSet parses element through wrapped type", async () => {
+        const doc = await db.collections.arrays.insertOne({ name: "a", tags: [], nums: [] });
+        await db.collections.arrays.updateOne({ _id: doc._id }, { $addToSet: { attrs: "UPPER" } });
+        const updated = await db.collections.arrays.findOne({ _id: doc._id });
+        expect(updated?.attrs).toEqual(["upper"]);
       });
 
       it("$push rejects non-array field", async () => {

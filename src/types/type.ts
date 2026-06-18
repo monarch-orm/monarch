@@ -188,6 +188,22 @@ export abstract class MonarchType<TInput, TOutput extends TInput = TInput> {
     return type.isInstanceOf(target);
   }
 
+  protected unwrap(): AnyMonarchType {
+    return this;
+  }
+
+  /**
+   * Unwraps the underlying type.
+   *
+   * Monarch types that wrap other types override this to return the inner type.
+   *
+   * @param target - Monarch type
+   * @returns Unwrapped type
+   */
+  public static unwrap(target: AnyMonarchType) {
+    return target.unwrap();
+  }
+
   /**
    * Nullable type modifier.
    *
@@ -309,8 +325,18 @@ export class MonarchNullable<T extends AnyMonarchType> extends MonarchType<
     return this instanceof target || MonarchType.isInstanceOf(this.type, target);
   }
 
-  public static type<T extends AnyMonarchType>(nullable: MonarchNullable<T>): T {
-    return nullable.type;
+  protected unwrap() {
+    return this.type;
+  }
+
+  /**
+   * Unwraps a nullable type to retrieve the inner type.
+   *
+   * @param target - MonarchNullable instance
+   * @returns Inner type
+   */
+  public static unwrap<T extends AnyMonarchType>(target: MonarchNullable<T>): T {
+    return target.type;
   }
 }
 
@@ -354,8 +380,18 @@ export class MonarchOptional<T extends AnyMonarchType> extends MonarchType<
     return this instanceof target || MonarchType.isInstanceOf(this.type, target);
   }
 
-  public static type<T extends AnyMonarchType>(optional: MonarchOptional<T>): T {
-    return optional.type;
+  protected unwrap() {
+    return this.type;
+  }
+
+  /**
+   * Unwraps an optional type to retrieve the inner type.
+   *
+   * @param target - MonarchOptional instance
+   * @returns Inner type
+   */
+  public static unwrap<T extends AnyMonarchType>(target: MonarchOptional<T>): T {
+    return target.type;
   }
 }
 
@@ -409,8 +445,18 @@ export class MonarchDefaulted<T extends AnyMonarchType> extends MonarchType<
     return this instanceof target || MonarchType.isInstanceOf(this.type, target);
   }
 
-  public static type<T extends AnyMonarchType>(defaulted: MonarchDefaulted<T>): T {
-    return defaulted.type;
+  protected unwrap() {
+    return this.type;
+  }
+
+  /**
+   * Unwraps a defaulted type to retrieve the inner type.
+   *
+   * @param target - MonarchDefaulted instance
+   * @returns Inner type
+   */
+  public static unwrap<T extends AnyMonarchType>(target: MonarchDefaulted<T>): T {
+    return target.type;
   }
 
   private static isDefaultFunction<T>(val: unknown): val is () => T {

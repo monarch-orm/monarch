@@ -4,11 +4,9 @@ import {
   MonarchArray,
   MonarchDate,
   MonarchDecimal128,
-  MonarchDefaulted,
   MonarchDouble,
   MonarchInt32,
   MonarchLong,
-  MonarchNullable,
   MonarchNumber,
   MonarchOptional,
   MonarchType,
@@ -89,17 +87,6 @@ export function updateParser<T extends AnyMonarchType>(
   return input;
 }
 
-function unwrapTo<T extends new (...args: any) => AnyMonarchType>(type: AnyMonarchType, target: T): InstanceType<T> {
-  let unwrapped: any = type;
-  while (!(unwrapped instanceof target)) {
-    if (unwrapped instanceof MonarchDefaulted) unwrapped = MonarchDefaulted.type(unwrapped);
-    else if (unwrapped instanceof MonarchOptional) unwrapped = MonarchOptional.type(unwrapped);
-    else if (unwrapped instanceof MonarchNullable) unwrapped = MonarchNullable.type(unwrapped);
-    else break;
-  }
-  return unwrapped as InstanceType<T>;
-}
-
 function parseFieldsOperator(
   op: "$set" | "$min" | "$max",
   schemaType: AnyMonarchType,
@@ -134,14 +121,14 @@ function parseArrayOperator(
     for (const [path, value] of Object.entries(fields)) {
       if (value === undefined) continue;
       const pathType = MonarchType.index(schemaType, path.split("."), -1);
-      if (!MonarchType.isInstanceOf(pathType, MonarchArray)) {
+      const unwrappedPathType = MonarchType.unwrap(pathType);
+      if (!MonarchType.isInstanceOf(unwrappedPathType, MonarchArray)) {
         throw MonarchParseError.fromCause({
           path,
           cause: MonarchParseError.create(`operator '${op}' requires an array field`),
         });
       }
-      const arrayType = unwrapTo(pathType, MonarchArray);
-      const elementType = MonarchArray.type(arrayType);
+      const elementType = MonarchArray.elementType(unwrappedPathType);
       const parser = MonarchType.parser(elementType, path);
       if (typeof value === "object" && value !== null && "$each" in value) {
         const ops = value as { $each: unknown[]; [k: string]: unknown };
@@ -167,14 +154,14 @@ function parseArrayAllOperator(
     for (const [path, value] of Object.entries(fields)) {
       if (value === undefined) continue;
       const pathType = MonarchType.index(schemaType, path.split("."), -1);
-      if (!MonarchType.isInstanceOf(pathType, MonarchArray)) {
+      const unwrappedPathType = MonarchType.unwrap(pathType);
+      if (!MonarchType.isInstanceOf(unwrappedPathType, MonarchArray)) {
         throw MonarchParseError.fromCause({
           path,
           cause: MonarchParseError.create(`operator '$pullAll' requires an array field`),
         });
       }
-      const arrayType = unwrapTo(pathType, MonarchArray);
-      const elementType = MonarchArray.type(arrayType);
+      const elementType = MonarchArray.elementType(unwrappedPathType);
       const parser = MonarchType.parser(elementType, path);
       parsed[path] = value.map(parser);
       if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
@@ -348,8 +335,7 @@ function parseRenameOperator(
           cause: MonarchParseError.create(`operator '$rename' requires an optional field`),
         });
       }
-      const sourceOptional = unwrapTo(sourceType, MonarchOptional);
-      const sourceInner = MonarchOptional.type(sourceOptional);
+      const sourceInner = MonarchOptional.unwrap(sourceType);
       const destType = MonarchType.index(schemaType, value.split("."), -1);
       if (!MonarchType.isInstanceOf(destType, sourceInner.constructor as new (...args: any[]) => AnyMonarchType)) {
         throw MonarchParseError.fromCause({

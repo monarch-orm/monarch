@@ -2,4 +2,4 @@
 "monarch-orm": patch
 ---
 
-Fix update operators `$addToSet` failing schema validation when parsing data
+Fix update operators `$addToSet` failing to unwrap types before parsing
