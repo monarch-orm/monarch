@@ -708,6 +708,13 @@ describe("Update Operations", async () => {
         "$push.data: operator '$push' requires an array field",
       );
     });
+
+    it("$addToSet on a mixed field throws at runtime (runtime checks for array type)", async () => {
+      const doc = await db.collections.mixed.insertOne({ label: "a", data: [] });
+      await expect(db.collections.mixed.updateOne({ _id: doc._id }, { $addToSet: { data: "item" } })).rejects.toThrow(
+        "$addToSet.data: operator '$addToSet' requires an array field",
+      );
+    });
   });
 
   describe("undefined values in update", async () => {
