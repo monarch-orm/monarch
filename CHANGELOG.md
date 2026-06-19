@@ -1,5 +1,13 @@
 # monarch-orm
 
+## 0.13.3
+
+### Patch Changes
+
+- 5a28aca: Fix update operators `$addToSet` failing to unwrap types before parsing
+- a84928e: Refactor legacy mongoose expressions.
+  Strictly typed the MongoDB pipeline stages and query operators.
+
 ## 0.13.0
 
 ### Minor Changes
