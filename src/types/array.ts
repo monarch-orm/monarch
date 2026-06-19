@@ -58,7 +58,13 @@ export class MonarchArray<T extends AnyMonarchType> extends MonarchType<InferTyp
     };
   }
 
-  public static type<T extends AnyMonarchType>(array: MonarchArray<T>): T {
+  /**
+   * Retrieves the element type of an array type.
+   *
+   * @param array - MonarchArray instance
+   * @returns Element type
+   */
+  public static elementType<T extends AnyMonarchType>(array: MonarchArray<T>): T {
     return array.type;
   }
 

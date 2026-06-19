@@ -7,6 +7,7 @@ import {
   MonarchDouble,
   MonarchInt32,
   MonarchLong,
+  MonarchMixed,
   MonarchNumber,
   MonarchOptional,
   MonarchType,
@@ -121,13 +122,25 @@ function parseArrayOperator(
     for (const [path, value] of Object.entries(fields)) {
       if (value === undefined) continue;
       const pathType = MonarchType.index(schemaType, path.split("."), -1);
-      if (!MonarchType.isInstanceOf(pathType, MonarchArray)) {
+      const unwrappedPathType = MonarchType.unwrap(pathType);
+      if (!MonarchType.isInstanceOf(unwrappedPathType, MonarchArray)) {
+        if (MonarchType.isInstanceOf(unwrappedPathType, MonarchMixed)) {
+          const parser = MonarchType.parser(pathType, path);
+          if (typeof value === "object" && value !== null && "$each" in value) {
+            const ops = value as { $each: unknown[]; [k: string]: unknown };
+            parsed[path] = { ...ops, $each: ops.$each.map(parser) };
+          } else {
+            parsed[path] = parser(value);
+          }
+          if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+          continue;
+        }
         throw MonarchParseError.fromCause({
           path,
           cause: MonarchParseError.create(`operator '${op}' requires an array field`),
         });
       }
-      const elementType = MonarchArray.type(pathType);
+      const elementType = MonarchArray.elementType(unwrappedPathType);
       const parser = MonarchType.parser(elementType, path);
       if (typeof value === "object" && value !== null && "$each" in value) {
         const ops = value as { $each: unknown[]; [k: string]: unknown };
@@ -153,13 +166,20 @@ function parseArrayAllOperator(
     for (const [path, value] of Object.entries(fields)) {
       if (value === undefined) continue;
       const pathType = MonarchType.index(schemaType, path.split("."), -1);
-      if (!MonarchType.isInstanceOf(pathType, MonarchArray)) {
+      const unwrappedPathType = MonarchType.unwrap(pathType);
+      if (!MonarchType.isInstanceOf(unwrappedPathType, MonarchArray)) {
+        if (MonarchType.isInstanceOf(unwrappedPathType, MonarchMixed)) {
+          const parser = MonarchType.parser(pathType, path);
+          parsed[path] = value.map(parser);
+          if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+          continue;
+        }
         throw MonarchParseError.fromCause({
           path,
           cause: MonarchParseError.create(`operator '$pullAll' requires an array field`),
         });
       }
-      const elementType = MonarchArray.type(pathType);
+      const elementType = MonarchArray.elementType(unwrappedPathType);
       const parser = MonarchType.parser(elementType, path);
       parsed[path] = value.map(parser);
       if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
@@ -182,6 +202,11 @@ function parseArrayPassThroughOperator(
       if (value === undefined) continue;
       const pathType = MonarchType.index(schemaType, path.split("."), -1);
       if (!MonarchType.isInstanceOf(pathType, MonarchArray)) {
+        if (MonarchType.isInstanceOf(pathType, MonarchMixed)) {
+          parsed[path] = value;
+          if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+          continue;
+        }
         throw MonarchParseError.fromCause({
           path,
           cause: MonarchParseError.create(`operator '${op}' requires an array field`),
@@ -214,6 +239,12 @@ function parseNumericPassThroughOperator(
         !MonarchType.isInstanceOf(pathType, MonarchLong) &&
         !MonarchType.isInstanceOf(pathType, MonarchDecimal128)
       ) {
+        if (MonarchType.isInstanceOf(pathType, MonarchMixed)) {
+          const parser = MonarchType.parser(pathType, path);
+          parsed[path] = parser(value);
+          if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+          continue;
+        }
         throw MonarchParseError.fromCause({
           path,
           cause: MonarchParseError.create(`operator '${op}' requires a numeric field`),
@@ -267,6 +298,11 @@ function parseDateOperator(
       if (value === undefined) continue;
       const pathType = MonarchType.index(schemaType, path.split("."), -1);
       if (!MonarchType.isInstanceOf(pathType, MonarchDate)) {
+        if (MonarchType.isInstanceOf(pathType, MonarchMixed)) {
+          parsed[path] = value;
+          if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+          continue;
+        }
         throw MonarchParseError.fromCause({
           path,
           cause: MonarchParseError.create(`operator '$currentDate' requires a date field`),
@@ -302,6 +338,11 @@ function parseBitOperator(
         !MonarchType.isInstanceOf(pathType, MonarchInt32) &&
         !MonarchType.isInstanceOf(pathType, MonarchLong)
       ) {
+        if (MonarchType.isInstanceOf(pathType, MonarchMixed)) {
+          parsed[path] = value;
+          if (schemaUpdates) removeUpdateConflict(path, schemaUpdates);
+          continue;
+        }
         throw MonarchParseError.fromCause({
           path,
           cause: MonarchParseError.create(`operator '$bit' requires an integer field`),
@@ -333,7 +374,7 @@ function parseRenameOperator(
           cause: MonarchParseError.create(`operator '$rename' requires an optional field`),
         });
       }
-      const sourceInner = MonarchOptional.type(sourceType);
+      const sourceInner = MonarchOptional.unwrap(sourceType);
       const destType = MonarchType.index(schemaType, value.split("."), -1);
       if (!MonarchType.isInstanceOf(destType, sourceInner.constructor as new (...args: any[]) => AnyMonarchType)) {
         throw MonarchParseError.fromCause({
