@@ -4,6 +4,9 @@ export default defineConfig({
   title: "Monarch ORM",
   description: "Type safe ODM for MongoDB",
   cleanUrls: true,
+  sitemap: {
+    hostname: "https://monarchorm.com" // You might want to update this to your actual domain
+  },
   themeConfig: {
     nav: [
       { text: "Home", link: "/" },
